@@ -135,7 +135,7 @@ namespace KkjQuicker.UI
         /// <returns>创建好的 <see cref="DoubleAnimation"/>。</returns>
         public static DoubleAnimation CreateDoubleAnimation(
             int durationInMilliseconds, double? from, double? to,
-            IEasingFunction easingFunction = null)
+            IEasingFunction? easingFunction = null)
         {
             return new DoubleAnimation
             {
@@ -159,7 +159,7 @@ namespace KkjQuicker.UI
         public static DoubleAnimation CreateDoubleAnimation(
             DependencyObject element, PropertyPath path,
             int durationInMilliseconds, double? from, double? to,
-            IEasingFunction easingFunction = null)
+            IEasingFunction? easingFunction = null)
         {
             if (element == null) throw new ArgumentNullException(nameof(element));
             if (path == null) throw new ArgumentNullException(nameof(path));
@@ -195,7 +195,7 @@ namespace KkjQuicker.UI
         /// <returns>创建好的 X 方向位移动画。</returns>
         public static DoubleAnimation CreateTranslateXAnimation(
             UIElement element, int durationInMilliseconds, double? from, double? to,
-            IEasingFunction easingFunction = null)
+            IEasingFunction? easingFunction = null)
         {
             TranslateTransform transform = GetOrCreateTranslateTransform(element);
             return CreateDoubleAnimation(transform, TranslateTransformXPropertyPath, durationInMilliseconds, from, to, easingFunction);
@@ -212,7 +212,7 @@ namespace KkjQuicker.UI
         /// <returns>创建好的 Y 方向位移动画。</returns>
         public static DoubleAnimation CreateTranslateYAnimation(
             UIElement element, int durationInMilliseconds, double? from, double? to,
-            IEasingFunction easingFunction = null)
+            IEasingFunction? easingFunction = null)
         {
             TranslateTransform transform = GetOrCreateTranslateTransform(element);
             return CreateDoubleAnimation(transform, TranslateTransformYPropertyPath, durationInMilliseconds, from, to, easingFunction);
@@ -229,7 +229,7 @@ namespace KkjQuicker.UI
         /// <returns>创建好的 X 方向缩放动画。</returns>
         public static DoubleAnimation CreateScaleXAnimation(
             UIElement element, int durationInMilliseconds, double? from, double? to,
-            IEasingFunction easingFunction = null)
+            IEasingFunction? easingFunction = null)
         {
             ScaleTransform transform = GetOrCreateScaleTransform(element);
             return CreateDoubleAnimation(transform, ScaleXPropertyPath, durationInMilliseconds, from, to, easingFunction);
@@ -246,7 +246,7 @@ namespace KkjQuicker.UI
         /// <returns>创建好的 Y 方向缩放动画。</returns>
         public static DoubleAnimation CreateScaleYAnimation(
             UIElement element, int durationInMilliseconds, double? from, double? to,
-            IEasingFunction easingFunction = null)
+            IEasingFunction? easingFunction = null)
         {
             ScaleTransform transform = GetOrCreateScaleTransform(element);
             return CreateDoubleAnimation(transform, ScaleYPropertyPath, durationInMilliseconds, from, to, easingFunction);

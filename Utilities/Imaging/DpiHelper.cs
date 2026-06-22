@@ -600,7 +600,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 本方法会退回到鼠标所在屏幕，并使用 <see cref="SystemDpi"/> 进行近似换算。
         /// </para>
         /// </remarks>
-        public static Rect GetScreenWorkAreaDip(Visual relativeTo = null)
+        public static Rect GetScreenWorkAreaDip(Visual? relativeTo = null)
         {
             return GetScreenRectDip(relativeTo, workArea: true);
         }
@@ -630,7 +630,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 本方法会退回到鼠标所在屏幕，并使用 <see cref="SystemDpi"/> 进行近似换算。
         /// </para>
         /// </remarks>
-        public static Rect GetScreenBoundsDip(Visual relativeTo = null)
+        public static Rect GetScreenBoundsDip(Visual? relativeTo = null)
         {
             return GetScreenRectDip(relativeTo, workArea: false);
         }
@@ -648,7 +648,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 返回该视觉对象所在屏幕的工作区；
         /// 否则返回鼠标当前所在屏幕的工作区。
         /// </returns>
-        public static Int32Rect GetScreenWorkAreaPx(Visual relativeTo = null)
+        public static Int32Rect GetScreenWorkAreaPx(Visual? relativeTo = null)
         {
             Rect r = GetScreenRectPx(relativeTo, workArea: true);
             return new Int32Rect((int)r.X, (int)r.Y, (int)r.Width, (int)r.Height);
@@ -667,7 +667,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 返回该视觉对象所在屏幕的完整边界；
         /// 否则返回鼠标当前所在屏幕的完整边界。
         /// </returns>
-        public static Int32Rect GetScreenBoundsPx(Visual relativeTo = null)
+        public static Int32Rect GetScreenBoundsPx(Visual? relativeTo = null)
         {
             Rect r = GetScreenRectPx(relativeTo, workArea: false);
             return new Int32Rect((int)r.X, (int)r.Y, (int)r.Width, (int)r.Height);

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -749,7 +749,7 @@ namespace KkjQuicker.Utilities.Win32
         /// <item><description>无法获取有效边界或边界为空的窗口</description></item>
         /// </list>
         /// </remarks>
-        public static Dictionary<IntPtr, RECT> GetVisibleWindowRects(IntPtr excludeHwnd = default(IntPtr), Action<Exception> onError = null)
+        public static Dictionary<IntPtr, RECT> GetVisibleWindowRects(IntPtr excludeHwnd = default(IntPtr), Action<Exception>? onError = null)
         {
             var result = new Dictionary<IntPtr, RECT>();
 

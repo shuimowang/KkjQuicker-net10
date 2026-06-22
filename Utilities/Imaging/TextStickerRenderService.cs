@@ -246,7 +246,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 为 null 时回退到 <see cref="TextStickerOptions.Dpi"/>,再回退到鼠标所在屏的系统 DPI。
         /// </param>
         /// <exception cref="ArgumentNullException"><paramref name="text"/> 为 null 时抛出。</exception>
-        public static BitmapSource Render(string text, TextStickerOptions opt = null, Visual relativeTo = null)
+        public static BitmapSource Render(string text, TextStickerOptions? opt = null, Visual? relativeTo = null)
         {
             if (text == null) throw new ArgumentNullException("text");
 
@@ -266,7 +266,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 为 null 时回退到 <see cref="TextStickerOptions.Dpi"/>,再回退到鼠标所在屏的系统 DPI。
         /// </param>
         /// <exception cref="ArgumentNullException"><paramref name="text"/> 为 null 时抛出。</exception>
-        public static byte[] RenderToPng(string text, TextStickerOptions opt = null, Visual relativeTo = null)
+        public static byte[] RenderToPng(string text, TextStickerOptions? opt = null, Visual? relativeTo = null)
         {
             if (text == null) throw new ArgumentNullException("text");
 

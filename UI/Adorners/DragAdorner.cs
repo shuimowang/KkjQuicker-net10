@@ -312,7 +312,7 @@ namespace KkjQuicker.UI.Adorners
             UIElement dragVisual,
             Point dragOffset,
             double opacity = 0.7,
-            string text = null)
+            string? text = null)
         {
             if (adornedElement == null) throw new ArgumentNullException(nameof(adornedElement));
             if (dragVisual == null) throw new ArgumentNullException(nameof(dragVisual));

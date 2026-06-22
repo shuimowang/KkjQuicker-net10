@@ -74,7 +74,7 @@ namespace KkjQuicker.Overlay.Docking
         /// </para>
         /// </summary>
         /// <param name="options">新的配置对象。传入 <see langword="null"/> 时使用默认配置。</param>
-        public static void Configure(WindowDockOptions options = null)
+        public static void Configure(WindowDockOptions? options = null)
         {
             lock (Gate)
             {

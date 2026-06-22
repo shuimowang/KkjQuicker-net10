@@ -458,7 +458,7 @@ namespace KkjQuicker.Overlay.Engine
         /// </summary>
         /// <param name="options">配置项；传入 <see langword="null"/> 时使用默认配置。</param>
         /// <param name="owner">Owner 窗口；传入后会在支持的布局模式下参与同步。</param>
-        public OverlayEngine(OverlayOptions options = null, Window owner = null)
+        public OverlayEngine(OverlayOptions? options = null, Window? owner = null)
         {
             _options = options ?? new OverlayOptions();
             _ownerRef = owner != null ? new WeakReference<Window>(owner) : null;

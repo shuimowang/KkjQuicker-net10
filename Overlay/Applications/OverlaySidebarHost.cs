@@ -166,7 +166,7 @@ namespace KkjQuicker.Overlay.Applications
         /// <param name="owner">宿主窗口。</param>
         /// <param name="content">初始侧边栏内容。允许为 <see langword="null"/>。</param>
         /// <param name="state">初始状态。传入 <see langword="null"/> 时使用默认配置。</param>
-        public OverlaySidebarHost(Window owner, UIElement content = null, OverlaySidebarState state = null)
+        public OverlaySidebarHost(Window owner, UIElement? content = null, OverlaySidebarState? state = null)
         {
             if (owner == null)
                 throw new ArgumentNullException(nameof(owner));

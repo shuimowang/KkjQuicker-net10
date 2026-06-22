@@ -201,7 +201,7 @@ namespace KkjQuicker.UI.Adorners
         /// </summary>
         /// <param name="element">要承载的元素。</param>
         /// <param name="visibleWhen">可见条件；为 <see langword="null"/> 时默认可见。</param>
-        public RawItem(UIElement element, Func<OverlayActionContext, bool> visibleWhen = null)
+        public RawItem(UIElement element, Func<OverlayActionContext, bool>? visibleWhen = null)
         {
             _element = element;
             _visibleWhen = visibleWhen;
@@ -466,7 +466,7 @@ namespace KkjQuicker.UI.Adorners
         /// 当添加的元素尺寸后续发生变化时，面板会自动请求重新布局，以修正锚点定位。
         /// </para>
         /// </remarks>
-        public OverlayPanel AddChild(UIElement element, Func<OverlayActionContext, bool> visibleWhen = null)
+        public OverlayPanel AddChild(UIElement element, Func<OverlayActionContext, bool>? visibleWhen = null)
         {
             ThrowIfDetached();
 
@@ -884,7 +884,7 @@ namespace KkjQuicker.UI.Adorners
         /// <param name="style">样式配置；为 <see langword="null"/> 时使用默认样式。</param>
         /// <returns>新创建并附着到当前 Adorner 的面板实例。</returns>
         /// <exception cref="ObjectDisposedException">当前 Adorner 已分离，不能继续使用。</exception>
-        public OverlayPanel AddPanel(OverlayLayout layout = null, OverlayStyle style = null)
+        public OverlayPanel AddPanel(OverlayLayout? layout = null, OverlayStyle? style = null)
         {
             if (_isDetached)
                 throw new ObjectDisposedException(nameof(OverlayAdorner));

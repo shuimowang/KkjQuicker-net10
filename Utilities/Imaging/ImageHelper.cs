@@ -140,7 +140,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="format">图像格式；为 <see langword="null"/> 时默认使用 PNG。</param>
         /// <param name="jpegQuality">JPEG 质量，范围建议为 0~100；超范围时会自动钳制。</param>
         /// <returns>Base64 字符串；可选附带 data URL 头。</returns>
-        public static string ToBase64(this Bitmap bitmap, bool includeDataHeader = false, ImageFormat format = null, long jpegQuality = 90)
+        public static string ToBase64(this Bitmap bitmap, bool includeDataHeader = false, ImageFormat? format = null, long jpegQuality = 90)
         {
             if (bitmap == null)
                 throw new ArgumentNullException(nameof(bitmap));
@@ -469,7 +469,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="path">目标文件路径。</param>
         /// <param name="format">保存格式；为 <see langword="null"/> 时按扩展名推断。</param>
         /// <param name="jpegQuality">JPEG 质量，范围建议为 0~100；超范围时会自动钳制。</param>
-        public static void SaveToFile(this Bitmap bitmap, string path, ImageFormat format = null, long jpegQuality = 90)
+        public static void SaveToFile(this Bitmap bitmap, string path, ImageFormat? format = null, long jpegQuality = 90)
         {
             if (bitmap == null)
                 throw new ArgumentNullException(nameof(bitmap));

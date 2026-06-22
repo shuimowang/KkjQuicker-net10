@@ -50,10 +50,10 @@ namespace KkjQuicker.UI
             string defaultExt,
             string defaultFileName,
             string initialDir,
-            string title = null,
+            string? title = null,
             int filterIndex = 1,
             bool topmost = false,
-            Window parentWindow = null)
+            Window? parentWindow = null)
         {
             if (string.IsNullOrWhiteSpace(filter))
                 throw new ArgumentException("文件筛选器不能为空。", nameof(filter));
@@ -103,12 +103,12 @@ namespace KkjQuicker.UI
             string defaultExt,
             string defaultFileName,
             string initialDir,
-            string title = null,
+            string? title = null,
             bool overwritePrompt = true,
             bool addExtension = true,
             int filterIndex = 1,
             bool topmost = false,
-            Window parentWindow = null)
+            Window? parentWindow = null)
         {
             if (string.IsNullOrWhiteSpace(filter))
                 throw new ArgumentException("文件筛选器不能为空。", nameof(filter));
@@ -150,10 +150,10 @@ namespace KkjQuicker.UI
         /// </returns>
         public static Tuple<bool, string> ShowSelectFolderDialog(
             string initialDir,
-            string title = null,
+            string? title = null,
             bool showNewFolderButton = true,
             bool topmost = false,
-            Window parentWindow = null)
+            Window? parentWindow = null)
         {
             using (var dialog = new Forms.FolderBrowserDialog())
             {

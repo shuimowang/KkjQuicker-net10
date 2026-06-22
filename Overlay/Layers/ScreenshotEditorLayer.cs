@@ -115,9 +115,9 @@ namespace KkjQuicker.Overlay.Layers
         public ScreenshotEditorLayer(
             BitmapSource fullImage,
             Int32Rect initialSelectionPixelRect,
-            Action<BitmapSource, Int32Rect> onAccepted = null,
-            Action onCanceled = null,
-            EditorOptions options = null)
+            Action<BitmapSource, Int32Rect>? onAccepted = null,
+            Action? onCanceled = null,
+            EditorOptions? options = null)
             : this(
                 fullImage ?? throw new ArgumentNullException(nameof(fullImage)),
                 new Int32Rect(0, 0, fullImage.PixelWidth, fullImage.PixelHeight),
@@ -144,9 +144,9 @@ namespace KkjQuicker.Overlay.Layers
             BitmapSource fullImage,
             Int32Rect canvasPixelBounds,
             Int32Rect initialSelectionPixelRect,
-            Action<BitmapSource, Int32Rect> onAccepted = null,
-            Action onCanceled = null,
-            EditorOptions options = null)
+            Action<BitmapSource, Int32Rect>? onAccepted = null,
+            Action? onCanceled = null,
+            EditorOptions? options = null)
         {
             if (canvasPixelBounds.Width <= 0 || canvasPixelBounds.Height <= 0)
                 throw new ArgumentException("画布像素范围无效。", nameof(canvasPixelBounds));

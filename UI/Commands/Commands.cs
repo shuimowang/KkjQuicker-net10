@@ -207,7 +207,7 @@ namespace KkjQuicker.UI.Commands
         /// <param name="execute">命令执行逻辑。</param>
         /// <param name="canExecute">命令可执行判断逻辑；为 <see langword="null"/> 时始终可执行。</param>
         /// <exception cref="ArgumentNullException"><paramref name="execute"/> 为 <see langword="null"/>。</exception>
-        public DelegateCommand(Action<T> execute, Func<T, bool> canExecute = null)
+        public DelegateCommand(Action<T> execute, Func<T, bool>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute ?? (_ => true);
@@ -281,7 +281,7 @@ namespace KkjQuicker.UI.Commands
         /// <param name="execute">命令执行逻辑。</param>
         /// <param name="canExecute">命令可执行判断逻辑；为 <see langword="null"/> 时始终可执行。</param>
         /// <exception cref="ArgumentNullException"><paramref name="execute"/> 为 <see langword="null"/>。</exception>
-        public DelegateCommand(Action execute, Func<bool> canExecute = null)
+        public DelegateCommand(Action execute, Func<bool>? canExecute = null)
             : base(
                 WrapExecute(execute),
                 WrapCanExecute(canExecute))
@@ -360,7 +360,7 @@ namespace KkjQuicker.UI.Commands
         /// <param name="execute">异步命令执行逻辑。</param>
         /// <param name="canExecute">命令可执行判断逻辑；为 <see langword="null"/> 时始终可执行。</param>
         /// <exception cref="ArgumentNullException"><paramref name="execute"/> 为 <see langword="null"/>。</exception>
-        public AsyncDelegateCommand(Func<T, Task> execute, Func<T, bool> canExecute = null)
+        public AsyncDelegateCommand(Func<T, Task> execute, Func<T, bool>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute ?? (_ => true);
@@ -372,7 +372,7 @@ namespace KkjQuicker.UI.Commands
         /// <param name="execute">带取消令牌的异步命令执行逻辑。</param>
         /// <param name="canExecute">命令可执行判断逻辑；为 <see langword="null"/> 时始终可执行。</param>
         /// <exception cref="ArgumentNullException"><paramref name="execute"/> 为 <see langword="null"/>。</exception>
-        public AsyncDelegateCommand(Func<T, CancellationToken, Task> execute, Func<T, bool> canExecute = null)
+        public AsyncDelegateCommand(Func<T, CancellationToken, Task> execute, Func<T, bool>? canExecute = null)
         {
             _executeWithToken = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute ?? (_ => true);
@@ -526,7 +526,7 @@ namespace KkjQuicker.UI.Commands
         /// <param name="execute">异步命令执行逻辑。</param>
         /// <param name="canExecute">命令可执行判断逻辑；为 <see langword="null"/> 时始终可执行。</param>
         /// <exception cref="ArgumentNullException"><paramref name="execute"/> 为 <see langword="null"/>。</exception>
-        public AsyncDelegateCommand(Func<Task> execute, Func<bool> canExecute = null)
+        public AsyncDelegateCommand(Func<Task> execute, Func<bool>? canExecute = null)
             : base(
                 WrapExecute(execute),
                 WrapCanExecute(canExecute))
@@ -568,7 +568,7 @@ namespace KkjQuicker.UI.Commands
         /// <param name="execute">命令执行逻辑。</param>
         /// <param name="canExecute">命令可执行判断逻辑；为 <see langword="null"/> 时始终可执行。</param>
         /// <returns><see cref="DelegateCommand"/> 实例。</returns>
-        public static DelegateCommand Create(Action execute, Func<bool> canExecute = null)
+        public static DelegateCommand Create(Action execute, Func<bool>? canExecute = null)
         {
             return new DelegateCommand(execute, canExecute);
         }
@@ -580,7 +580,7 @@ namespace KkjQuicker.UI.Commands
         /// <param name="execute">命令执行逻辑。</param>
         /// <param name="canExecute">命令可执行判断逻辑；为 <see langword="null"/> 时始终可执行。</param>
         /// <returns><see cref="DelegateCommand{T}"/> 实例。</returns>
-        public static DelegateCommand<T> Create<T>(Action<T> execute, Func<T, bool> canExecute = null)
+        public static DelegateCommand<T> Create<T>(Action<T> execute, Func<T, bool>? canExecute = null)
         {
             return new DelegateCommand<T>(execute, canExecute);
         }
@@ -594,7 +594,7 @@ namespace KkjQuicker.UI.Commands
         /// <remarks>
         /// 创建的命令默认采用“执行期间禁用命令”的单飞行语义。
         /// </remarks>
-        public static AsyncDelegateCommand CreateAsync(Func<Task> execute, Func<bool> canExecute = null)
+        public static AsyncDelegateCommand CreateAsync(Func<Task> execute, Func<bool>? canExecute = null)
         {
             return new AsyncDelegateCommand(execute, canExecute);
         }
@@ -609,7 +609,7 @@ namespace KkjQuicker.UI.Commands
         /// <remarks>
         /// 创建的命令默认采用“执行期间禁用命令”的单飞行语义。
         /// </remarks>
-        public static AsyncDelegateCommand<T> CreateAsync<T>(Func<T, Task> execute, Func<T, bool> canExecute = null)
+        public static AsyncDelegateCommand<T> CreateAsync<T>(Func<T, Task> execute, Func<T, bool>? canExecute = null)
         {
             return new AsyncDelegateCommand<T>(execute, canExecute);
         }
@@ -626,7 +626,7 @@ namespace KkjQuicker.UI.Commands
         /// </remarks>
         public static AsyncDelegateCommand<T> CreateAsync<T>(
             Func<T, CancellationToken, Task> execute,
-            Func<T, bool> canExecute = null)
+            Func<T, bool>? canExecute = null)
         {
             return new AsyncDelegateCommand<T>(execute, canExecute);
         }

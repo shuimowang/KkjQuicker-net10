@@ -91,7 +91,7 @@ namespace KkjQuicker.UI
         /// 当处于通知暂停状态时，不会立即发出通知，而是仅记录存在待处理更改；
         /// 恢复通知后，会统一触发一次"所有属性已更改"的通知。
         /// </remarks>
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             if (_notificationSuspendCount > 0)
             {
@@ -118,8 +118,8 @@ namespace KkjQuicker.UI
         protected bool SetProperty<T>(
             ref T field,
             T value,
-            [CallerMemberName] string propertyName = null,
-            Action onChanged = null)
+            [CallerMemberName] string? propertyName = null,
+            Action? onChanged = null)
         {
             if (EqualityComparer<T>.Default.Equals(field, value))
                 return false;
