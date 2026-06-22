@@ -14,7 +14,7 @@
     <LangVersion>13.0</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <NoWarn>CA1416;WFDEV005;NU1510;NU1603</NoWarn>
+    <NoWarn>CA1416;CS8600;CS8601;CS8602;CS8603;CS8604;CS8612;CS8618;CS8622;CS8625;CS8765;CS8767;WFDEV005;NU1510;NU1603</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
