@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace KkjQuicker.Utilities.Extensions
@@ -21,7 +21,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <returns>
         /// 当索引有效时返回对应元素；否则返回 <c>default(T)</c>。
         /// </returns>
-        public static T GetOrDefault<T>(this IList<T> list, int index)
+        public static T? GetOrDefault<T>(this IList<T> list, int index)
         {
             return list != null && index >= 0 && index < list.Count
                 ? list[index]

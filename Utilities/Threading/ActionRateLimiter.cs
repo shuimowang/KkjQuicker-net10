@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -107,15 +107,15 @@ namespace KkjQuicker.Utilities.Threading
         private bool _disposed;
 
         // Sync
-        private Action _pendingSyncAction;
+        private Action? _pendingSyncAction = null!;
         private bool _isSyncThrottling;
 
         // Async debounce
-        private CancellationTokenSource _debounceCts;
+        private CancellationTokenSource? _debounceCts = null!;
 
         // Async throttle
         private bool _isAsyncThrottling;
-        private CancellationTokenSource _cooldownCts;
+        private CancellationTokenSource? _cooldownCts = null!;
 
         /// <summary>
         /// 初始化 <see cref="ActionRateLimiter"/>。
@@ -130,7 +130,7 @@ namespace KkjQuicker.Utilities.Threading
         /// <exception cref="InvalidOperationException">无法获取可用的 WPF <see cref="Dispatcher"/>。</exception>
         public ActionRateLimiter(
             TimeSpan interval,
-            Dispatcher dispatcher = null,
+            Dispatcher? dispatcher = null,
             DispatcherPriority priority = DispatcherPriority.Background)
         {
             if (interval <= TimeSpan.Zero)
@@ -294,7 +294,7 @@ namespace KkjQuicker.Utilities.Threading
 
         private void OnDebounceTick(object sender, EventArgs e)
         {
-            Action toRun = null;
+            Action? toRun = null;
 
             lock (_syncRoot)
             {
@@ -366,7 +366,7 @@ namespace KkjQuicker.Utilities.Threading
                 _debounceCts?.Dispose();
 
                 _debounceCts = CancellationTokenSource.CreateLinkedTokenSource(_disposeCts.Token);
-                cts = _debounceCts;
+                cts = _debounceCts!;
                 localToken = cts.Token; // 在 CTS 确定存活时捕获结构体，避免后续并发 Dispose 后访问 .Token getter
                 delay = _interval;
             }
@@ -394,7 +394,7 @@ namespace KkjQuicker.Utilities.Threading
                 {
                     if (ReferenceEquals(_debounceCts, cts))
                     {
-                        _debounceCts.Dispose();
+                        _debounceCts!.Dispose();
                         _debounceCts = null;
                     }
                 }
@@ -424,7 +424,7 @@ namespace KkjQuicker.Utilities.Threading
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
-            CancellationTokenSource cooldownCts = null;
+            CancellationTokenSource? cooldownCts = null;
             TimeSpan cooldownDelay;
 
             lock (_syncRoot)
@@ -486,7 +486,7 @@ namespace KkjQuicker.Utilities.Threading
                 {
                     if (ReferenceEquals(_cooldownCts, cooldownCts))
                     {
-                        _cooldownCts.Dispose();
+                        _cooldownCts!.Dispose();
                         _cooldownCts = null;
                     }
 
@@ -515,8 +515,8 @@ namespace KkjQuicker.Utilities.Threading
         {
             Dispatch(() =>
             {
-                CancellationTokenSource debounceCts = null;
-                CancellationTokenSource cooldownCts = null;
+                CancellationTokenSource? debounceCts = null;
+                CancellationTokenSource? cooldownCts = null;
 
                 lock (_syncRoot)
                 {
@@ -557,8 +557,8 @@ namespace KkjQuicker.Utilities.Threading
         /// </summary>
         public void Dispose()
         {
-            CancellationTokenSource debounceCts = null;
-            CancellationTokenSource cooldownCts = null;
+            CancellationTokenSource? debounceCts = null;
+            CancellationTokenSource? cooldownCts = null;
 
             lock (_syncRoot)
             {

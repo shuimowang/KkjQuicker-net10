@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace KkjQuicker.Utilities.Extensions
@@ -79,7 +79,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// 若源词典中存在仅大小写不同但在忽略大小写比较下视为相同的键，
         /// 则创建新词典时会抛出异常。
         /// </remarks>
-        public static IDictionary<string, T> ToIgnoreCase<T>(this IDictionary<string, T> dict)
+        public static IDictionary<string, T>? ToIgnoreCase<T>(this IDictionary<string, T> dict)
         {
             if (dict == null)
                 return null;

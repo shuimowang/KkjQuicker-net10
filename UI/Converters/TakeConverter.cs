@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -14,7 +14,7 @@ namespace KkjQuicker.UI.Converters
     [ValueConversion(typeof(object), typeof(object))]
     public class TakeConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             int count = ParseCount(parameter, culture);
             if (value == null)

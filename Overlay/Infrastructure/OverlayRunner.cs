@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Overlay.Engine;
+using KkjQuicker.Overlay.Engine;
 using KkjQuicker.Overlay.Layers;
 using System;
 using System.Threading.Tasks;
@@ -11,7 +11,7 @@ namespace KkjQuicker.Overlay.Infrastructure
 {
     public static class OverlayRunner
     {
-        public static async Task<BitmapSource> RunScreenshotLayer()
+        public static async Task<BitmapSource?> RunScreenshotLayer()
         {
             var overlay = new OverlayEngine(new OverlayOptions
             {

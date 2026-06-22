@@ -1,4 +1,4 @@
-﻿using NAudio.CoreAudioApi;
+using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using System.Collections.Generic;
 
@@ -146,7 +146,7 @@ namespace KkjQuicker.Audio
         /// 获取当前默认音频输出设备名称。
         /// </summary>
         /// <returns>默认输出设备名称；若获取失败，则返回 <see langword="null"/>。</returns>
-        public static string GetDefaultOutputDeviceName()
+        public static string? GetDefaultOutputDeviceName()
         {
             try
             {

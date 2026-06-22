@@ -20,12 +20,12 @@ namespace KkjQuicker.Utilities.FFmpeg
         /// <summary>
         /// 获取或设置标准输出文本。
         /// </summary>
-        public string StandardOutput { get; set; }
+        public string StandardOutput { get; set; } = null!;
 
         /// <summary>
         /// 获取或设置标准错误文本。
         /// </summary>
-        public string StandardError { get; set; }
+        public string StandardError { get; set; } = null!;
 
         /// <summary>
         /// 获取或设置是否因超时被终止。
@@ -40,12 +40,12 @@ namespace KkjQuicker.Utilities.FFmpeg
         /// <summary>
         /// 获取或设置启动时使用的可执行文件路径。
         /// </summary>
-        public string FileName { get; set; }
+        public string FileName { get; set; } = null!;
 
         /// <summary>
         /// 获取或设置启动时使用的参数。
         /// </summary>
-        public string Arguments { get; set; }
+        public string Arguments { get; set; } = null!;
 
         /// <summary>
         /// 获取执行结果是否成功。
@@ -85,10 +85,10 @@ namespace KkjQuicker.Utilities.FFmpeg
         public static FFmpegProcessResult Run(
             string ffmpegExePath,
             string arguments,
-            string workingDirectory = null,
+            string? workingDirectory = null,
             int timeoutMilliseconds = 0,
-            Action<string> outputDataReceived = null,
-            Action<string> errorDataReceived = null)
+            Action<string>? outputDataReceived = null,
+            Action<string>? errorDataReceived = null)
         {
             return RunAsync(
                 ffmpegExePath,
@@ -114,11 +114,11 @@ namespace KkjQuicker.Utilities.FFmpeg
         public static async Task<FFmpegProcessResult> RunAsync(
             string ffmpegExePath,
             string arguments,
-            string workingDirectory = null,
+            string? workingDirectory = null,
             int timeoutMilliseconds = 0,
             CancellationToken cancellationToken = default(CancellationToken),
-            Action<string> outputDataReceived = null,
-            Action<string> errorDataReceived = null)
+            Action<string>? outputDataReceived = null,
+            Action<string>? errorDataReceived = null)
         {
             if (string.IsNullOrWhiteSpace(ffmpegExePath))
                 throw new ArgumentNullException(nameof(ffmpegExePath));
@@ -248,9 +248,9 @@ namespace KkjQuicker.Utilities.FFmpeg
         public static Process Start(
             string ffmpegExePath,
             string arguments,
-            string workingDirectory = null,
-            Action<string> outputDataReceived = null,
-            Action<string> errorDataReceived = null)
+            string? workingDirectory = null,
+            Action<string>? outputDataReceived = null,
+            Action<string>? errorDataReceived = null)
         {
             if (string.IsNullOrWhiteSpace(ffmpegExePath))
                 throw new ArgumentNullException(nameof(ffmpegExePath));
@@ -377,7 +377,7 @@ namespace KkjQuicker.Utilities.FFmpeg
         /// <param name="arguments">命令行参数。</param>
         /// <param name="workingDirectory">工作目录。</param>
         /// <returns>启动信息。</returns>
-        public static ProcessStartInfo CreateStartInfo(string ffmpegExePath, string arguments, string workingDirectory = null)
+        public static ProcessStartInfo CreateStartInfo(string ffmpegExePath, string arguments, string? workingDirectory = null)
         {
             if (string.IsNullOrWhiteSpace(ffmpegExePath))
                 throw new ArgumentNullException(nameof(ffmpegExePath));
@@ -419,7 +419,7 @@ namespace KkjQuicker.Utilities.FFmpeg
             }
         }
 
-        private static string TryGetDirectoryName(string path)
+        private static string? TryGetDirectoryName(string path)
         {
             try
             {

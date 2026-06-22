@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
@@ -31,8 +31,8 @@ namespace KkjQuicker.Utilities.Extensions
             if (value == null)
                 return string.Empty;
 
-            string name = value.ToString();
-            MemberInfo member = value.GetType().GetMember(name).FirstOrDefault();
+            string? name = value.ToString();
+            MemberInfo? member = value.GetType().GetMember(name ?? "").FirstOrDefault();
             if (member == null)
                 return name;
 

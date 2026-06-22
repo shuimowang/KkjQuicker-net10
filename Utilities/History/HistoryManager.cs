@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace KkjQuicker.Utilities.History
@@ -319,7 +319,7 @@ namespace KkjQuicker.Utilities.History
         /// <summary>
         /// 当历史状态发生变化时触发。
         /// </summary>
-        public event EventHandler<HistoryChangedEventArgs> HistoryChanged;
+        public event EventHandler<HistoryChangedEventArgs>? HistoryChanged;
 
         /// <summary>
         /// 获取或设置最大历史容量。

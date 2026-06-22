@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -44,8 +44,8 @@ namespace KkjQuicker.Utilities.Threading
         private bool _disposed;
         private bool _isProcessing;
 
-        private CancellationTokenSource _delayCts;
-        private CancellationTokenSource _currentExecutionCts;
+        private CancellationTokenSource? _delayCts = null!;
+        private CancellationTokenSource? _currentExecutionCts = null!;
 
         /// <summary>
         /// 初始化 <see cref="ActionQueueLimiter"/>。
@@ -147,8 +147,8 @@ namespace KkjQuicker.Utilities.Threading
         /// </remarks>
         public void Cancel()
         {
-            Queue<QueueItem> pending = null;
-            CancellationTokenSource delayToCancel = null;
+            Queue<QueueItem>? pending = null;
+            CancellationTokenSource? delayToCancel = null;
 
             lock (_syncRoot)
             {
@@ -192,9 +192,9 @@ namespace KkjQuicker.Utilities.Threading
         /// </remarks>
         public void Dispose()
         {
-            Queue<QueueItem> pending = null;
-            CancellationTokenSource delayToCancel = null;
-            CancellationTokenSource executionToCancel = null;
+            Queue<QueueItem>? pending = null;
+            CancellationTokenSource? delayToCancel = null;
+            CancellationTokenSource? executionToCancel = null;
 
             lock (_syncRoot)
             {
@@ -347,7 +347,7 @@ namespace KkjQuicker.Utilities.Threading
         {
             if (item.IsAsync)
             {
-                CancellationTokenSource executionCts = null;
+                CancellationTokenSource? executionCts = null;
 
                 try
                 {
@@ -403,7 +403,7 @@ namespace KkjQuicker.Utilities.Threading
             }
         }
 
-        private static void CancelToken(CancellationTokenSource cts)
+        private static void CancelToken(CancellationTokenSource? cts)
         {
             if (cts == null)
                 return;
@@ -417,7 +417,7 @@ namespace KkjQuicker.Utilities.Threading
             }
         }
 
-        private static void CancelDispose(ref CancellationTokenSource cts)
+        private static void CancelDispose(ref CancellationTokenSource? cts)
         {
             if (cts == null)
                 return;
@@ -443,9 +443,9 @@ namespace KkjQuicker.Utilities.Threading
 
         private sealed class QueueItem
         {
-            public readonly Action SyncAction;
-            public readonly Func<CancellationToken, Task> AsyncAction;
-            public readonly TaskCompletionSource<bool> Completion;
+            public readonly Action SyncAction = null!;
+            public readonly Func<CancellationToken, Task> AsyncAction = null!;
+            public readonly TaskCompletionSource<bool> Completion = null!;
 
             public bool IsAsync
             {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 
@@ -30,7 +30,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// 对应值为 <see langword="null"/> 或 <see cref="DBNull.Value"/>，则返回 <see langword="null"/>；
         /// 否则返回对应的原始值。
         /// </returns>
-        public static object GetValueOrNull(this IDictionary<string, object> dict, string key)
+        public static object? GetValueOrNull(this IDictionary<string, object> dict, string key)
         {
             if (dict == null)
                 return null;
@@ -131,12 +131,12 @@ namespace KkjQuicker.Utilities.Extensions
         /// <remarks>
         /// 本方法不会将空字符串视为失败；若原始值为非空对象，则返回其 <see cref="object.ToString"/> 结果。
         /// </remarks>
-        public static string GetString(this IDictionary<string, object> dict, string key, string defaultValue = null)
+        public static string GetString(this IDictionary<string, object> dict, string key, string? defaultValue = null)
         {
             return ToStringOrDefault(dict.GetValueOrNull(key), defaultValue);
         }
 
-        private static bool ToBoolOrDefault(object value, bool defaultValue)
+        private static bool ToBoolOrDefault(object? value, bool defaultValue)
         {
             if (value == null || value == DBNull.Value)
                 return defaultValue;
@@ -144,7 +144,7 @@ namespace KkjQuicker.Utilities.Extensions
             if (value is bool)
                 return (bool)value;
 
-            string text = value as string;
+            string? text = value as string;
             if (text != null)
             {
                 text = text.Trim().ToLowerInvariant();
@@ -168,7 +168,7 @@ namespace KkjQuicker.Utilities.Extensions
             }
         }
 
-        private static int ToIntOrDefault(object value, int defaultValue)
+        private static int ToIntOrDefault(object? value, int defaultValue)
         {
             if (value == null || value == DBNull.Value)
                 return defaultValue;
@@ -176,7 +176,7 @@ namespace KkjQuicker.Utilities.Extensions
             if (value is int)
                 return (int)value;
 
-            string text = value as string;
+            string? text = value as string;
             if (text != null)
             {
                 int parsed;
@@ -195,7 +195,7 @@ namespace KkjQuicker.Utilities.Extensions
             }
         }
 
-        private static double ToDoubleOrDefault(object value, double defaultValue)
+        private static double ToDoubleOrDefault(object? value, double defaultValue)
         {
             if (value == null || value == DBNull.Value)
                 return defaultValue;
@@ -206,7 +206,7 @@ namespace KkjQuicker.Utilities.Extensions
             if (value is float)
                 return (float)value;
 
-            string text = value as string;
+            string? text = value as string;
             if (text != null)
             {
                 double parsed;
@@ -229,7 +229,7 @@ namespace KkjQuicker.Utilities.Extensions
             }
         }
 
-        private static string ToStringOrDefault(object value, string defaultValue)
+        private static string? ToStringOrDefault(object? value, string? defaultValue)
         {
             if (value == null || value == DBNull.Value)
                 return defaultValue;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -39,7 +39,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <param name="json">要反序列化的 JSON 字符串。</param>
         /// <returns>反序列化后的对象。</returns>
         /// <exception cref="JsonException">JSON 格式无效或无法转换为目标类型。</exception>
-        public static T FromJson<T>(this string json)
+        public static T? FromJson<T>(this string json)
         {
             return JsonConvert.DeserializeObject<T>(json);
         }
@@ -52,7 +52,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <returns>反序列化后的对象。</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> 为 <see langword="null"/>。</exception>
         /// <exception cref="JsonException">JSON 格式无效或无法转换为目标类型。</exception>
-        public static object FromJson(this string json, Type type)
+        public static object? FromJson(this string json, Type type)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
@@ -73,7 +73,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// 当输入为空、格式无效、无法转换为目标类型，或反序列化结果为 <see langword="null"/> 时，
         /// 本方法不会抛出异常，而是返回 <see langword="false"/>。
         /// </remarks>
-        public static bool TryFromJson<T>(this string json, out T result)
+        public static bool TryFromJson<T>(this string json, out T? result)
         {
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -116,7 +116,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// 仅对可被 Newtonsoft.Json 正常序列化和反序列化的对象有效。
         /// </para>
         /// </remarks>
-        public static T DeepClone<T>(this T obj)
+        public static T? DeepClone<T>(this T obj)
         {
             if (object.Equals(obj, null))
                 return default(T);

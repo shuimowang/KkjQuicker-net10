@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -404,7 +404,7 @@ namespace KkjQuicker.Utilities.Input
             return IsOpen == other.IsOpen && ConversionMode == other.ConversionMode;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is ImeState && Equals((ImeState)obj);
         }

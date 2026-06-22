@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Net.Http;
 
@@ -58,7 +58,7 @@ namespace KkjQuicker.Net.Http
         /// </para>
         /// </remarks>
         public static HttpClient Create(
-            Action<HttpClientHandler> configureHandler = null,
+            Action<HttpClientHandler>? configureHandler = null,
             TimeSpan? timeout = null)
         {
             return CreateCore(configureHandler, timeout ?? TimeSpan.FromSeconds(30), true);

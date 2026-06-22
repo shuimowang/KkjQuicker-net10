@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Text;
@@ -146,7 +146,7 @@ namespace KkjQuicker.Utilities
                     return defaultValue;
 
                 T value = JsonConvert.DeserializeObject<T>(json, settings);
-                return object.Equals(value, null) ? defaultValue : value;
+                return object.Equals(value, null) ? defaultValue : value!;
             }
             catch
             {
@@ -607,7 +607,7 @@ namespace KkjQuicker.Utilities
 
         private static void EnsureParentDirectory(string path)
         {
-            string directory = Path.GetDirectoryName(path);
+            string? directory = Path.GetDirectoryName(path);
             if (string.IsNullOrWhiteSpace(directory))
                 return;
 

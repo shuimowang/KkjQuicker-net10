@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -57,8 +57,8 @@ namespace KkjQuicker.UI.Converters
 
             if (parameter != null)
             {
-                string param = parameter.ToString();
-                int colon = param.IndexOf(':');
+                string? param = parameter.ToString();
+                int colon = param?.IndexOf(':') ?? -1;
 
                 if (colon >= 0)
                 {

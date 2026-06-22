@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -155,7 +155,7 @@ namespace KkjQuicker.Utilities.FFmpeg
         /// 同时启用双路音频时，滤镜将自动并入 -filter_complex 以避免冲突。
         /// </para>
         /// </summary>
-        public string CustomVideoFilter { get; set; }
+        public string? CustomVideoFilter { get; set; }
     }
 
     /// <summary>
@@ -167,8 +167,8 @@ namespace KkjQuicker.Utilities.FFmpeg
         // 仅用于 DirectShow 设备枚举的内部类型
         private sealed class AudioDeviceEntry
         {
-            public string DisplayName;
-            public string AlternativeName;
+            public string DisplayName = null!;
+            public string? AlternativeName;
         }
 
         /// <summary>
@@ -211,8 +211,8 @@ namespace KkjQuicker.Utilities.FFmpeg
             bool isGif = IsGif(normalized.OutputKind);
 
             // GIF 不支持音频，跳过设备枚举
-            string micDevice = null;
-            string sysAudioDevice = null;
+            string? micDevice = null;
+            string? sysAudioDevice = null;
 
             if (!isGif && (normalized.CaptureMic || normalized.CaptureSystemAudio))
             {
@@ -332,7 +332,7 @@ namespace KkjQuicker.Utilities.FFmpeg
 
         private static void AppendTwoAudioMixFilterAndMap(
             List<string> parts,
-            string customVideoFilter)
+            string? customVideoFilter)
         {
             // 输入 0：gdigrab（视频）  输入 1：mic  输入 2：sysaudio
             //
@@ -473,7 +473,7 @@ namespace KkjQuicker.Utilities.FFmpeg
                 StandardErrorEncoding = Encoding.Default,
             };
 
-            string dir = TryGetDirectoryName(ffmpegExePath);
+            string? dir = TryGetDirectoryName(ffmpegExePath);
             if (!string.IsNullOrWhiteSpace(dir))
                 psi.WorkingDirectory = dir;
 
@@ -495,7 +495,7 @@ namespace KkjQuicker.Utilities.FFmpeg
                 return result;
 
             string[] lines = ffmpegOutput.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
-            AudioDeviceEntry current = null;
+            AudioDeviceEntry? current = null;
 
             foreach (string line in lines)
             {
@@ -507,7 +507,7 @@ namespace KkjQuicker.Utilities.FFmpeg
                 // 形如：  "麦克风 (Realtek(R) Audio)" (audio)
                 if (trimmed.IndexOf("(audio)", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    string displayName = TryParseQuotedText(trimmed);
+                    string? displayName = TryParseQuotedText(trimmed);
                     if (displayName == null)
                         continue;
 
@@ -532,7 +532,7 @@ namespace KkjQuicker.Utilities.FFmpeg
         /// 查找默认麦克风设备。
         /// 优先按关键词匹配；未匹配时回退到列表中第一个可用设备。
         /// </summary>
-        private static string FindMicDevice(List<AudioDeviceEntry> devices)
+        private static string? FindMicDevice(List<AudioDeviceEntry> devices)
         {
             if (devices == null || devices.Count == 0)
                 return null;
@@ -549,7 +549,7 @@ namespace KkjQuicker.Utilities.FFmpeg
             // 无关键词匹配时，取第一个可用设备作为默认麦克风
             foreach (var device in devices)
             {
-                string name = GetUsableDeviceName(device);
+                string? name = GetUsableDeviceName(device);
                 if (name != null)
                     return name;
             }
@@ -561,7 +561,7 @@ namespace KkjQuicker.Utilities.FFmpeg
         /// 查找系统声音采集设备（立体声混音、虚拟声卡等）。
         /// 未找到时返回 <see langword="null"/>，不做品牌猜测以避免误选麦克风。
         /// </summary>
-        private static string FindSystemAudioDevice(List<AudioDeviceEntry> devices)
+        private static string? FindSystemAudioDevice(List<AudioDeviceEntry> devices)
         {
             if (devices == null || devices.Count == 0)
                 return null;
@@ -584,7 +584,7 @@ namespace KkjQuicker.Utilities.FFmpeg
             return null;
         }
 
-        private static string GetUsableDeviceName(AudioDeviceEntry device)
+        private static string? GetUsableDeviceName(AudioDeviceEntry device)
         {
             if (device == null)
                 return null;
@@ -599,7 +599,7 @@ namespace KkjQuicker.Utilities.FFmpeg
             return null;
         }
 
-        private static string TryParseQuotedText(string line)
+        private static string? TryParseQuotedText(string line)
         {
             if (string.IsNullOrWhiteSpace(line))
                 return null;
@@ -717,7 +717,7 @@ namespace KkjQuicker.Utilities.FFmpeg
         private static string ToInvariant(int value) =>
             value.ToString(CultureInfo.InvariantCulture);
 
-        private static string TryGetDirectoryName(string path)
+        private static string? TryGetDirectoryName(string path)
         {
             try { return Path.GetDirectoryName(path); }
             catch { return null; }

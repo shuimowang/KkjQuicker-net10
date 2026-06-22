@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -152,7 +152,7 @@ namespace KkjQuicker.UI
         /// 获取当前应用程序的 UI 线程 <see cref="Dispatcher"/>。
         /// </summary>
         /// <returns>当前应用程序的 <see cref="Dispatcher"/>;若不可用则返回 <c>null</c>。</returns>
-        public static Dispatcher GetDispatcher()
+        public static Dispatcher? GetDispatcher()
         {
             return Application.Current != null ? Application.Current.Dispatcher : null;
         }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Globalization;
 using System.Linq;
@@ -183,7 +183,7 @@ namespace KkjQuicker.UI.Converters
             return result;
         }
 
-        private static object ChangeTypeSafe(object value, Type targetType, CultureInfo culture, Type fallbackType = null)
+        private static object ChangeTypeSafe(object value, Type targetType, CultureInfo culture, Type? fallbackType = null)
         {
             if (targetType == null)
                 return value;
