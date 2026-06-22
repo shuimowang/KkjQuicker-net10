@@ -158,7 +158,7 @@ namespace KkjQuicker.Utilities.Win32
 
         private void OnClipboardChanged()
         {
-            EventHandler handler = ClipboardChanged;
+            EventHandler? handler = ClipboardChanged;
 
             if (handler != null)
             {

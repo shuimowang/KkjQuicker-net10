@@ -129,7 +129,7 @@ namespace KkjQuicker.AI.OpenAI
 
         public ChatRequest WithResponseFormat(string type)
         {
-            string t = Normalize(type);
+            string? t = Normalize(type);
 
             ResponseFormat = t == null
                 ? null

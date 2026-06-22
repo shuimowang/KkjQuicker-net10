@@ -1,4 +1,4 @@
-﻿// KkjQuicker.UI.WindowMessageMonitor
+// KkjQuicker.UI.WindowMessageMonitor
 using System;
 using System.ComponentModel;
 using System.Windows;
@@ -19,7 +19,7 @@ namespace KkjQuicker.UI
         public const int WM_DPICHANGED = 0x02E0;
 
         private readonly Window _window;
-        private HwndSource _source;
+        private HwndSource? _source;
         private bool _isDisposed;
         private bool _isHooked;
 
@@ -154,7 +154,7 @@ namespace KkjQuicker.UI
             return IntPtr.Zero;
         }
 
-        private void Raise(EventHandler handler)
+        private void Raise(EventHandler? handler)
         {
             if (handler != null)
                 handler(this, EventArgs.Empty);

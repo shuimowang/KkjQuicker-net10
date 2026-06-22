@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Specialized;
 using System.Threading;
 using System.Windows;
@@ -62,7 +62,7 @@ namespace KkjQuicker.Utilities
                 false);
         }
 
-        public static string TryGetClipboardText(
+        public static string? TryGetClipboardText(
             TextDataFormat format = TextDataFormat.UnicodeText)
         {
             return RetryRead(
@@ -78,7 +78,7 @@ namespace KkjQuicker.Utilities
 
         public static StringCollection GetFileDropList()
         {
-            StringCollection files = RetryRead(
+            StringCollection? files = RetryRead(
                 delegate
                 {
                     if (!WpfClipboard.ContainsFileDropList())
@@ -92,7 +92,7 @@ namespace KkjQuicker.Utilities
             return files ?? new StringCollection();
         }
 
-        public static object GetData(string format)
+        public static object? GetData(string format)
         {
             if (string.IsNullOrEmpty(format))
                 return null;
@@ -103,7 +103,7 @@ namespace KkjQuicker.Utilities
 
                 try
                 {
-                    object data = InvokeOnSta(
+                    object? data = InvokeOnSta(
                         delegate
                         {
                             dataPresent = WpfClipboard.ContainsData(format);
@@ -131,7 +131,7 @@ namespace KkjQuicker.Utilities
             return null;
         }
 
-        public static BitmapSource GetImage()
+        public static BitmapSource? GetImage()
         {
             return RetryRead(
                 delegate
@@ -139,7 +139,7 @@ namespace KkjQuicker.Utilities
                     if (!WpfClipboard.ContainsImage())
                         return null;
 
-                    BitmapSource image = WpfClipboard.GetImage();
+                    BitmapSource? image = WpfClipboard.GetImage();
 
                     if (image != null && image.CanFreeze)
                         image.Freeze();
@@ -218,7 +218,7 @@ namespace KkjQuicker.Utilities
                 });
         }
 
-        private static T RetryRead<T>(Func<T> action, T failedValue)
+        private static T? RetryRead<T>(Func<T> action, T? failedValue)
         {
             for (int i = 0; i < ClipboardRetryCount; i++)
             {
@@ -266,7 +266,7 @@ namespace KkjQuicker.Utilities
             return false;
         }
 
-        private static T TryInvokeOnSta<T>(Func<T> action, T failedValue)
+        private static T? TryInvokeOnSta<T>(Func<T> action, T? failedValue)
         {
             try
             {
@@ -278,12 +278,12 @@ namespace KkjQuicker.Utilities
             }
         }
 
-        private static T InvokeOnSta<T>(Func<T> action)
+        private static T? InvokeOnSta<T>(Func<T> action)
         {
             if (action == null)
                 return default(T);
 
-            Dispatcher dispatcher = null;
+            Dispatcher? dispatcher = null;
 
             if (Application.Current != null)
                 dispatcher = Application.Current.Dispatcher;

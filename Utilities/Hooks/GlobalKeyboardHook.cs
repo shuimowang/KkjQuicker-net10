@@ -50,7 +50,7 @@ namespace KkjQuicker.Utilities.Hooks
             // Fix #1：IsDisposed 防止 UnhookWindowsHookEx 后在途回调触发事件
             if (code == NativeConstants.HC_ACTION && !IsDisposed)
             {
-                EventHandler<KeyboardHookEventArgs> handler = KeyboardEvent;
+                EventHandler<KeyboardHookEventArgs>? handler = KeyboardEvent;
                 if (handler != null)
                 {
                     KBDLLHOOKSTRUCT data = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);

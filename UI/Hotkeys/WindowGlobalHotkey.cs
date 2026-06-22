@@ -74,7 +74,7 @@ namespace KkjQuicker.UI.Hotkeys
             Key key,
             ModifierKeys modifiers,
             Action onTriggered,
-            Action<int> onRegistrationFailed)
+            Action<int>? onRegistrationFailed)
         {
             if (onTriggered == null)
                 throw new ArgumentNullException(nameof(onTriggered));
@@ -160,7 +160,7 @@ namespace KkjQuicker.UI.Hotkeys
             if (!NativeMethods.RegisterHotKey(_hwnd, _id, _modifiers, _virtualKey))
             {
                 int error = Marshal.GetLastWin32Error();
-                Action<int> failed = RegistrationFailed;
+                Action<int>? failed = RegistrationFailed;
 
                 Dispose();
 
@@ -193,7 +193,7 @@ namespace KkjQuicker.UI.Hotkeys
             {
                 handled = true;
 
-                Action triggered = Triggered;
+                Action? triggered = Triggered;
                 if (triggered != null)
                     triggered();
             }

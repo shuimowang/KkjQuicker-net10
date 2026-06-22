@@ -408,7 +408,7 @@ namespace KkjQuicker.AI.OpenAI
                 if (string.IsNullOrWhiteSpace(id))
                     return Array.Empty<ChatMessage>();
 
-                List<ChatMessage> h;
+                List<ChatMessage>? h;
 
                 if (_store.TryGetValue(id, out h))
                 {
@@ -445,7 +445,7 @@ namespace KkjQuicker.AI.OpenAI
 
             public bool Remove(string id)
             {
-                List<ChatMessage> removed;
+                List<ChatMessage>? removed;
                 return !string.IsNullOrWhiteSpace(id) &&
                        _store.TryRemove(id, out removed);
             }

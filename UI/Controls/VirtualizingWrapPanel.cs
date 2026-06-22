@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -128,11 +128,11 @@ namespace KkjQuicker.UI.Controls
             get { return _offset.Y; }
         }
 
-        public ScrollViewer ScrollOwner { get; set; }
+        public ScrollViewer? ScrollOwner { get; set; }
 
         private static void OnLayoutPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            VirtualizingWrapPanel panel = d as VirtualizingWrapPanel;
+            VirtualizingWrapPanel? panel = d as VirtualizingWrapPanel;
             if (panel == null)
                 return;
 
@@ -344,7 +344,7 @@ namespace KkjQuicker.UI.Controls
 
         public Rect MakeVisible(Visual visual, Rect rectangle)
         {
-            UIElement element = visual as UIElement;
+            UIElement? element = visual as UIElement;
             if (element == null)
                 return Rect.Empty;
 
@@ -525,7 +525,7 @@ namespace KkjQuicker.UI.Controls
                 for (int itemIndex = firstIndex; itemIndex <= lastIndex; itemIndex++, childIndex++)
                 {
                     bool isNewlyRealized;
-                    UIElement child = generator.GenerateNext(out isNewlyRealized) as UIElement;
+                    UIElement? child = generator.GenerateNext(out isNewlyRealized) as UIElement;
 
                     if (child == null)
                         continue;
@@ -602,7 +602,7 @@ namespace KkjQuicker.UI.Controls
         {
             EnsureItemsControl();
 
-            ItemContainerGenerator generator = _itemsControl != null
+            ItemContainerGenerator? generator = _itemsControl != null
                 ? _itemsControl.ItemContainerGenerator
                 : null;
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -43,7 +43,7 @@ namespace KkjQuicker.UI
         /// <summary>
         /// 当属性值发生更改时发生。
         /// </summary>
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         /// <summary>
         /// 暂停属性更改通知，适用于批量更新多个属性的场景。
@@ -143,7 +143,7 @@ namespace KkjQuicker.UI
             RaisePropertyChanged(string.Empty);
         }
 
-        private void RaisePropertyChanged(string propertyName)
+        private void RaisePropertyChanged(string? propertyName)
         {
             var handler = PropertyChanged;
             if (handler == null)
@@ -166,7 +166,7 @@ namespace KkjQuicker.UI
 
         private sealed class NotificationScope : IDisposable
         {
-            private Action _onDispose;
+            private Action? _onDispose;
 
             public NotificationScope(Action onDispose)
             {

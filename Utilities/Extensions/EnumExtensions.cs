@@ -26,7 +26,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// 当枚举值未能对应到具体成员时，也会回退为 <see cref="Enum.ToString()"/> 结果。
         /// 该方法适用于 WPF 下拉框显示、状态文本展示、配置项名称显示等场景。
         /// </remarks>
-        public static string GetEnumDisplayName(this Enum value)
+        public static string? GetEnumDisplayName(this Enum value)
         {
             if (value == null)
                 return string.Empty;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -308,7 +308,7 @@ namespace KkjQuicker.Utilities.Imaging
         #region 主流程
 
         // Fix #4: 透传 relativeTo,使 MeasureLayout 能取到正确屏幕的 work area
-        private static Bitmap RenderGdiBitmap(string text, TextStickerOptions options, Visual relativeTo)
+        private static Bitmap RenderGdiBitmap(string text, TextStickerOptions options, Visual? relativeTo)
         {
             string normalized = NormalizeText(text);
             double resolvedDpi = ResolveDpi(relativeTo, options);
@@ -354,7 +354,7 @@ namespace KkjQuicker.Utilities.Imaging
         // Fix #2: 最后一行底部只计字符本身高度,不叠加 (lineHeightScale-1) 的行后间距
         // Fix #4: 降级路径取 work area 时传入 relativeTo,使 work area 与 resolvedDpi 取自同一屏
         private static LayoutResult MeasureLayout(
-            string text, Graphics g, Font font, TextStickerOptions options, float pxScale, Visual relativeTo)
+            string text, Graphics g, Font font, TextStickerOptions options, float pxScale, Visual? relativeTo)
         {
             LayoutResult result = new LayoutResult();
             List<float> lineWidths = new List<float>();
@@ -595,7 +595,7 @@ namespace KkjQuicker.Utilities.Imaging
                 format.HotkeyPrefix = HotkeyPrefix.None;
                 format.SetMeasurableCharacterRanges(new[] { new CharacterRange(0, 1) });
 
-                Region[] regions = null;
+                Region[]? regions = null;
                 try
                 {
                     regions = g.MeasureCharacterRanges(text, font, new RectangleF(0f, 0f, 2048f, 2048f), format);
@@ -679,7 +679,7 @@ namespace KkjQuicker.Utilities.Imaging
 
         // relativeTo 非 null 时通过 DpiHelper.GetDpi 获取完整回退链(PresentationSource → HWND → SystemDpi);
         // 为 null 时优先取 options.Dpi,该值无效时再回退到真实系统 DPI
-        private static double ResolveDpi(Visual relativeTo, TextStickerOptions options)
+        private static double ResolveDpi(Visual? relativeTo, TextStickerOptions options)
         {
             if (relativeTo != null)
             {
@@ -698,7 +698,7 @@ namespace KkjQuicker.Utilities.Imaging
 
         private static Color ToDrawingColor(System.Windows.Media.Brush brush, Color fallback)
         {
-            SolidColorBrush solid = brush as SolidColorBrush;
+            SolidColorBrush? solid = brush as SolidColorBrush;
             if (solid == null) return fallback;
             System.Windows.Media.Color c = solid.Color;
             return Color.FromArgb(c.A, c.R, c.G, c.B);

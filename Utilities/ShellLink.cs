@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -19,8 +19,8 @@ namespace KkjQuicker.Utilities
         private const int InfoTipSize = 1024;
         private const uint SLGP_UNCPRIORITY = 0x0002;
 
-        private object _comObject;
-        private IShellLinkW _shellLink;
+        private object? _comObject;
+        private IShellLinkW? _shellLink;
         private bool _isDisposed;
 
         /// <summary>
@@ -233,7 +233,7 @@ namespace KkjQuicker.Utilities
             if (!string.Equals(Path.GetExtension(linkFile), ".lnk", StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException("快捷方式文件扩展名必须是 .lnk。", "linkFile");
 
-            string directory = Path.GetDirectoryName(linkFile);
+            string? directory = Path.GetDirectoryName(linkFile);
             if (!string.IsNullOrWhiteSpace(directory))
                 Directory.CreateDirectory(directory);
 
@@ -294,7 +294,7 @@ namespace KkjQuicker.Utilities
             }
         }
 
-        private IShellLinkW ShellLinkInterface
+        private IShellLinkW? ShellLinkInterface
         {
             get
             {
@@ -309,7 +309,7 @@ namespace KkjQuicker.Utilities
             {
                 ThrowIfDisposed();
 
-                ComTypes.IPersistFile persistFile = _comObject as ComTypes.IPersistFile;
+                ComTypes.IPersistFile? persistFile = _comObject as ComTypes.IPersistFile;
                 if (persistFile == null)
                     throw new COMException("无法获取 IPersistFile 接口。");
 

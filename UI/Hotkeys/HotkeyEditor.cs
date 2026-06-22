@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -210,7 +210,7 @@ namespace KkjQuicker.UI.Hotkeys
 
         public string GetKeyData()
         {
-            HotkeyGesture hotkey = Hotkey;
+            HotkeyGesture? hotkey = Hotkey;
             if (hotkey == null || hotkey.IsEmpty)
                 return string.Empty;
 
@@ -222,12 +222,12 @@ namespace KkjQuicker.UI.Hotkeys
             Hotkey = HotkeyGesture.ParseOrNone(data);
         }
 
-        void SetHotkey(HotkeyGesture hotkey)
+        void SetHotkey(HotkeyGesture? hotkey)
         {
             if (hotkey == null)
                 hotkey = HotkeyGesture.None;
 
-            Hotkey = hotkey;
+            Hotkey = hotkey!;
         }
 
         static void OnHotkeyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -265,7 +265,7 @@ namespace KkjQuicker.UI.Hotkeys
             {
                 _updatingText = true;
 
-                HotkeyGesture hotkey = Hotkey;
+                HotkeyGesture? hotkey = Hotkey;
                 if (hotkey == null || hotkey.IsEmpty)
                 {
                     Text = EmptyText ?? string.Empty;
@@ -335,11 +335,11 @@ namespace KkjQuicker.UI.Hotkeys
 
     public sealed class HotkeyChangedEventArgs : EventArgs
     {
-        public HotkeyGesture OldHotkey { get; private set; }
+        public HotkeyGesture? OldHotkey { get; private set; }
 
-        public HotkeyGesture NewHotkey { get; private set; }
+        public HotkeyGesture? NewHotkey { get; private set; }
 
-        public HotkeyChangedEventArgs(HotkeyGesture oldHotkey, HotkeyGesture newHotkey)
+        public HotkeyChangedEventArgs(HotkeyGesture? oldHotkey, HotkeyGesture? newHotkey)
         {
             OldHotkey = oldHotkey;
             NewHotkey = newHotkey;

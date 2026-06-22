@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Utilities.Win32;
+using KkjQuicker.Utilities.Win32;
 using System;
 using System.Windows;
 using System.Windows.Interop;
@@ -383,7 +383,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 会退回到 <see cref="SystemDpi"/> 进行近似换算。
         /// </param>
         /// <returns>转换后的 DIP 坐标。</returns>
-        public static Point PxToDipOnScreen(Point px, Visual relativeTo)
+        public static Point PxToDipOnScreen(Point px, Visual? relativeTo)
         {
             if (relativeTo == null)
             {
@@ -443,7 +443,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 本方法按矩形左上角与右下角两个点分别进行转换，再重建结果矩形。
         /// 该策略更符合屏幕坐标空间与设备变换的实际语义。
         /// </remarks>
-        public static Rect PxToDipOnScreen(Rect px, Visual relativeTo)
+        public static Rect PxToDipOnScreen(Rect px, Visual? relativeTo)
         {
             Point topLeft = PxToDipOnScreen(new Point(px.Left, px.Top), relativeTo);
             Point bottomRight = PxToDipOnScreen(new Point(px.Right, px.Bottom), relativeTo);
@@ -739,7 +739,7 @@ namespace KkjQuicker.Utilities.Imaging
         {
             try
             {
-                HwndSource source = PresentationSource.FromVisual(visual) as HwndSource;
+                HwndSource? source = PresentationSource.FromVisual(visual) as HwndSource;
                 if (source != null && source.Handle != IntPtr.Zero)
                     return source.Handle;
 
@@ -761,13 +761,13 @@ namespace KkjQuicker.Utilities.Imaging
             return IntPtr.Zero;
         }
 
-        private static Rect GetScreenRectDip(Visual relativeTo, bool workArea)
+        private static Rect GetScreenRectDip(Visual? relativeTo, bool workArea)
         {
             Rect pxRect = GetScreenRectPx(relativeTo, workArea);
             return PxToDipOnScreen(pxRect, relativeTo);
         }
 
-        private static Rect GetScreenRectPx(Visual relativeTo, bool workArea)
+        private static Rect GetScreenRectPx(Visual? relativeTo, bool workArea)
         {
             if (relativeTo != null)
             {

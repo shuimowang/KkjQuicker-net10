@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Utilities.Win32;
+using KkjQuicker.Utilities.Win32;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -562,7 +562,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// </para>
         /// </remarks>
         /// <returns>剪贴板中的图像；剪贴板不含图像时返回 <see langword="null"/>。</returns>
-        public static BitmapSource GetFromClipboard()
+        public static BitmapSource? GetFromClipboard()
         {
             if (!System.Windows.Clipboard.ContainsImage())
                 return null;
@@ -779,7 +779,7 @@ namespace KkjQuicker.Utilities.Imaging
             return jpegQuality;
         }
 
-        private static ImageCodecInfo GetEncoder(ImageFormat format)
+        private static ImageCodecInfo? GetEncoder(ImageFormat format)
         {
             if (format == null)
                 return null;
@@ -796,7 +796,7 @@ namespace KkjQuicker.Utilities.Imaging
 
         private static void EnsureParentDirectory(string path)
         {
-            string directory = Path.GetDirectoryName(path);
+            string? directory = Path.GetDirectoryName(path);
             if (string.IsNullOrWhiteSpace(directory))
                 return;
 

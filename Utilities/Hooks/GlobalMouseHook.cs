@@ -75,12 +75,12 @@ namespace KkjQuicker.Utilities.Hooks
                 MouseMessage message = (MouseMessage)(int)wParam;
 
                 // 轻量事件：先触发，无分配
-                Action<MouseRawInfo> rawHandler = MouseRawEvent;
+                Action<MouseRawInfo>? rawHandler = MouseRawEvent;
                 if (rawHandler != null)
                     rawHandler(new MouseRawInfo(message, data.pt.x, data.pt.y));
 
                 // 完整事件：支持拦截
-                EventHandler<MouseHookEventArgs> handler = MouseEvent;
+                EventHandler<MouseHookEventArgs>? handler = MouseEvent;
                 if (handler != null)
                 {
                     MouseHookEventArgs args = new MouseHookEventArgs(

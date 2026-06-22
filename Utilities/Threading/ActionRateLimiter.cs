@@ -95,7 +95,7 @@ namespace KkjQuicker.Utilities.Threading
     public sealed class ActionRateLimiter : IDisposable
     {
         private readonly object _syncRoot = new object();
-        private readonly Dispatcher _dispatcher;
+        private readonly Dispatcher? _dispatcher;
         private readonly DispatcherPriority _priority;
 
         private readonly DispatcherTimer _debounceTimer;
@@ -253,11 +253,11 @@ namespace KkjQuicker.Utilities.Threading
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
-            if (_dispatcher.CheckAccess())
+            if (_dispatcher?.CheckAccess() == true)
                 return ThrottleInternal(action);
 
             bool result = false;
-            _dispatcher.Invoke(_priority, new Action(() =>
+            _dispatcher?.Invoke(_priority, new Action(() =>
             {
                 result = ThrottleInternal(action);
             }));
@@ -629,16 +629,16 @@ namespace KkjQuicker.Utilities.Threading
 
             try
             {
-                if (_dispatcher.CheckAccess())
+                if (_dispatcher?.CheckAccess() == true)
                 {
                     action();
                     return;
                 }
 
                 if (invoke)
-                    _dispatcher.Invoke(_priority, action);
+                    _dispatcher?.Invoke(_priority, action);
                 else
-                    _dispatcher.BeginInvoke(_priority, action);
+                    _dispatcher?.BeginInvoke(_priority, action);
             }
             catch (TaskCanceledException)
             {

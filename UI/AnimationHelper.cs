@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -339,7 +339,7 @@ namespace KkjQuicker.UI
 
             Storyboard storyboard = CreateStoryboard(animation);
 
-            EventHandler handler = null;
+            EventHandler? handler = null;
             handler = (s, e) =>
             {
                 storyboard.Completed -= handler;
@@ -367,14 +367,14 @@ namespace KkjQuicker.UI
             if (element == null) throw new ArgumentNullException(nameof(element));
 
             // 提前捕获父容器，避免动画期间父容器变化导致移除失败或异常。
-            Panel parent = (element as FrameworkElement)?.Parent as Panel;
+            Panel? parent = (element as FrameworkElement)?.Parent as Panel;
 
             DoubleAnimation animation = CreateOpacityAnimation(element, durationInMilliseconds, null, 0d);
             animation.FillBehavior = FillBehavior.Stop;
 
             Storyboard storyboard = CreateStoryboard(animation);
 
-            EventHandler handler = null;
+            EventHandler? handler = null;
             handler = (s, e) =>
             {
                 storyboard.Completed -= handler;

@@ -38,7 +38,7 @@ namespace KkjQuicker.Utilities.Extensions
             if (string.IsNullOrEmpty(key))
                 return null;
 
-            object value;
+            object? value;
             if (!dict.TryGetValue(key, out value))
                 return null;
 
@@ -62,7 +62,7 @@ namespace KkjQuicker.Utilities.Extensions
             if (string.IsNullOrEmpty(key))
                 return false;
 
-            object value;
+            object? value;
             return dict.TryGetValue(key, out value) && value != null && value != DBNull.Value;
         }
 
@@ -131,7 +131,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <remarks>
         /// 本方法不会将空字符串视为失败；若原始值为非空对象，则返回其 <see cref="object.ToString"/> 结果。
         /// </remarks>
-        public static string GetString(this IDictionary<string, object> dict, string key, string? defaultValue = null)
+        public static string? GetString(this IDictionary<string, object> dict, string key, string? defaultValue = null)
         {
             return ToStringOrDefault(dict.GetValueOrNull(key), defaultValue);
         }

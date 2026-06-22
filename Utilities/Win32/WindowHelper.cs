@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -21,7 +21,7 @@ namespace KkjQuicker.Utilities.Win32
         /// </summary>
         /// <typeparam name="T">窗口类型。</typeparam>
         /// <returns>找到则返回对应窗口；未找到则返回 <see langword="null"/>。</returns>
-        public static T FindRootWindow<T>() where T : Window
+        public static T? FindRootWindow<T>() where T : Window
         {
             return Application.Current == null
                 ? null
@@ -60,7 +60,7 @@ namespace KkjQuicker.Utilities.Win32
         /// 若该句柄对应当前进程且属于当前 <see cref="Application"/> 的窗口实例，则返回对应窗口；
         /// 否则返回 <see langword="null"/>。
         /// </returns>
-        public static Window GetWindowFromHandle(IntPtr hwnd)
+        public static Window? GetWindowFromHandle(IntPtr hwnd)
         {
             if (hwnd == IntPtr.Zero || Application.Current == null)
                 return null;

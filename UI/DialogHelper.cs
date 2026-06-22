@@ -1,4 +1,4 @@
-﻿using Microsoft.Win32;
+using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Windows;
@@ -193,7 +193,7 @@ namespace KkjQuicker.UI
             }
         }
 
-        private static bool? ShowCommonDialog(FileDialog dialog, bool topmost, Window parentWindow)
+        private static bool? ShowCommonDialog(FileDialog dialog, bool topmost, Window? parentWindow)
         {
             if (parentWindow != null)
             {

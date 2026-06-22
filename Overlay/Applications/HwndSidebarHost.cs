@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Utilities.Imaging;
+using KkjQuicker.Utilities.Imaging;
 using KkjQuicker.Utilities.Win32;
 using System;
 using System.Threading;
@@ -78,7 +78,7 @@ namespace KkjQuicker.Overlay.Applications
 
         // Hook 句柄数组；WinEventDelegate 必须作为字段保持存活，防止被 GC 回收
         private readonly IntPtr[] _hooks = new IntPtr[SlotCount];
-        private NativeMethods.WinEventDelegate _winEventProc;
+        private NativeMethods.WinEventDelegate? _winEventProc;
 
         // 生命周期状态。
         // _disposed 需跨线程可见（WinEvent 回调在线程池线程读取），故标记 volatile。
