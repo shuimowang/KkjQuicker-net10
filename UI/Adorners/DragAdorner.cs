@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Documents;
@@ -20,9 +20,9 @@ namespace KkjQuicker.UI.Adorners
     {
         private readonly VisualBrush _brush;
 
-        private UIElement _dragVisual;              // 当前预览视觉（用于尺寸/事件订阅）
-        private FrameworkElement _dragFE;           // 用于 SizeChanged（可选）
-        private SizeChangedEventHandler _sizeHandler;
+        private UIElement _dragVisual = null!;              // 当前预览视觉（用于尺寸/事件订阅）
+        private FrameworkElement _dragFE = null!;           // 用于 SizeChanged（可选）
+        private SizeChangedEventHandler _sizeHandler = null!;
 
         private Point _dragOffset;                  // 鼠标在拖拽元素内的相对点
         private Point _mousePos;                    // 鼠标相对 AdornedElement 的位置
@@ -34,7 +34,7 @@ namespace KkjQuicker.UI.Adorners
         private Typeface _typeface = new Typeface("Segoe UI");
         private double _fontSize = 12;
         private Brush _textBrush = Brushes.Black;
-        private FormattedText _formattedText;
+        private FormattedText _formattedText = null!;
         private double _lastPixelsPerDip = -1;
 
         /// <summary>文本相对鼠标的偏移。</summary>

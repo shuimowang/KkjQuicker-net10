@@ -30,19 +30,19 @@ namespace KkjQuicker.Overlay.Layers
     public sealed class EditorOptions
     {
         /// <summary>保存行为（可选）。返回 true 表示已由宿主处理保存。</summary>
-        public Func<EditorView, BitmapSource, bool> SaveHandler { get; set; }
+        public Func<EditorView, BitmapSource, bool>? SaveHandler { get; set; }
 
         /// <summary>错误回调。</summary>
-        public Action<Exception> OnError { get; set; }
+        public Action<Exception>? OnError { get; set; }
 
         /// <summary>中键行为（可选）。</summary>
-        public Func<EditorView, bool> MiddleClickHandler { get; set; }
+        public Func<EditorView, bool>? MiddleClickHandler { get; set; }
 
         /// <summary>额外工具栏按钮（可选）。</summary>
         public List<ToolbarButton> ExtraToolbarButtons { get; set; } = new List<ToolbarButton>();
 
         /// <summary>右键菜单构造器（可选）。</summary>
-        public Func<EditorView, ContextMenu> CreateContextMenu { get; set; }
+        public Func<EditorView, ContextMenu>? CreateContextMenu { get; set; }
 
         /// <summary>默认颜色预设。</summary>
         public Color[] ColorPresets { get; set; } = new[] { Colors.Red, Colors.Yellow, Colors.Lime, Colors.Aqua, Colors.White };
@@ -63,11 +63,11 @@ namespace KkjQuicker.Overlay.Layers
     public sealed class ToolbarButton
     {
         /// <summary>按钮图标或显示内容。</summary>
-        public object Icon { get; set; }
+        public object? Icon { get; set; }
         /// <summary>按钮提示文本。</summary>
-        public string ToolTip { get; set; }
+        public string? ToolTip { get; set; }
         /// <summary>点击按钮或触发对应快捷键时执行的动作。</summary>
-        public Action<EditorView> OnClick { get; set; }
+        public Action<EditorView>? OnClick { get; set; }
         /// <summary>快捷键主键。</summary>
         public Key ShortcutKey { get; set; } = Key.None;
         /// <summary>快捷键修饰键。</summary>
@@ -84,12 +84,12 @@ namespace KkjQuicker.Overlay.Layers
     /// </summary>
     public sealed class ScreenshotEditorLayer : OverlayInputLayerBase
     {
-        private readonly EditorView _view;
-        private OverlayContext _context;
+        private readonly EditorView _view = null!;
+        private OverlayContext _context = null!;
 
-        private readonly Action<BitmapSource, Int32Rect> _onAccepted;
-        private readonly Action _onCanceled;
-        private readonly EditorOptions _options;
+        private readonly Action<BitmapSource, Int32Rect>? _onAccepted = null!;
+        private readonly Action? _onCanceled = null!;
+        private readonly EditorOptions _options = null!;
 
         private readonly TaskCompletionSource<BitmapSource> _tcs =
             new TaskCompletionSource<BitmapSource>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -273,10 +273,10 @@ namespace KkjQuicker.Overlay.Layers
         private enum ThumbHit { N, NE, E, SE, S, SW, W, NW }
         private enum InteractionMode { None, MovingSelection, ResizingSelection, Drawing }
 
-        private readonly EditorOptions _opt;
+        private readonly EditorOptions _opt = null!;
         private readonly HistoryManager _history = new HistoryManager();
 
-        private BitmapSource _fullImage;
+        private BitmapSource _fullImage = null!;
         private readonly Int32Rect _canvasPixelBounds;
         private int _imgPxW, _imgPxH;
         private double _imgDipW, _imgDipH;
@@ -286,7 +286,7 @@ namespace KkjQuicker.Overlay.Layers
         private bool _infoBadgeVisible = true;
         private bool _maskVisible = true;
 
-        private Image _backgroundImage;
+        private Image _backgroundImage = null!;
         private Rect _selection;
         private EditTool _currentTool = EditTool.None;
         private int _sequenceNumber = 1;
@@ -294,46 +294,46 @@ namespace KkjQuicker.Overlay.Layers
         private Color _currentColor;
         private double _currentThickness;
 
-        private TextBlock _toolNameText;
-        private TextBlock _thicknessValueText;
-        private Slider _thicknessSlider;
-        private StackPanel _effectPanel;
-        private TextBlock _effectLabel;
-        private Slider _effectSlider;
-        private TextBlock _effectValueText;
+        private TextBlock _toolNameText = null!;
+        private TextBlock _thicknessValueText = null!;
+        private Slider _thicknessSlider = null!;
+        private StackPanel _effectPanel = null!;
+        private TextBlock _effectLabel = null!;
+        private Slider _effectSlider = null!;
+        private TextBlock _effectValueText = null!;
 
         private bool IsDrawingMode => _currentTool != EditTool.None;
 
-        private Border _selectionBorder;
-        private Grid _clipHost;
-        private RectangleGeometry _clipRect;
-        private Canvas _inkLayer;
-        private Image _mosaicImage;
-        private Canvas _mosaicMask;
-        private BitmapSource _mosaicBitmap;
+        private Border _selectionBorder = null!;
+        private Grid _clipHost = null!;
+        private RectangleGeometry _clipRect = null!;
+        private Canvas _inkLayer = null!;
+        private Image _mosaicImage = null!;
+        private Canvas _mosaicMask = null!;
+        private BitmapSource _mosaicBitmap = null!;
 
-        private Border _toolBarBorder;
-        private StackPanel _mainToolbar;
-        private StackPanel _settingsBar;
-        private Border _currentColorSwatch;
+        private Border _toolBarBorder = null!;
+        private StackPanel _mainToolbar = null!;
+        private StackPanel _settingsBar = null!;
+        private Border _currentColorSwatch = null!;
 
-        private Border _infoBorder;
-        private TextBlock _infoText;
+        private Border _infoBorder = null!;
+        private TextBlock _infoText = null!;
 
         private InteractionMode _interactionMode;
         private Point _startPoint;
         private Rect _moveStartRect;
         private Rect _resizeStartRect;
 
-        private Shape _tempShape;
-        private Polyline _tempPolyline;
+        private Shape _tempShape = null!;
+        private Polyline _tempPolyline = null!;
 
         private readonly List<TextBox> _liveTextInputs = new List<TextBox>();
         private readonly Dictionary<Thumb, ThumbHit> _thumbMap = new Dictionary<Thumb, ThumbHit>();
 
         private int _mosaicPixelSize;
         private bool _effectSliderDragging;
-        private ActionRateLimiter _mosaicRebuildLimiter;
+        private ActionRateLimiter _mosaicRebuildLimiter = null!;
         private bool _effectThumbHooked;
         private int _lastMosaicPixelSize = -1;
         private Int32Rect _selectionPixelRect;
@@ -355,16 +355,16 @@ namespace KkjQuicker.Overlay.Layers
 
         // GhostWindow:实时透传模式下使用。独立 Topmost 窗口,跨进程穿透。
         // 语义上整窗即"遮罩":SetMaskVisible 直接切换整窗可见性。
-        private Window _ghostWindow;
-        private RectangleGeometry _maskOuter;
-        private RectangleGeometry _maskHole;
-        private Path _maskPath;
+        private Window _ghostWindow = null!;
+        private RectangleGeometry _maskOuter = null!;
+        private RectangleGeometry _maskHole = null!;
+        private Path _maskPath = null!;
 
         // InlineMask:静态截图模式下使用。作为 EditorView 的子元素参与 Z 轴,
         // 天然位于工具栏/选框/手柄/信息标签之下,无需挖洞。
-        private Path _inlineMaskPath;
-        private RectangleGeometry _inlineMaskOuter;
-        private RectangleGeometry _inlineMaskHole;
+        private Path _inlineMaskPath = null!;
+        private RectangleGeometry _inlineMaskOuter = null!;
+        private RectangleGeometry _inlineMaskHole = null!;
 
         /// <summary>
         /// 按当前模式(是否有背景图)确保遮罩载体正确。

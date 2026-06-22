@@ -193,9 +193,9 @@ namespace KkjQuicker.Overlay.Engine
     /// </summary>
     public sealed class OverlayContext
     {
-        private readonly WeakReference<OverlayEngine> _engineRef;
-        private readonly Dispatcher _dispatcher;
-        private readonly IOverlayLayer _ownerLayer;
+        private readonly WeakReference<OverlayEngine> _engineRef = null!;
+        private readonly Dispatcher _dispatcher = null!;
+        private readonly IOverlayLayer _ownerLayer = null!;
 
         internal OverlayContext(
             OverlayEngine engine,
@@ -216,7 +216,7 @@ namespace KkjQuicker.Overlay.Engine
         /// 获取承载当前图层的 Overlay 窗口。
         /// <para>引擎销毁后该窗口会被关闭，调用者不应依赖其持续存活。</para>
         /// </summary>
-        public Window Window { get; }
+        public Window Window { get; } = null!;
 
         /// <summary>
         /// 获取当前 Overlay 配置。
@@ -224,7 +224,7 @@ namespace KkjQuicker.Overlay.Engine
         /// <para>调用方不应假设运行期直接修改该对象的属性会自动触发生效；
         /// 如需使修改生效，应由外部重新驱动同步或重建引擎。</para>
         /// </summary>
-        public OverlayOptions Options { get; }
+        public OverlayOptions Options { get; } = null!;
 
         /// <summary>
         /// 获取 Owner 在 Overlay 内部的可交互区域（DIP，相对于 Overlay 左上角）。
@@ -361,7 +361,7 @@ namespace KkjQuicker.Overlay.Engine
         /// 获取或设置 Overlay 背景画刷。
         /// <para>未设置时默认使用透明背景。</para>
         /// </summary>
-        public Brush Background { get; set; }
+        public Brush? Background { get; set; }
 
         /// <summary>
         /// 获取或设置当没有任何图层时，是否自动隐藏 Overlay 窗口。
@@ -440,12 +440,12 @@ namespace KkjQuicker.Overlay.Engine
     /// </summary>
     public sealed class OverlayEngine : IDisposable
     {
-        private readonly Dispatcher _dispatcher;
-        private readonly OverlayOptions _options;
-        private readonly WeakReference<Window> _ownerRef;
-        private readonly OverlayWindowHost _host;
-        private readonly OverlayLayerCollection _layers;
-        private readonly OverlayInputRouter _inputRouter;
+        private readonly Dispatcher _dispatcher = null!;
+        private readonly OverlayOptions _options = null!;
+        private readonly WeakReference<Window>? _ownerRef = null!;
+        private readonly OverlayWindowHost _host = null!;
+        private readonly OverlayLayerCollection _layers = null!;
+        private readonly OverlayInputRouter _inputRouter = null!;
 
         private bool _disposed;
         private bool _syncScheduled;
@@ -921,7 +921,7 @@ namespace KkjQuicker.Overlay.Engine
 
     internal sealed class OverlayWindowHost : IDisposable
     {
-        private readonly HostWindow _window;
+        private readonly HostWindow _window = null!;
         private bool _disposed;
         private bool _mousePassthrough = true;
 
@@ -941,12 +941,12 @@ namespace KkjQuicker.Overlay.Engine
             get { return _window.Root; }
         }
 
-        public event KeyEventHandler PreviewKeyDown;
-        public event KeyEventHandler PreviewKeyUp;
-        public event MouseButtonEventHandler PreviewMouseDown;
-        public event MouseButtonEventHandler PreviewMouseUp;
-        public event MouseEventHandler PreviewMouseMove;
-        public event MouseWheelEventHandler PreviewMouseWheel;
+        public event KeyEventHandler? PreviewKeyDown;
+        public event KeyEventHandler? PreviewKeyUp;
+        public event MouseButtonEventHandler? PreviewMouseDown;
+        public event MouseButtonEventHandler? PreviewMouseUp;
+        public event MouseEventHandler? PreviewMouseMove;
+        public event MouseWheelEventHandler? PreviewMouseWheel;
         public event EventHandler? BecameVisible;
 
         public void SetBounds(Rect bounds)
@@ -1434,7 +1434,7 @@ namespace KkjQuicker.Overlay.Engine
     internal sealed class OverlayInputRouter
     {
         private readonly OverlayLayerCollection _layers;
-        private IOverlayInputLayer _captured;
+        private IOverlayInputLayer? _captured;
 
         public OverlayInputRouter(OverlayLayerCollection layers)
         {

@@ -58,12 +58,12 @@ namespace KkjQuicker.UI.Converters
         /// <summary>
         /// 获取或设置相等时输出的值。
         /// </summary>
-        public T TrueValue { get; set; }
+        public T TrueValue { get; set; } = default!;
 
         /// <summary>
         /// 获取或设置不相等时输出的值。
         /// </summary>
-        public T FalseValue { get; set; }
+        public T FalseValue { get; set; } = default!;
 
         /// <summary>
         /// 获取或设置是否在 <see cref="Convert"/> 中反转比较结果。

@@ -579,7 +579,7 @@ namespace KkjQuicker.Overlay.Docking
         /// 若过滤器执行过程中抛出异常，则按拒绝加入管理处理。
         /// </para>
         /// </summary>
-        public Predicate<IntPtr> CustomWindowFilter { get; set; }
+        public Predicate<IntPtr>? CustomWindowFilter { get; set; }
 
         internal void Normalize()
         {
@@ -670,7 +670,7 @@ namespace KkjQuicker.Overlay.Docking
         /// <summary>
         /// 获取或设置说明信息。
         /// </summary>
-        public string Message { get; internal set; }
+        public string? Message { get; internal set; }
 
         /// <summary>
         /// 获取一个值，表示该窗口当前是否允许加入贴边管理。
@@ -832,13 +832,13 @@ namespace KkjQuicker.Overlay.Docking
         private readonly List<IntPtr> _animRemove = new List<IntPtr>(8);
         private readonly SemaphoreSlim _checkSemaphore = new SemaphoreSlim(1, 1);
 
-        private WindowDockOptions _opt;
-        private Action<WindowDockSnapshot[]> _snapshotCallback;
+        private WindowDockOptions _opt = null!;
+        private Action<WindowDockSnapshot[]> _snapshotCallback = null!;
 
-        private GlobalMouseHook _mouseHook;
-        private Timer _throttleTimer;
-        private Timer _animTimer;
-        private Timer _pollTimer;
+        private GlobalMouseHook _mouseHook = null!;
+        private Timer _throttleTimer = null!;
+        private Timer _animTimer = null!;
+        private Timer _pollTimer = null!;
 
         private volatile bool _running;
         private volatile bool _mouseDown;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -338,13 +338,13 @@ namespace KkjQuicker.UI.Commands
     /// </remarks>
     public class AsyncDelegateCommand<T> : CommandBase, IAsyncCommand<T>
     {
-        private readonly Func<T, Task> _execute;
-        private readonly Func<T, CancellationToken, Task> _executeWithToken;
-        private readonly Func<T, bool> _canExecute;
+        private readonly Func<T, Task> _execute = null!;
+        private readonly Func<T, CancellationToken, Task> _executeWithToken = null!;
+        private readonly Func<T, bool> _canExecute = null!;
 
         private int _isExecuting;
         private long _executionId;
-        private CancellationTokenSource _cts;
+        private CancellationTokenSource _cts = null!;
 
         /// <summary>
         /// 获取命令当前是否正在执行。

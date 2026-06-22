@@ -14,13 +14,13 @@ namespace KkjQuicker.Utilities.Win32
 
         public int Pid { get; internal set; }
 
-        public string ProcessName { get; internal set; }
+        public string ProcessName { get; internal set; } = null!;
 
-        public string ExeName { get; internal set; }
+        public string ExeName { get; internal set; } = null!;
 
-        public string ExePath { get; internal set; }
+        public string ExePath { get; internal set; } = null!;
 
-        public string Title { get; internal set; }
+        public string Title { get; internal set; } = null!;
 
         public string ClassName
         {
@@ -75,17 +75,17 @@ namespace KkjQuicker.Utilities.Win32
         private volatile bool _isDisposed;
         private volatile bool _isRunning;
         private int _version;
-        private SynchronizationContext _synchronizationContext;
+        private SynchronizationContext _synchronizationContext = null!;
 
-        private volatile ForegroundWindowInfo _currentWindow;
-        private volatile ForegroundWindowInfo _previousWindow;
-        private volatile ForegroundWindowInfo _lastExternalWindow;
+        private volatile ForegroundWindowInfo _currentWindow = null!;
+        private volatile ForegroundWindowInfo _previousWindow = null!;
+        private volatile ForegroundWindowInfo _lastExternalWindow = null!;
 
         // volatile backing field，确保后台任务读取到最新值
         private volatile bool _marshalEventToContext;
 
         // volatile backing field，确保后台任务读取到最新值
-        private volatile Func<ForegroundWindowInfo, bool> _ignorePredicate;
+        private volatile Func<ForegroundWindowInfo, bool> _ignorePredicate = null!;
 
         public ForegroundWindowInfo CurrentWindow
         {

@@ -33,12 +33,12 @@ namespace KkjQuicker.UI.Converters
         /// <summary>
         /// 获取或设置布尔值为 <see langword="true"/> 时返回的值。
         /// </summary>
-        public T TrueValue { get; set; }
+        public T TrueValue { get; set; } = default!;
 
         /// <summary>
         /// 获取或设置布尔值为 <see langword="false"/> 时返回的值。
         /// </summary>
-        public T FalseValue { get; set; }
+        public T FalseValue { get; set; } = default!;
 
         /// <summary>
         /// 获取或设置是否在 <see cref="Convert"/> 时反转布尔逻辑。

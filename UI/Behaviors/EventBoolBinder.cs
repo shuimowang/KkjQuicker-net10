@@ -177,7 +177,7 @@ namespace KkjQuicker.UI.Behaviors
         private class SharedTimerState
         {
             private readonly DispatcherTimer _timer;
-            private Action _pendingAction;
+            private Action? _pendingAction;
 
             public SharedTimerState(Dispatcher dispatcher)
             {

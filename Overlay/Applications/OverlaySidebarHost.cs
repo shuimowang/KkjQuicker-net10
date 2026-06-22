@@ -104,7 +104,7 @@ namespace KkjQuicker.Overlay.Applications
         /// 为 <see langword="null"/> 时使用默认背景。
         /// </para>
         /// </summary>
-        public Brush Background { get; set; }
+        public Brush? Background { get; set; }
 
         /// <summary>
         /// 获取或设置侧边栏边框画刷。
@@ -112,7 +112,7 @@ namespace KkjQuicker.Overlay.Applications
         /// 为 <see langword="null"/> 时使用默认边框。
         /// </para>
         /// </summary>
-        public Brush BorderBrush { get; set; }
+        public Brush? BorderBrush { get; set; }
 
         /// <summary>
         /// 获取或设置侧边栏边框厚度。
@@ -149,12 +149,12 @@ namespace KkjQuicker.Overlay.Applications
     public sealed class OverlaySidebarHost : IDisposable
     {
         private readonly Window _owner;
-        private readonly SidebarLayer _layer;
+        private readonly SidebarLayer _layer = null!;
         private readonly OverlaySidebarState _state;
 
-        private OverlayEngine _overlay;
-        private IDisposable _layerToken;
-        private UIElement _content;
+        private OverlayEngine _overlay = null!;
+        private IDisposable _layerToken = null!;
+        private UIElement _content = null!;
         private bool _disposed;
 
         private bool _topMost = true;
@@ -734,7 +734,7 @@ namespace KkjQuicker.Overlay.Applications
         {
             private readonly OverlaySidebarHost _host;
             private readonly SidebarView _view;
-            private OverlayContext _context;
+            private OverlayContext? _context;
 
             public SidebarLayer(OverlaySidebarHost host)
             {

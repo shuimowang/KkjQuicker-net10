@@ -35,7 +35,7 @@ namespace KkjQuicker.UI.Controls
             new Dictionary<string, ImageSource>(StringComparer.OrdinalIgnoreCase);
 
         private static readonly object KnownFolderPathLock = new object();
-        private static Dictionary<string, Guid> KnownFolderPathMap;
+        private static Dictionary<string, Guid> KnownFolderPathMap = null!;
 
         private static readonly Guid[] KnownFolderIds =
         {
@@ -47,7 +47,7 @@ namespace KkjQuicker.UI.Controls
             new Guid("18989B1D-99B5-455B-841C-AB7C74E4DDFC")  // Videos
         };
 
-        private CancellationTokenSource _loadCancellation;
+        private CancellationTokenSource _loadCancellation = null!;
         private int _loadVersion;
         private bool _isLoading;
 

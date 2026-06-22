@@ -194,7 +194,7 @@ namespace KkjQuicker.UI.Adorners
     public sealed class RawItem : OverlayItemBase
     {
         private readonly UIElement _element;
-        private readonly Func<OverlayActionContext, bool> _visibleWhen;
+        private readonly Func<OverlayActionContext, bool>? _visibleWhen;
 
         /// <summary>
         /// 初始化一个 <see cref="RawItem"/> 实例。
@@ -390,8 +390,8 @@ namespace KkjQuicker.UI.Adorners
         private readonly Dictionary<FrameworkElement, SizeChangedEventHandler> _sizeChangedHandlers =
             new Dictionary<FrameworkElement, SizeChangedEventHandler>();
 
-        private Border _panelRoot;
-        private StackPanel _stackPanel;
+        private Border _panelRoot = null!;
+        private StackPanel _stackPanel = null!;
         private bool _isAttached;
         private bool _isDetached;
         private bool _isPanelVisible;

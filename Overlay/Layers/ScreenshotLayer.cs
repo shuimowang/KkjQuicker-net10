@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Overlay.Engine;
+using KkjQuicker.Overlay.Engine;
 using KkjQuicker.Utilities.Imaging;
 using KkjQuicker.Utilities.Win32;
 using System;
@@ -31,19 +31,19 @@ namespace KkjQuicker.Overlay.Layers
     /// </remarks>
     public sealed class ScreenshotLayer : OverlayInputLayerBase
     {
-        private readonly ScreenshotCanvas _canvas;
-        private OverlayContext _context;
+        private readonly ScreenshotCanvas _canvas = null!;
+        private OverlayContext _context = null!;
 
-        private BitmapSource _screen;
+        private BitmapSource _screen = null!;
         private Rect _selectionRect;
         private Int32Rect _selectionBitmapPixelRect;
-        private TaskCompletionSource<ScreenshotResult> _tcs;
+        private TaskCompletionSource<ScreenshotResult> _tcs = null!;
 
         private bool _isDragging;
         private bool _captureStarted;
         private Point _startPos;
         private readonly System.Drawing.Rectangle _vsBounds;
-        private Dictionary<IntPtr, RECT> _winRects;
+        private Dictionary<IntPtr, RECT> _winRects = null!;
 
         // 均在 UI 线程上访问，无需 Interlocked。
         private bool _completed;
@@ -64,7 +64,7 @@ namespace KkjQuicker.Overlay.Layers
             /// <summary>
             /// 获取冻结时刻的整张虚拟屏截图。
             /// </summary>
-            public BitmapSource FullScreen { get; private set; }
+            public BitmapSource FullScreen { get; private set; } = null!;
 
             /// <summary>
             /// 获取选区的 DIP 矩形（Canvas 坐标系）。
@@ -79,7 +79,7 @@ namespace KkjQuicker.Overlay.Layers
             /// <summary>
             /// 获取裁剪后的截图位图。
             /// </summary>
-            public BitmapSource Cropped { get; private set; }
+            public BitmapSource Cropped { get; private set; } = null!;
 
             internal ScreenshotResult(BitmapSource full, Rect dipRect, Int32Rect bmpPxRect, BitmapSource cropped)
             {
