@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -122,7 +122,7 @@ namespace KkjQuicker.UI.Converters
             if (IsReversed)
                 isEqual = !isEqual;
 
-            return isEqual ? (object)parsed.TrueVal : parsed.FalseVal;
+            return isEqual ? (object)parsed.TrueVal! : parsed.FalseVal!;
         }
 
         /// <summary>
@@ -295,7 +295,7 @@ namespace KkjQuicker.UI.Converters
                 var converter = TypeDescriptor.GetConverter(targetType);
                 if (converter != null && converter.CanConvertFrom(typeof(string)))
                 {
-                    result = (T)converter.ConvertFromString(null, culture, text);
+                    result = (T)converter.ConvertFromString(null, culture, text)!;
                     return true;
                 }
 
@@ -347,7 +347,7 @@ namespace KkjQuicker.UI.Converters
                 var converter = TypeDescriptor.GetConverter(targetType);
                 if (converter != null && converter.CanConvertFrom(value.GetType()))
                 {
-                    result = (T)converter.ConvertFrom(null, culture, value);
+                    result = (T)converter.ConvertFrom(null, culture, value)!;
                     return true;
                 }
             }

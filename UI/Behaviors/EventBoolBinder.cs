@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
@@ -283,13 +283,13 @@ namespace KkjQuicker.UI.Behaviors
 
         private static void OnElementUnloaded(object? sender, RoutedEventArgs e)
         {
-            var element = (FrameworkElement)sender;
+            var element = (FrameworkElement)sender!;
             ((BehaviorState)element.GetValue(StateProperty))?.Cleanup(element);
         }
 
         private static void OnElementLoaded(object? sender, RoutedEventArgs e)
         {
-            var element = (FrameworkElement)sender;
+            var element = (FrameworkElement)sender!;
             ((BehaviorState)element.GetValue(StateProperty))?.Restore(element);
         }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -353,7 +353,7 @@ namespace KkjQuicker.Utilities.Win32
         {
             task.ContinueWith(delegate (Task faultedTask)
             {
-                AggregateException exception = faultedTask.Exception;
+                AggregateException? exception = faultedTask.Exception;
                 if (exception != null)
                     Trace.TraceError("ForegroundWindowMonitor background task failed: {0}", exception.Flatten());
             },
@@ -370,7 +370,7 @@ namespace KkjQuicker.Utilities.Win32
             if (ShouldIgnore(info))
                 return;
 
-            ForegroundWindowInfo oldWindow;
+            ForegroundWindowInfo? oldWindow;
 
             lock (_syncRoot)
             {
@@ -413,7 +413,7 @@ namespace KkjQuicker.Utilities.Win32
             ForegroundWindowInfo deactivatedWindow,
             int version)
         {
-            EventHandler<ForegroundWindowChangedEventArgs> handler = ForegroundWindowChanged;
+            EventHandler<ForegroundWindowChangedEventArgs>? handler = ForegroundWindowChanged;
             if (handler == null)
                 return;
 
@@ -426,7 +426,7 @@ namespace KkjQuicker.Utilities.Win32
                     if (!IsActiveVersion(version))
                         return;
 
-                    EventHandler<ForegroundWindowChangedEventArgs> h = ForegroundWindowChanged;
+                    EventHandler<ForegroundWindowChangedEventArgs>? h = ForegroundWindowChanged;
                     if (h == null)
                         return;
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
@@ -93,7 +93,7 @@ namespace KkjQuicker.UI.Converters
             if (IsReversed)
                 flag = !flag;
 
-            return flag ? (object)trueValue : falseValue;
+            return flag ? (object)trueValue! : falseValue!;
         }
 
         /// <summary>
@@ -166,7 +166,7 @@ namespace KkjQuicker.UI.Converters
                 var converter = TypeDescriptor.GetConverter(targetType);
                 if (converter != null && converter.CanConvertFrom(typeof(string)))
                 {
-                    result = (T)converter.ConvertFromString(null, culture, text);
+                    result = (T)converter.ConvertFromString(null, culture, text)!;
                     return true;
                 }
 

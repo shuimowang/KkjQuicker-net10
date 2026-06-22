@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Overlay.Engine;
+using KkjQuicker.Overlay.Engine;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -853,7 +853,7 @@ namespace KkjQuicker.Overlay.Applications
 
                 if (content != null)
                 {
-                    FrameworkElement fe = content as FrameworkElement;
+                    FrameworkElement? fe = content as FrameworkElement;
                     if (fe != null && ReferenceEquals(fe.Parent, _contentPresenter))
                     {
                         _contentPresenter.Content = content;
@@ -925,7 +925,7 @@ namespace KkjQuicker.Overlay.Applications
                 if (content == null)
                     return;
 
-                FrameworkElement fe = content as FrameworkElement;
+                FrameworkElement? fe = content as FrameworkElement;
                 if (fe == null)
                     return;
 
@@ -933,14 +933,14 @@ namespace KkjQuicker.Overlay.Applications
                 if (parent == null)
                     return;
 
-                Panel panel = parent as Panel;
+                Panel? panel = parent as Panel;
                 if (panel != null)
                 {
                     panel.Children.Remove(content);
                     return;
                 }
 
-                Decorator decorator = parent as Decorator;
+                Decorator? decorator = parent as Decorator;
                 if (decorator != null)
                 {
                     if (ReferenceEquals(decorator.Child, content))
@@ -949,7 +949,7 @@ namespace KkjQuicker.Overlay.Applications
                     return;
                 }
 
-                ContentControl contentControl = parent as ContentControl;
+                ContentControl? contentControl = parent as ContentControl;
                 if (contentControl != null)
                 {
                     if (ReferenceEquals(contentControl.Content, content))
@@ -958,7 +958,7 @@ namespace KkjQuicker.Overlay.Applications
                     return;
                 }
 
-                ContentPresenter presenter = parent as ContentPresenter;
+                ContentPresenter? presenter = parent as ContentPresenter;
                 if (presenter != null)
                 {
                     if (ReferenceEquals(presenter.Content, content))

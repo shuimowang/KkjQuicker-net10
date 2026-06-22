@@ -529,7 +529,7 @@ namespace KkjQuicker.UI.Controls
             Func<Task<ImageSource>> loadFactory,
             CancellationToken cancellationToken)
         {
-            ImageSource cached;
+            ImageSource? cached;
 
             lock (ImageCacheLock)
             {
@@ -550,7 +550,7 @@ namespace KkjQuicker.UI.Controls
 
             lock (ImageCacheLock)
             {
-                ImageSource existingEntry;
+                ImageSource? existingEntry;
                 if (ImageCache.TryGetValue(cacheKey, out existingEntry))
                     return existingEntry;
 
@@ -620,7 +620,7 @@ namespace KkjQuicker.UI.Controls
             if (text.StartsWith("pack://", StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            Uri uri;
+            Uri? uri;
             if (Uri.TryCreate(text, UriKind.Absolute, out uri) && uri.IsFile)
                 return true;
 

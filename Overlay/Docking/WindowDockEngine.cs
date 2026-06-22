@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Utilities.Hooks;
+using KkjQuicker.Utilities.Hooks;
 using KkjQuicker.Utilities.Win32;
 using System;
 using System.Collections.Generic;
@@ -1076,7 +1076,7 @@ namespace KkjQuicker.Overlay.Docking
         {
             ThrowIfDisposed();
 
-            WindowDockInfo addedInfo = null;
+            WindowDockInfo? addedInfo = null;
 
             lock (_sync)
             {
@@ -1124,7 +1124,7 @@ namespace KkjQuicker.Overlay.Docking
             if (hwnd == IntPtr.Zero)
                 return false;
 
-            WindowDockInfo removed = null;
+            WindowDockInfo? removed = null;
             bool shouldStop = false;
             bool hadAny = false;
 
@@ -1774,7 +1774,7 @@ namespace KkjQuicker.Overlay.Docking
 
         private bool CheckRuntimeCore()
         {
-            WindowDockInfo[] list;
+            WindowDockInfo[]? list;
 
             lock (_sync)
             {

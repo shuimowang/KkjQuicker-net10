@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows;
@@ -71,7 +71,7 @@ namespace KkjQuicker.UI.Adorners
             if (func == null)
                 return defaultValue;
 
-            TTarget target = Target as TTarget;
+            TTarget? target = Target as TTarget;
             return target != null ? func(target) : defaultValue;
         }
 
@@ -85,7 +85,7 @@ namespace KkjQuicker.UI.Adorners
             if (action == null)
                 return;
 
-            TTarget target = Target as TTarget;
+            TTarget? target = Target as TTarget;
             if (target != null)
                 action(target);
         }
@@ -615,7 +615,7 @@ namespace KkjQuicker.UI.Adorners
 
         private void RegisterChildLayoutListener(UIElement element)
         {
-            FrameworkElement fe = element as FrameworkElement;
+            FrameworkElement? fe = element as FrameworkElement;
             if (fe == null)
                 return;
 
@@ -661,7 +661,7 @@ namespace KkjQuicker.UI.Adorners
 
             for (int i = 0; i < _stackPanel.Children.Count; i++)
             {
-                FrameworkElement fe = _stackPanel.Children[i] as FrameworkElement;
+                FrameworkElement? fe = _stackPanel.Children[i] as FrameworkElement;
                 if (fe == null)
                     continue;
 
@@ -866,7 +866,7 @@ namespace KkjQuicker.UI.Adorners
             {
                 for (int i = 0; i < adorners.Length; i++)
                 {
-                    OverlayAdorner existing = adorners[i] as OverlayAdorner;
+                    OverlayAdorner? existing = adorners[i] as OverlayAdorner;
                     if (existing != null)
                         return existing;
                 }
@@ -980,7 +980,7 @@ namespace KkjQuicker.UI.Adorners
             if (FindAncestorAdornerDecorator(target) != null)
                 return AdornerLayer.GetAdornerLayer(target);
 
-            FrameworkElement content = window.Content as FrameworkElement;
+            FrameworkElement? content = window.Content as FrameworkElement;
             if (content == null)
                 return null;
 
@@ -999,7 +999,7 @@ namespace KkjQuicker.UI.Adorners
             DependencyObject parent = current;
             while (parent != null)
             {
-                AdornerDecorator decorator = parent as AdornerDecorator;
+                AdornerDecorator? decorator = parent as AdornerDecorator;
                 if (decorator != null)
                     return decorator;
 

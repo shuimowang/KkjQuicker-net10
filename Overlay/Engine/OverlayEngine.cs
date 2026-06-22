@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Utilities.Imaging;
+using KkjQuicker.Utilities.Imaging;
 using KkjQuicker.Utilities.Win32;
 using System;
 using System.Collections.Generic;
@@ -1334,7 +1334,7 @@ namespace KkjQuicker.Overlay.Engine
             var result = new List<IOverlayInputLayer>(_layers.Count);
             for (int i = _layers.Count - 1; i >= 0; i--)
             {
-                IOverlayInputLayer inputLayer = _layers[i].Layer as IOverlayInputLayer;
+                IOverlayInputLayer? inputLayer = _layers[i].Layer as IOverlayInputLayer;
                 if (inputLayer == null)
                     continue;
 
@@ -1385,7 +1385,7 @@ namespace KkjQuicker.Overlay.Engine
             if (view == null)
                 return;
 
-            FrameworkElement fe = view as FrameworkElement;
+            FrameworkElement? fe = view as FrameworkElement;
             if (fe == null)
                 return;
 
@@ -1393,14 +1393,14 @@ namespace KkjQuicker.Overlay.Engine
             if (parent == null)
                 return;
 
-            Panel panel = parent as Panel;
+            Panel? panel = parent as Panel;
             if (panel != null)
             {
                 panel.Children.Remove(view);
                 return;
             }
 
-            Decorator decorator = parent as Decorator;
+            Decorator? decorator = parent as Decorator;
             if (decorator != null)
             {
                 if (ReferenceEquals(decorator.Child, view))
@@ -1409,7 +1409,7 @@ namespace KkjQuicker.Overlay.Engine
                 return;
             }
 
-            ContentControl contentControl = parent as ContentControl;
+            ContentControl? contentControl = parent as ContentControl;
             if (contentControl != null)
             {
                 if (ReferenceEquals(contentControl.Content, view))
@@ -1418,7 +1418,7 @@ namespace KkjQuicker.Overlay.Engine
                 return;
             }
 
-            ContentPresenter contentPresenter = parent as ContentPresenter;
+            ContentPresenter? contentPresenter = parent as ContentPresenter;
             if (contentPresenter != null)
             {
                 if (ReferenceEquals(contentPresenter.Content, view))

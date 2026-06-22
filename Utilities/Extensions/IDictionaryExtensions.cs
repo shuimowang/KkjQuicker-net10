@@ -32,7 +32,9 @@ namespace KkjQuicker.Utilities.Extensions
                 return defaultValue;
 
             TValue value = default!;
+#pragma warning disable CS8600 // 将 null 字面量或可能的 null 值转换为非 null 类型。
             return dict.TryGetValue(key, out value) ? value : defaultValue;
+#pragma warning restore CS8600
         }
 
         /// <summary>
@@ -63,7 +65,9 @@ namespace KkjQuicker.Utilities.Extensions
                 return defaultValueProvider();
 
             TValue value = default!;
+#pragma warning disable CS8600
             return dict.TryGetValue(key, out value) ? value : defaultValueProvider();
+#pragma warning restore CS8600
         }
 
         /// <summary>

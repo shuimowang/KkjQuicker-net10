@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -257,7 +257,7 @@ namespace KkjQuicker.UI
             if (e == null)
                 return null;
 
-            DependencyObject source = e.OriginalSource as DependencyObject;
+            DependencyObject? source = e.OriginalSource as DependencyObject;
             return source == null ? null : FindAncestor<T>(source, includeSelf);
         }
 
@@ -277,14 +277,14 @@ namespace KkjQuicker.UI
             if (e == null)
                 return null;
 
-            DependencyObject current = e.OriginalSource as DependencyObject;
+            DependencyObject? current = e.OriginalSource as DependencyObject;
             while (current != null)
             {
-                FrameworkElement fe = current as FrameworkElement;
+                FrameworkElement? fe = current as FrameworkElement;
                 if (fe != null && fe.DataContext is T feData)
                     return feData;
 
-                FrameworkContentElement fce = current as FrameworkContentElement;
+                FrameworkContentElement? fce = current as FrameworkContentElement;
                 if (fce != null && fce.DataContext is T fceData)
                     return fceData;
 
@@ -372,7 +372,7 @@ namespace KkjQuicker.UI
                 if (!Equals(propertySelector(item), value))
                     continue;
 
-                Selector selector = itemsControl as Selector;
+                Selector? selector = itemsControl as Selector;
                 if (selector != null)
                     selector.SelectedItem = item;
 
@@ -403,7 +403,7 @@ namespace KkjQuicker.UI
                 if (!predicate(item))
                     continue;
 
-                Selector selector = itemsControl as Selector;
+                Selector? selector = itemsControl as Selector;
                 if (selector != null)
                     selector.SelectedItem = item;
 
@@ -447,19 +447,19 @@ namespace KkjQuicker.UI
             if (itemsControl == null || item == null)
                 return;
 
-            ListView listView = itemsControl as ListView;
+            ListView? listView = itemsControl as ListView;
             if (listView != null) { listView.ScrollIntoView(item); return; }
 
-            ListBox listBox = itemsControl as ListBox;
+            ListBox? listBox = itemsControl as ListBox;
             if (listBox != null) { listBox.ScrollIntoView(item); return; }
 
-            DataGrid dataGrid = itemsControl as DataGrid;
+            DataGrid? dataGrid = itemsControl as DataGrid;
             if (dataGrid != null) { dataGrid.ScrollIntoView(item); return; }
 
-            ComboBox comboBox = itemsControl as ComboBox;
+            ComboBox? comboBox = itemsControl as ComboBox;
             if (comboBox != null && comboBox.IsDropDownOpen)
             {
-                ListBoxItem listBoxItem =
+                ListBoxItem? listBoxItem =
                     comboBox.ItemContainerGenerator.ContainerFromItem(item) as ListBoxItem;
                 if (listBoxItem != null)
                     listBoxItem.BringIntoView();
@@ -495,7 +495,7 @@ namespace KkjQuicker.UI
 
             foreach (DependencyObject obj in TraverseVisualTree(parent).Skip(1))
             {
-                UIElement element = obj as UIElement;
+                UIElement? element = obj as UIElement;
                 if (element != null && SetFocus(element))
                     return true;
             }

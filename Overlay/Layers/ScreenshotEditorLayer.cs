@@ -1,4 +1,4 @@
-﻿using FontAwesome5;
+using FontAwesome5;
 using KkjQuicker.Overlay.Engine;
 using KkjQuicker.UI;
 using KkjQuicker.Utilities.History;
@@ -180,8 +180,8 @@ namespace KkjQuicker.Overlay.Layers
                     selectionPixelRect.Height);
             }
 
-            Size originDip = DpiHelper.PxToDip(new Size(localPx.X, localPx.Y), (Visual)null);
-            Size sizeDip = DpiHelper.PxToDip(new Size(localPx.Width, localPx.Height), (Visual)null);
+            Size originDip = DpiHelper.PxToDip(new Size(localPx.X, localPx.Y), (Visual?)null);
+            Size sizeDip = DpiHelper.PxToDip(new Size(localPx.Width, localPx.Height), (Visual?)null);
 
             return new Rect(originDip.Width, originDip.Height, sizeDip.Width, sizeDip.Height);
         }
@@ -388,7 +388,7 @@ namespace KkjQuicker.Overlay.Layers
         {
             // 像素位置转 DIP,避免高 DPI 或多显示器非零偏移时错位
             Size posDip = DpiHelper.PxToDip(
-                new Size(_canvasPixelBounds.X, _canvasPixelBounds.Y), (Visual)null);
+                new Size(_canvasPixelBounds.X, _canvasPixelBounds.Y), (Visual?)null);
 
             _ghostWindow = new Window
             {
@@ -620,7 +620,7 @@ namespace KkjQuicker.Overlay.Layers
             _fullImage = fullImage;
             _imgPxW = _fullImage != null ? _fullImage.PixelWidth : _canvasPixelBounds.Width;
             _imgPxH = _fullImage != null ? _fullImage.PixelHeight : _canvasPixelBounds.Height;
-            Size dip = DpiHelper.PxToDip(new Size(_imgPxW, _imgPxH), (Visual)null);
+            Size dip = DpiHelper.PxToDip(new Size(_imgPxW, _imgPxH), (Visual?)null);
             _imgDipW = dip.Width;
             _imgDipH = dip.Height;
             Width = _imgDipW;
@@ -1319,7 +1319,7 @@ namespace KkjQuicker.Overlay.Layers
             var croppedBase = new CroppedBitmap(_fullImage, localCropRect); croppedBase.Freeze();
 
             bool hasMosaic = _mosaicMask != null && _mosaicMask.Children.Count > 0;
-            CroppedBitmap croppedMosaic = null;
+            CroppedBitmap? croppedMosaic = null;
             if (hasMosaic) { EnsureMosaicBitmap(); if (_mosaicBitmap != null) { croppedMosaic = new CroppedBitmap(_mosaicBitmap, localCropRect); croppedMosaic.Freeze(); } }
 
             var dv = new DrawingVisual();
