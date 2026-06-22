@@ -36,7 +36,7 @@ namespace KkjQuicker.Utilities.Extensions
             if (member == null)
                 return name;
 
-            DisplayAttribute attribute = member.GetCustomAttribute<DisplayAttribute>(false);
+            DisplayAttribute? attribute = member.GetCustomAttribute<DisplayAttribute>(false);
             return attribute != null ? attribute.GetName() : name;
         }
     }

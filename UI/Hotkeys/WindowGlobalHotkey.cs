@@ -37,7 +37,7 @@ namespace KkjQuicker.UI.Hotkeys
         readonly uint _modifiers;
         readonly uint _virtualKey;
 
-        HwndSource _source;
+        HwndSource? _source;
         IntPtr _hwnd;
         bool _registered;
         bool _disposed;
@@ -45,14 +45,14 @@ namespace KkjQuicker.UI.Hotkeys
         /// <summary>
         /// 快捷键触发时触发。
         /// </summary>
-        public event Action Triggered;
+        public event Action? Triggered;
 
         /// <summary>
         /// 快捷键注册失败时触发。
         /// 参数为 Win32 错误码。
         /// 常见错误：1409 表示快捷键已被其它程序注册。
         /// </summary>
-        public event Action<int> RegistrationFailed;
+        public event Action<int>? RegistrationFailed;
 
         public bool IsRegistered
         {
@@ -132,14 +132,14 @@ namespace KkjQuicker.UI.Hotkeys
                 Register(true);
         }
 
-        void Window_SourceInitialized(object sender, EventArgs e)
+        void Window_SourceInitialized(object? sender, EventArgs e)
         {
             // 延迟注册路径。
             // 这里不能无条件抛异常，否则会绕过创建窗口时的 try-catch。
             Register(false);
         }
 
-        void Window_Closed(object sender, EventArgs e)
+        void Window_Closed(object? sender, EventArgs e)
         {
             Dispose();
         }

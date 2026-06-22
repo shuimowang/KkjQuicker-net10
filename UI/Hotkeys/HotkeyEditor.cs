@@ -62,7 +62,7 @@ namespace KkjQuicker.UI.Hotkeys
 
         bool _updatingText;
 
-        public event EventHandler<HotkeyChangedEventArgs> HotkeyChanged;
+        public event EventHandler<HotkeyChangedEventArgs>? HotkeyChanged;
 
         /// <summary>
         /// 当前快捷键。
@@ -128,7 +128,7 @@ namespace KkjQuicker.UI.Hotkeys
             Loaded += HotkeyEditor_Loaded;
         }
 
-        void HotkeyEditor_Loaded(object sender, RoutedEventArgs e)
+        void HotkeyEditor_Loaded(object? sender, RoutedEventArgs e)
         {
             UpdateText();
         }
@@ -192,7 +192,7 @@ namespace KkjQuicker.UI.Hotkeys
             UpdateText();
         }
 
-        void OnPasting(object sender, DataObjectPastingEventArgs e)
+        void OnPasting(object? sender, DataObjectPastingEventArgs e)
         {
             e.CancelCommand();
         }

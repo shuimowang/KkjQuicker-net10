@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Audio.Abstractions;
+using KkjQuicker.Audio.Abstractions;
 using KkjQuicker.Audio.Options;
 using NAudio.Wave;
 using System;
@@ -18,7 +18,7 @@ namespace KkjQuicker.Audio.Sources
         private readonly AudioCaptureOptions _options;
         private readonly WaveFormat _outputFormat;
 
-        private WaveInEvent _waveIn;
+        private WaveInEvent? _waveIn = null!;
         private bool _isRunning;
         private bool _disposed;
         private bool _stopping;
@@ -26,12 +26,12 @@ namespace KkjQuicker.Audio.Sources
         /// <summary>
         /// 当产生新的 PCM 音频帧时触发。
         /// </summary>
-        public event EventHandler<byte[]> FrameReady;
+        public event EventHandler<byte[]>? FrameReady;
 
         /// <summary>
         /// 当采集过程中发生错误时触发。
         /// </summary>
-        public event EventHandler<Exception> ErrorOccurred;
+        public event EventHandler<Exception>? ErrorOccurred;
 
         /// <summary>
         /// 获取输出音频格式。
@@ -59,7 +59,7 @@ namespace KkjQuicker.Audio.Sources
         /// 创建麦克风音频源。
         /// </summary>
         /// <param name="options">音频采集配置。</param>
-        public MicrophoneAudioSource(AudioCaptureOptions options = null)
+        public MicrophoneAudioSource(AudioCaptureOptions? options = null)
         {
             _options = options ?? new AudioCaptureOptions();
             _outputFormat = new WaveFormat(
@@ -82,7 +82,7 @@ namespace KkjQuicker.Audio.Sources
                 if (_isRunning)
                     return;
 
-                WaveInEvent waveIn = null;
+                WaveInEvent? waveIn = null;
                 try
                 {
                     waveIn = new WaveInEvent
@@ -122,7 +122,7 @@ namespace KkjQuicker.Audio.Sources
         /// </summary>
         public void Stop()
         {
-            WaveInEvent waveIn = null;
+            WaveInEvent? waveIn = null;
 
             lock (_lock)
             {
@@ -171,7 +171,7 @@ namespace KkjQuicker.Audio.Sources
         /// <summary>
         /// 处理音频数据可用事件。
         /// </summary>
-        private void OnDataAvailable(object sender, WaveInEventArgs e)
+        private void OnDataAvailable(object? sender, WaveInEventArgs e)
         {
             lock (_lock)
             {
@@ -188,7 +188,7 @@ namespace KkjQuicker.Audio.Sources
         /// <summary>
         /// 处理录音停止事件。
         /// </summary>
-        private void OnRecordingStopped(object sender, StoppedEventArgs e)
+        private void OnRecordingStopped(object? sender, StoppedEventArgs e)
         {
             var waveIn = sender as WaveInEvent;
             CleanupWaveIn(waveIn);
@@ -197,7 +197,7 @@ namespace KkjQuicker.Audio.Sources
                 RaiseError(e.Exception);
         }
 
-        private void CleanupWaveIn(WaveInEvent waveIn)
+        private void CleanupWaveIn(WaveInEvent? waveIn)
         {
             lock (_lock)
             {

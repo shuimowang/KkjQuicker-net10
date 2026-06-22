@@ -208,7 +208,7 @@ namespace KkjQuicker.Utilities.Imaging
 
         private sealed class GlyphLayout
         {
-            public string Text;
+            public string Text = null!;
             public RectangleF Rect;
             public int LineIndex;
         }

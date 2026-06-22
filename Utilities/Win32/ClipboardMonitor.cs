@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -27,7 +27,7 @@ namespace KkjQuicker.Utilities.Win32
         /// <summary>
         /// 剪贴板内容发生变化时触发。事件在首次调用 <see cref="Start"/> 并创建底层窗口的线程上回调。
         /// </summary>
-        public event EventHandler ClipboardChanged;
+        public event EventHandler? ClipboardChanged;
 
         /// <summary>
         /// 当前是否已经注册剪贴板监听。

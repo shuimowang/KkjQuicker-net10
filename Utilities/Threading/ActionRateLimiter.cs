@@ -292,7 +292,7 @@ namespace KkjQuicker.Utilities.Threading
             }
         }
 
-        private void OnDebounceTick(object sender, EventArgs e)
+        private void OnDebounceTick(object? sender, EventArgs e)
         {
             Action? toRun = null;
 
@@ -319,7 +319,7 @@ namespace KkjQuicker.Utilities.Threading
             }
         }
 
-        private void OnThrottleTick(object sender, EventArgs e)
+        private void OnThrottleTick(object? sender, EventArgs e)
         {
             lock (_syncRoot)
             {

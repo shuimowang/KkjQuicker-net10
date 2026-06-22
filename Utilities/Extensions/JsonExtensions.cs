@@ -83,7 +83,7 @@ namespace KkjQuicker.Utilities.Extensions
 
             try
             {
-                T value = JsonConvert.DeserializeObject<T>(json);
+                T? value = JsonConvert.DeserializeObject<T>(json);
                 if (object.Equals(value, null))
                 {
                     result = default(T);

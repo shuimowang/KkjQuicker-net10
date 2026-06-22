@@ -201,7 +201,7 @@ namespace KkjQuicker.UI.Behaviors
                 _pendingAction = null;
             }
 
-            private void OnTick(object sender, EventArgs e)
+            private void OnTick(object? sender, EventArgs e)
             {
                 _timer.Stop();
                 var action = _pendingAction;
@@ -281,13 +281,13 @@ namespace KkjQuicker.UI.Behaviors
             return state;
         }
 
-        private static void OnElementUnloaded(object sender, RoutedEventArgs e)
+        private static void OnElementUnloaded(object? sender, RoutedEventArgs e)
         {
             var element = (FrameworkElement)sender;
             ((BehaviorState)element.GetValue(StateProperty))?.Cleanup(element);
         }
 
-        private static void OnElementLoaded(object sender, RoutedEventArgs e)
+        private static void OnElementLoaded(object? sender, RoutedEventArgs e)
         {
             var element = (FrameworkElement)sender;
             ((BehaviorState)element.GetValue(StateProperty))?.Restore(element);
@@ -318,15 +318,15 @@ namespace KkjQuicker.UI.Behaviors
             // 计时器实例：懒解析，Cleanup 后置 null 强制下次 Trigger 时重新解析。
             // 若绑定目标可识别则与其他控件共享同一实例（_isSharedTimer = true）；
             // 否则为私有实例（_isSharedTimer = false）。
-            private SharedTimerState _timer;
+            private SharedTimerState _timer = null!;
             private bool _isSharedTimer;
 
-            private RoutedEventHandler _trueHandler;
-            private RoutedEventHandler _falseHandler;
+            private RoutedEventHandler _trueHandler = null!;
+            private RoutedEventHandler _falseHandler = null!;
 
             // 记录当前实际订阅的事件名；null 表示未订阅
-            private string _subscribedTrueEventName;
-            private string _subscribedFalseEventName;
+            private string _subscribedTrueEventName = null!;
+            private string _subscribedFalseEventName = null!;
 
             // 处理器在首次订阅时按需创建，避免在 BehaviorState 构造时捕获 element
             private RoutedEventHandler GetTrueHandler(FrameworkElement element)

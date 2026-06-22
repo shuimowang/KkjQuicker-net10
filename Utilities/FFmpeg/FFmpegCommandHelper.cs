@@ -303,7 +303,7 @@ namespace KkjQuicker.Utilities.FFmpeg
 
         private static void AppendDshowAudioInput(
             List<string> parts,
-            string deviceName,
+            string? deviceName,
             FFmpegScreenRecordOptions options)
         {
             if (options.InputThreadQueueSize > 0)

@@ -31,7 +31,7 @@ namespace KkjQuicker.Utilities.Extensions
             if (dict == null)
                 return defaultValue;
 
-            TValue value;
+            TValue value = default!;
             return dict.TryGetValue(key, out value) ? value : defaultValue;
         }
 
@@ -62,7 +62,7 @@ namespace KkjQuicker.Utilities.Extensions
             if (dict == null)
                 return defaultValueProvider();
 
-            TValue value;
+            TValue value = default!;
             return dict.TryGetValue(key, out value) ? value : defaultValueProvider();
         }
 

@@ -50,7 +50,7 @@ namespace KkjQuicker.UI.Converters
             bool started = false;
             using (var reader = new StringReader(text))
             {
-                string line;
+                string? line;
                 while ((line = reader.ReadLine()) != null)
                 {
                     if (!started)

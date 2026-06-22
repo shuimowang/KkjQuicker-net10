@@ -23,9 +23,9 @@ namespace KkjQuicker.Audio.Sources
         private readonly WaveFormat _outputFormat;
         private readonly int _targetSampleRate = 16000;
 
-        private WasapiLoopbackCapture _capture;
-        private BufferedWaveProvider _bufferedProvider;
-        private WdlResamplingSampleProvider _resampler;
+        private WasapiLoopbackCapture? _capture = null!;
+        private BufferedWaveProvider? _bufferedProvider = null!;
+        private WdlResamplingSampleProvider? _resampler = null!;
         private bool _isRunning;
         private bool _disposed;
         private bool _stopping;
@@ -36,12 +36,12 @@ namespace KkjQuicker.Audio.Sources
         /// <remarks>
         /// 事件参数为 16000Hz、16-bit、Mono 的 PCM 数据。
         /// </remarks>
-        public event EventHandler<byte[]> FrameReady;
+        public event EventHandler<byte[]>? FrameReady;
 
         /// <summary>
         /// 当采集过程中发生错误时触发。
         /// </summary>
-        public event EventHandler<Exception> ErrorOccurred;
+        public event EventHandler<Exception>? ErrorOccurred;
 
         /// <summary>
         /// 获取输出音频格式：16000Hz、16-bit、Mono。
@@ -87,9 +87,9 @@ namespace KkjQuicker.Audio.Sources
                 if (_isRunning)
                     return;
 
-                WasapiLoopbackCapture capture = null;
-                BufferedWaveProvider bufferedProvider = null;
-                WdlResamplingSampleProvider resampler = null;
+                WasapiLoopbackCapture? capture = null;
+                BufferedWaveProvider? bufferedProvider = null;
+                WdlResamplingSampleProvider? resampler = null;
 
                 try
                 {
@@ -157,7 +157,7 @@ namespace KkjQuicker.Audio.Sources
         /// </summary>
         public void Stop()
         {
-            WasapiLoopbackCapture capture = null;
+            WasapiLoopbackCapture? capture = null;
 
             lock (_lock)
             {
@@ -205,11 +205,11 @@ namespace KkjQuicker.Audio.Sources
         /// <summary>
         /// 处理音频数据可用事件。
         /// </summary>
-        private void OnDataAvailable(object sender, WaveInEventArgs e)
+        private void OnDataAvailable(object? sender, WaveInEventArgs e)
         {
-            BufferedWaveProvider bufferedProvider;
-            WdlResamplingSampleProvider resampler;
-            WasapiLoopbackCapture capture;
+            BufferedWaveProvider? bufferedProvider;
+            WdlResamplingSampleProvider? resampler;
+            WasapiLoopbackCapture? capture;
 
             lock (_lock)
             {
@@ -267,7 +267,7 @@ namespace KkjQuicker.Audio.Sources
         /// <summary>
         /// 处理录音停止事件。
         /// </summary>
-        private void OnRecordingStopped(object sender, StoppedEventArgs e)
+        private void OnRecordingStopped(object? sender, StoppedEventArgs e)
         {
             var capture = sender as WasapiLoopbackCapture;
             CleanupCapture(capture);
@@ -276,7 +276,7 @@ namespace KkjQuicker.Audio.Sources
                 RaiseError(e.Exception);
         }
 
-        private void CleanupCapture(WasapiLoopbackCapture capture)
+        private void CleanupCapture(WasapiLoopbackCapture? capture)
         {
             lock (_lock)
             {

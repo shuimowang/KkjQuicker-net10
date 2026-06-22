@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Utilities.Hooks.Interop;
+using KkjQuicker.Utilities.Hooks.Interop;
 using KkjQuicker.Utilities.Win32;
 using System;
 using System.ComponentModel;
@@ -32,7 +32,7 @@ namespace KkjQuicker.Utilities.Hooks
     public abstract class LowLevelGlobalHookBase : IDisposable
     {
         private readonly object _syncRoot = new object();
-        private SafeHookHandle _handle;
+        private SafeHookHandle? _handle;
 
         // Fix #2：标记 volatile，确保 Callback 线程与 Dispose 线程之间的可见性
         private volatile bool _disposed;
@@ -47,7 +47,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// HookProcInstance = Callback;
         /// </code>
         /// </remarks>
-        protected NativeMethods.HookProc HookProcInstance;
+        protected NativeMethods.HookProc HookProcInstance = null!;
 
         /// <summary>
         /// 获取当前 Hook 类型。

@@ -47,7 +47,7 @@ namespace KkjQuicker.AI.OpenAI
             string apiUrl,
             string apiKey,
             string model,
-            HttpClient client = null)
+            HttpClient? client = null)
         {
             if (string.IsNullOrWhiteSpace(apiUrl))
                 throw new ArgumentException("API 地址不能为空白。", nameof(apiUrl));
@@ -111,7 +111,7 @@ namespace KkjQuicker.AI.OpenAI
                 if (!resp.IsSuccessStatusCode)
                     throw MakeException(resp, raw);
 
-                ChatResponse result = JsonConvert.DeserializeObject<ChatResponse>(raw);
+                ChatResponse? result = JsonConvert.DeserializeObject<ChatResponse>(raw);
 
                 if (result == null)
                     throw new HttpRequestException("响应反序列化失败。");
@@ -160,7 +160,7 @@ namespace KkjQuicker.AI.OpenAI
                         if (string.Equals(payload.Trim(), "[DONE]", StringComparison.OrdinalIgnoreCase))
                             return;
 
-                        OpenAiChatStreamChunk chunk;
+                        OpenAiChatStreamChunk? chunk;
 
                         try
                         {
@@ -171,7 +171,7 @@ namespace KkjQuicker.AI.OpenAI
                             return;
                         }
 
-                        string text = chunk != null &&
+                        string? text = chunk != null &&
                                       chunk.Choices != null &&
                                       chunk.Choices.Count > 0 &&
                                       chunk.Choices[0] != null &&
@@ -355,10 +355,10 @@ namespace KkjQuicker.AI.OpenAI
         private sealed class RequestDto
         {
             [JsonProperty("model")]
-            public string Model { get; set; }
+            public string Model { get; set; } = null!;
 
             [JsonProperty("messages")]
-            public IList<object> Messages { get; set; }
+            public IList<object> Messages { get; set; } = null!;
 
             [JsonProperty("stream")]
             public bool Stream { get; set; }
@@ -373,13 +373,13 @@ namespace KkjQuicker.AI.OpenAI
             public double? TopP { get; set; }
 
             [JsonProperty("stop", NullValueHandling = NullValueHandling.Ignore)]
-            public object Stop { get; set; }
+            public object? Stop { get; set; }
 
             [JsonProperty("response_format", NullValueHandling = NullValueHandling.Ignore)]
-            public object ResponseFormat { get; set; }
+            public object? ResponseFormat { get; set; }
 
             [JsonExtensionData]
-            public Dictionary<string, JToken> Extra { get; set; }
+            public Dictionary<string, JToken>? Extra { get; set; }
         }
 
         // ── 私有嵌套：Session 存储 ────────────────────────────────────────────
@@ -421,7 +421,7 @@ namespace KkjQuicker.AI.OpenAI
                 return Array.Empty<ChatMessage>();
             }
 
-            public void Append(string id, string user, string assistant)
+            public void Append(string? id, string? user, string? assistant)
             {
                 if (string.IsNullOrWhiteSpace(id) || MaxMessages <= 0)
                     return;
@@ -430,8 +430,8 @@ namespace KkjQuicker.AI.OpenAI
 
                 lock (h)
                 {
-                    h.Add(ChatMessage.User(user));
-                    h.Add(ChatMessage.Assistant(assistant));
+                    h.Add(ChatMessage.User(user!));
+                    h.Add(ChatMessage.Assistant(assistant!));
 
                     int limit = MaxMessages;
 

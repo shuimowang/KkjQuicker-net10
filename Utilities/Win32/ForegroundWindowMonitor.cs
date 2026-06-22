@@ -8,7 +8,7 @@ namespace KkjQuicker.Utilities.Win32
 {
     public sealed class ForegroundWindowInfo
     {
-        private string _className;
+        private string _className = null!;
 
         public IntPtr Handle { get; internal set; }
 
@@ -141,7 +141,7 @@ namespace KkjQuicker.Utilities.Win32
             set { _ignorePredicate = value; }
         }
 
-        public event EventHandler<ForegroundWindowChangedEventArgs> ForegroundWindowChanged;
+        public event EventHandler<ForegroundWindowChangedEventArgs>? ForegroundWindowChanged;
 
         public ForegroundWindowMonitor()
         {

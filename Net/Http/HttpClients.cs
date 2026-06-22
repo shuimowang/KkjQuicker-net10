@@ -74,7 +74,7 @@ namespace KkjQuicker.Net.Http
         /// </param>
         /// <returns>配置完成的 <see cref="HttpClient"/> 实例。</returns>
         private static HttpClient CreateCore(
-            Action<HttpClientHandler> configureHandler,
+            Action<HttpClientHandler>? configureHandler,
             TimeSpan timeout,
             bool disposeHandler)
         {

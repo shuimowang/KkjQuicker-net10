@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -254,7 +254,7 @@ namespace KkjQuicker.UI.Hotkeys
             return builder.ToString();
         }
 
-        public bool Equals(HotkeyGesture other)
+        public bool Equals(HotkeyGesture? other)
         {
             if (ReferenceEquals(other, null))
                 return false;
@@ -262,7 +262,7 @@ namespace KkjQuicker.UI.Hotkeys
             return Key == other.Key && Modifiers == other.Modifiers;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return Equals(obj as HotkeyGesture);
         }

@@ -24,8 +24,8 @@ namespace KkjQuicker.Overlay.Docking
     public static class WindowDockManager
     {
         private static readonly object Gate = new object();
-        private static WindowDockEngine _engine;
-        private static WindowDockOptions _defaultOptions;
+        private static WindowDockEngine _engine = null!;
+        private static WindowDockOptions _defaultOptions = null!;
 
         /// <summary>
         /// 获取一个值，表示默认引擎当前是否正在运行。

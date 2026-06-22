@@ -126,9 +126,9 @@ namespace KkjQuicker.Domain
         }
 
         internal AppStateSnapshot WithForeground(
-            ForegroundWindowInfo activated,
-            ForegroundWindowInfo deactivated,
-            ForegroundWindowInfo lastExternal)
+            ForegroundWindowInfo? activated,
+            ForegroundWindowInfo? deactivated,
+            ForegroundWindowInfo? lastExternal)
         {
             return new AppStateSnapshot(
                 IsMonitoring,
@@ -225,10 +225,10 @@ namespace KkjQuicker.Domain
     {
         private static readonly object SyncRoot = new object();
 
-        private static ForegroundWindowMonitor _foregroundMonitor;
-        private static Dispatcher _dispatcher;
+        private static ForegroundWindowMonitor? _foregroundMonitor = null!;
+        private static Dispatcher? _dispatcher = null!;
         private static AppStateSnapshot _current = AppStateSnapshot.Empty;
-        private static EventHandler<AppStateChangedEventArgs> _changed;
+        private static EventHandler<AppStateChangedEventArgs>? _changed;
         private static int _uiThreadId;
 
         /// <summary>
@@ -238,7 +238,7 @@ namespace KkjQuicker.Domain
         /// 静态事件要求调用方在不再使用时解除订阅。一般优先使用 <see cref="Subscribe"/>，
         /// 通过释放返回的令牌自动解除订阅。
         /// </remarks>
-        public static event EventHandler<AppStateChangedEventArgs> Changed
+        public static event EventHandler<AppStateChangedEventArgs>? Changed
         {
             add
             {
@@ -389,7 +389,7 @@ namespace KkjQuicker.Domain
         /// </remarks>
         public static void Stop()
         {
-            Dispatcher dispatcher;
+            Dispatcher? dispatcher;
 
             lock (SyncRoot)
                 dispatcher = _dispatcher;
@@ -403,7 +403,7 @@ namespace KkjQuicker.Domain
                 return;
             }
 
-            ForegroundWindowMonitor monitor;
+            ForegroundWindowMonitor? monitor;
             AppStateSnapshot previous;
             AppStateSnapshot current;
 
@@ -445,7 +445,7 @@ namespace KkjQuicker.Domain
             if (notifyImmediately)
             {
                 AppStateSnapshot snapshot = Current;
-                Dispatcher dispatcher;
+                Dispatcher? dispatcher;
 
                 lock (SyncRoot)
                     dispatcher = _dispatcher;
@@ -480,7 +480,7 @@ namespace KkjQuicker.Domain
             long value = Environment.TickCount;
             AppStateSnapshot previous;
             AppStateSnapshot current;
-            Dispatcher dispatcher;
+            Dispatcher? dispatcher;
 
             lock (SyncRoot)
             {
@@ -500,16 +500,16 @@ namespace KkjQuicker.Domain
         }
 
         private static void OnForegroundChanged(
-            object sender,
-            ForegroundWindowChangedEventArgs e)
+            object? sender,
+            ForegroundWindowChangedEventArgs? e)
         {
             if (e == null || e.ActivatedWindow == null)
                 return;
 
-            ForegroundWindowMonitor monitor = sender as ForegroundWindowMonitor;
+            ForegroundWindowMonitor? monitor = sender as ForegroundWindowMonitor;
             AppStateSnapshot previous;
             AppStateSnapshot current;
-            Dispatcher dispatcher;
+            Dispatcher? dispatcher;
             AppStateChangeKind changes;
 
             lock (SyncRoot)
@@ -564,9 +564,9 @@ namespace KkjQuicker.Domain
             AppStateSnapshot previous,
             AppStateSnapshot current,
             AppStateChangeKind changes,
-            Dispatcher dispatcher)
+            Dispatcher? dispatcher)
         {
-            EventHandler<AppStateChangedEventArgs> handler;
+            EventHandler<AppStateChangedEventArgs>? handler;
 
             lock (SyncRoot)
                 handler = _changed;
@@ -583,7 +583,7 @@ namespace KkjQuicker.Domain
         private static void PublishToHandler(
             EventHandler<AppStateChangedEventArgs> handler,
             AppStateChangedEventArgs args,
-            Dispatcher dispatcher)
+            Dispatcher? dispatcher)
         {
             if (handler == null)
                 return;
@@ -624,9 +624,9 @@ namespace KkjQuicker.Domain
 
         private sealed class AppStateSubscription : IDisposable
         {
-            private EventHandler<AppStateChangedEventArgs> _target;
+            private EventHandler<AppStateChangedEventArgs>? _target;
 
-            public EventHandler<AppStateChangedEventArgs> Handler { get; private set; }
+            public EventHandler<AppStateChangedEventArgs> Handler { get; private set; } = null!;
 
             public AppStateSubscription(EventHandler<AppStateChangedEventArgs> handler)
             {
@@ -634,9 +634,9 @@ namespace KkjQuicker.Domain
                 Handler = Forward;
             }
 
-            private void Forward(object sender, AppStateChangedEventArgs e)
+            private void Forward(object? sender, AppStateChangedEventArgs e)
             {
-                EventHandler<AppStateChangedEventArgs> target =
+                EventHandler<AppStateChangedEventArgs>? target =
                     Volatile.Read(ref _target);
 
                 if (target != null)
@@ -645,7 +645,7 @@ namespace KkjQuicker.Domain
 
             public void Dispose()
             {
-                EventHandler<AppStateChangedEventArgs> target =
+                EventHandler<AppStateChangedEventArgs>? target =
                     Interlocked.Exchange(ref _target, null);
 
                 if (target != null)

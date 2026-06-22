@@ -60,7 +60,7 @@ namespace KkjQuicker.UI.Converters
                 string? param = parameter.ToString();
                 int colon = param?.IndexOf(':') ?? -1;
 
-                if (colon >= 0)
+                if (colon >= 0 && param != null)
                 {
                     operation = param.Substring(0, colon).Trim();
 

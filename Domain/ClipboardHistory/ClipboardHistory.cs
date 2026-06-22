@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -24,7 +24,7 @@ namespace KkjQuicker.Domain.ClipboardHistory
         public DateTime RecordTime { get; set; } = DateTime.Now;
 
         /// <summary>复制来源进程路径,用于按来源筛选</summary>
-        public string CopiedFrom { get; set; }
+        public string CopiedFrom { get; set; } = null!;
 
         /// <summary>是否置顶,置顶项显示在剪贴板列表最前,并可在清空时跳过</summary>
         public bool IsPinned { get; set; }
@@ -34,15 +34,15 @@ namespace KkjQuicker.Domain.ClipboardHistory
     {
         public override string ItemType => "Text";
 
-        public string Text { get; set; }
+        public string Text { get; set; } = null!;
 
-        public string HtmlText { get; set; }
+        public string HtmlText { get; set; } = null!;
 
         /// <summary>
         /// 短标题。为空时界面可回退显示正文预览。
         /// 常用于常用项里给长文本、Token、Key、模板文本起别名。
         /// </summary>
-        public string Title { get; set; }
+        public string Title { get; set; } = null!;
 
         /// <summary>
         /// 界面显示标题，不持久化。
@@ -60,27 +60,27 @@ namespace KkjQuicker.Domain.ClipboardHistory
         /// 内容图标,例如颜色文本显示颜色块,网址文本显示 favicon。
         /// 来源程序请使用基类的 CopiedFrom。
         /// </summary>
-        public string Icon { get; set; }
+        public string Icon { get; set; } = null!;
     }
 
     public class ImageClipboardItem : ClipboardItem
     {
         public override string ItemType => "Image";
 
-        public string ImagePath { get; set; }
+        public string ImagePath { get; set; } = null!;
 
         public int PixelWidth { get; set; }
 
         public int PixelHeight { get; set; }
 
-        public string ImageHash { get; set; }
+        public string ImageHash { get; set; } = null!;
     }
 
     public class FileClipboardItem : ClipboardItem
     {
         public override string ItemType => "File";
 
-        public string[] FilePaths { get; set; }
+        public string[] FilePaths { get; set; } = null!;
     }
 
     public class CustomFormatClipboardItem : ClipboardItem
@@ -88,16 +88,16 @@ namespace KkjQuicker.Domain.ClipboardHistory
         public override string ItemType => "CustomFormat";
 
         /// <summary>剪贴板自定义格式,例如 quicker-action-steps。必须原样写回剪贴板。</summary>
-        public string Format { get; set; }
+        public string Format { get; set; } = null!;
 
         /// <summary>格式显示名称,例如 Quicker动作步骤。仅用于 UI 展示。</summary>
-        public string FormatTitle { get; set; }
+        public string FormatTitle { get; set; } = null!;
 
         /// <summary>格式说明,例如 从 Quicker 复制的动作步骤。仅用于 UI 展示。</summary>
-        public string FormatDescription { get; set; }
+        public string FormatDescription { get; set; } = null!;
 
         /// <summary>原始 JSON,用于原样写回剪贴板。</summary>
-        public string RawJson { get; set; }
+        public string RawJson { get; set; } = null!;
 
         /// <summary>展示列表,例如动作步骤列表。</summary>
         public List<CustomFormatDisplayItem> DisplayItems { get; set; }
@@ -117,24 +117,24 @@ namespace KkjQuicker.Domain.ClipboardHistory
     public class CustomFormatDisplayItem
     {
         /// <summary>图标,例如 fa:Solid_Bolt</summary>
-        public string Icon { get; set; }
+        public string Icon { get; set; } = null!;
 
         /// <summary>主标题,例如步骤名称</summary>
-        public string Title { get; set; }
+        public string Title { get; set; } = null!;
 
         /// <summary>说明</summary>
-        public string Description { get; set; }
+        public string Description { get; set; } = null!;
     }
 
     public class ClipboardTemplateSelector : DataTemplateSelector
     {
-        public DataTemplate TextTemplate { get; set; }
+        public DataTemplate TextTemplate { get; set; } = null!;
 
-        public DataTemplate ImageTemplate { get; set; }
+        public DataTemplate ImageTemplate { get; set; } = null!;
 
-        public DataTemplate FileTemplate { get; set; }
+        public DataTemplate FileTemplate { get; set; } = null!;
 
-        public DataTemplate CustomFormatTemplate { get; set; }
+        public DataTemplate CustomFormatTemplate { get; set; } = null!;
 
         public override DataTemplate SelectTemplate(object item, DependencyObject container)
         {
@@ -216,13 +216,13 @@ namespace KkjQuicker.Domain.ClipboardHistory
             return typeof(ClipboardItem).IsAssignableFrom(objectType);
         }
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+        public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.Null)
                 return null;
 
             JObject jo = JObject.Load(reader);
-            string itemType = (string)jo["ItemType"];
+            string? itemType = (string?)jo["ItemType"];
 
             ClipboardItem item;
 
@@ -262,7 +262,7 @@ namespace KkjQuicker.Domain.ClipboardHistory
             get { return false; }
         }
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
         }
     }

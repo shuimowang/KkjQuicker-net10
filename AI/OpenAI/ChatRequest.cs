@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using KkjQuicker.AI.OpenAI.Models;
@@ -23,12 +23,12 @@ namespace KkjQuicker.AI.OpenAI
                 "response_format"
             };
 
-        public string Prompt { get; private set; }
-        public string SystemPrompt { get; private set; }
-        public string SessionId { get; private set; }
-        public IList<ChatMessage> History { get; private set; }
-        public IList<object> RawMessages { get; private set; }
-        public IDictionary<string, object> ExtraParameters { get; private set; }
+        public string? Prompt { get; private set; }
+        public string? SystemPrompt { get; private set; }
+        public string? SessionId { get; private set; }
+        public IList<ChatMessage>? History { get; private set; }
+        public IList<object>? RawMessages { get; private set; }
+        public IDictionary<string, object>? ExtraParameters { get; private set; }
 
         /// <summary>0 表示不发送 max_tokens 参数。</summary>
         public int MaxTokens { get; private set; }
@@ -37,12 +37,12 @@ namespace KkjQuicker.AI.OpenAI
         public double? TopP { get; private set; }
 
         /// <summary>stop 可为 string 或 string[]。</summary>
-        public object Stop { get; private set; }
+        public object? Stop { get; private set; }
 
-        public object ResponseFormat { get; private set; }
+        public object? ResponseFormat { get; private set; }
         public bool Stream { get; private set; }
 
-        public ChatRequest(string prompt = null)
+        public ChatRequest(string? prompt = null)
         {
             Prompt = Normalize(prompt);
         }
@@ -161,7 +161,7 @@ namespace KkjQuicker.AI.OpenAI
             return this;
         }
 
-        private static string Normalize(string s)
+        private static string? Normalize(string? s)
         {
             return string.IsNullOrWhiteSpace(s) ? null : s.Trim();
         }

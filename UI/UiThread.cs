@@ -45,7 +45,7 @@ namespace KkjQuicker.UI
             if (action == null)
                 return;
 
-            Dispatcher dispatcher = GetDispatcher();
+            Dispatcher? dispatcher = GetDispatcher();
 
             if (dispatcher == null || dispatcher.CheckAccess())
             {
@@ -83,7 +83,7 @@ namespace KkjQuicker.UI
             if (action == null)
                 return;
 
-            Dispatcher dispatcher = GetDispatcher();
+            Dispatcher? dispatcher = GetDispatcher();
 
             if (dispatcher == null || dispatcher.CheckAccess())
             {
@@ -115,12 +115,12 @@ namespace KkjQuicker.UI
         /// 抛出的异常会按"不吞异常"原则原样向上抛出。
         /// </para>
         /// </remarks>
-        public static TResult RunAndWait<TResult>(Func<TResult> func, DispatcherPriority priority = DispatcherPriority.Send)
+        public static TResult? RunAndWait<TResult>(Func<TResult> func, DispatcherPriority priority = DispatcherPriority.Send)
         {
             if (func == null)
                 return default(TResult);
 
-            Dispatcher dispatcher = GetDispatcher();
+            Dispatcher? dispatcher = GetDispatcher();
 
             if (dispatcher == null || dispatcher.CheckAccess())
             {
@@ -144,7 +144,7 @@ namespace KkjQuicker.UI
         /// </remarks>
         public static bool CheckAccess()
         {
-            Dispatcher dispatcher = GetDispatcher();
+            Dispatcher? dispatcher = GetDispatcher();
             return dispatcher != null && dispatcher.CheckAccess();
         }
 

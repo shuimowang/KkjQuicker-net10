@@ -51,7 +51,7 @@ namespace KkjQuicker.UI.Behaviors
 
         private sealed class HandlerToken
         {
-            public EventHandler<NotifyCollectionChangedEventArgs> Handler { get; set; }
+            public EventHandler<NotifyCollectionChangedEventArgs>? Handler { get; set; }
         }
 
         #endregion
@@ -74,7 +74,7 @@ namespace KkjQuicker.UI.Behaviors
             var oldIncc = e.OldValue as INotifyCollectionChanged;
             if (oldIncc != null)
             {
-                HandlerToken token;
+                HandlerToken? token;
                 if (_collectionTokens.TryGetValue(d, out token))
                 {
                     CollectionChangedEventManager.RemoveHandler(oldIncc, token.Handler);
@@ -147,7 +147,7 @@ namespace KkjQuicker.UI.Behaviors
             }, DispatcherPriority.Loaded);
         }
 
-        private static void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private static void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
             var d = sender as DependencyObject;
             if (d == null) return;
@@ -162,7 +162,7 @@ namespace KkjQuicker.UI.Behaviors
         }
 
         /// <summary>全量将 <paramref name="targetList"/> 中的项应用到控件选中状态。</summary>
-        private static void ApplyFullSelection(DependencyObject d, IList targetList)
+        private static void ApplyFullSelection(DependencyObject d, IList? targetList)
         {
             var lb = (ListBox)d;
             lb.UnselectAll();

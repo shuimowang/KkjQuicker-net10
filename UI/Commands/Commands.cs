@@ -58,7 +58,7 @@ namespace KkjQuicker.UI.Commands
         /// TaskExtensions.UnhandledExceptionHandler = ex => Logger.Error(ex);
         /// </code>
         /// </remarks>
-        public static Action<Exception> UnhandledExceptionHandler;
+        public static Action<Exception> UnhandledExceptionHandler = null!;
 
         /// <summary>
         /// 以安全方式忽略任务结果（fire-and-forget）。
@@ -123,7 +123,7 @@ namespace KkjQuicker.UI.Commands
         /// <summary>
         /// 当命令的可执行状态发生变化时发生。
         /// </summary>
-        public event EventHandler CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged;
 
         /// <summary>
         /// 确定命令当前是否可执行。

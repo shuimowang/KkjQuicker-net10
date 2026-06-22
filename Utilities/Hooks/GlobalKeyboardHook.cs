@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Utilities.Hooks.Interop;
+using KkjQuicker.Utilities.Hooks.Interop;
 using KkjQuicker.Utilities.Win32;
 using System;
 using System.Diagnostics;
@@ -35,7 +35,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// 事件处理程序可通过设置 <see cref="KeyboardHookEventArgs.Handled"/> 为 <c>true</c>
         /// 来拦截当前按键消息，使其不再传递给后续 Hook 或目标窗口。
         /// </remarks>
-        public event EventHandler<KeyboardHookEventArgs> KeyboardEvent;
+        public event EventHandler<KeyboardHookEventArgs>? KeyboardEvent;
 
         /// <summary>
         /// 初始化一个全局低级键盘 Hook。

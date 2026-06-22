@@ -13,10 +13,10 @@ namespace KkjQuicker.Net.WebSockets
     public sealed class WebSocketClientOptions
     {
         /// <summary>服务器地址（ws:// 或 wss://）。</summary>
-        public string Url { get; set; }
+        public string Url { get; set; } = null!;
 
         /// <summary>自定义 HTTP 请求头，常用于传递 Token / API Key。</summary>
-        public Dictionary<string, string> Headers { get; set; }
+        public Dictionary<string, string>? Headers { get; set; } = null!;
 
         /// <summary>Keep-Alive 间隔，Zero 表示禁用。默认 30 秒。</summary>
         public TimeSpan KeepAliveInterval { get; set; }
@@ -31,7 +31,7 @@ namespace KkjQuicker.Net.WebSockets
         public TimeSpan ConnectTimeout { get; set; }
 
         /// <summary>自动重连配置，null 表示禁用。</summary>
-        public WebSocketReconnectOptions Reconnect { get; set; }
+        public WebSocketReconnectOptions? Reconnect { get; set; }
 
         public WebSocketClientOptions()
         {
@@ -88,10 +88,10 @@ namespace KkjQuicker.Net.WebSockets
         private readonly Uri _uri;
         private readonly WebSocketClientOptions _options;
 
-        private ClientWebSocket _socket;
-        private CancellationTokenSource _receiveCts;
-        private CancellationTokenSource _reconnectCts;
-        private Task _receiveTask;
+        private ClientWebSocket? _socket = null!;
+        private CancellationTokenSource? _receiveCts = null!;
+        private CancellationTokenSource? _reconnectCts = null!;
+        private Task? _receiveTask = null!;
 
         private volatile bool _disposed;
         private volatile bool _manualDisconnect;
@@ -100,15 +100,15 @@ namespace KkjQuicker.Net.WebSockets
         private int _reconnectAttempts;
 
         /// <summary>收到完整文本消息时发生。</summary>
-        public event EventHandler<string> TextMessageReceived;
+        public event EventHandler<string>? TextMessageReceived;
         /// <summary>收到完整二进制消息时发生。</summary>
-        public event EventHandler<byte[]> BinaryMessageReceived;
+        public event EventHandler<byte[]>? BinaryMessageReceived;
         /// <summary>连接状态文本变化时发生。</summary>
-        public event EventHandler<string> StateChanged;
+        public event EventHandler<string>? StateChanged;
         /// <summary>发生错误时发生。</summary>
-        public event EventHandler<Exception> Error;
+        public event EventHandler<Exception>? Error;
         /// <summary>连接断开时发生。</summary>
-        public event EventHandler Disconnected;
+        public event EventHandler? Disconnected;
 
         /// <summary>当前 WebSocket 状态。</summary>
         public WebSocketState State
@@ -153,7 +153,7 @@ namespace KkjQuicker.Net.WebSockets
             _uri = new Uri(options.Url, UriKind.Absolute);
         }
 
-        public ReliableWebSocketClient(string url, Dictionary<string, string> headers = null)
+        public ReliableWebSocketClient(string url, Dictionary<string, string>? headers = null)
             : this(new WebSocketClientOptions { Url = url, Headers = headers }) { }
 
         // ── 公共 API ──────────────────────────────────────────────────────────
@@ -181,9 +181,9 @@ namespace KkjQuicker.Net.WebSockets
         {
             if (_disposed) return;
 
-            ClientWebSocket socket;
-            CancellationTokenSource receiveCts;
-            Task receiveTask;
+            ClientWebSocket? socket;
+            CancellationTokenSource? receiveCts;
+            Task? receiveTask;
 
             lock (_syncRoot)
             {
@@ -626,7 +626,7 @@ namespace KkjQuicker.Net.WebSockets
         private void OnDisconnected() =>
             SafeRaise(Disconnected, EventArgs.Empty);
 
-        private void SafeRaise(EventHandler handler, EventArgs args)
+        private void SafeRaise(EventHandler? handler, EventArgs args)
         {
             if (handler == null)
                 return;
@@ -644,7 +644,7 @@ namespace KkjQuicker.Net.WebSockets
             }
         }
 
-        private void SafeRaise<T>(EventHandler<T> handler, T args)
+        private void SafeRaise<T>(EventHandler<T>? handler, T args)
         {
             if (handler == null)
                 return;

@@ -267,7 +267,7 @@ namespace KkjQuicker.Overlay.Engine
         /// 当 <see cref="OwnerBounds"/> 更新时触发。
         /// <para>供图层订阅，以响应 Owner 位置或尺寸变化。</para>
         /// </summary>
-        public event EventHandler OwnerBoundsChanged;
+        public event EventHandler? OwnerBoundsChanged;
 
         internal void UpdateOwnerBounds(Rect rect)
         {
@@ -618,7 +618,7 @@ namespace KkjQuicker.Overlay.Engine
             host.BecameVisible -= Host_BecameVisible;
         }
 
-        private void Host_PreviewKeyDown(object sender, KeyEventArgs e)
+        private void Host_PreviewKeyDown(object? sender, KeyEventArgs e)
         {
             if (!CanRouteKeyboardInput())
                 return;
@@ -626,7 +626,7 @@ namespace KkjQuicker.Overlay.Engine
             _inputRouter.DispatchKeyDown(e);
         }
 
-        private void Host_PreviewKeyUp(object sender, KeyEventArgs e)
+        private void Host_PreviewKeyUp(object? sender, KeyEventArgs e)
         {
             if (!CanRouteKeyboardInput())
                 return;
@@ -634,7 +634,7 @@ namespace KkjQuicker.Overlay.Engine
             _inputRouter.DispatchKeyUp(e);
         }
 
-        private void Host_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        private void Host_PreviewMouseDown(object? sender, MouseButtonEventArgs e)
         {
             if (!CanRouteMouseInput())
                 return;
@@ -642,7 +642,7 @@ namespace KkjQuicker.Overlay.Engine
             _inputRouter.DispatchMouseDown(e);
         }
 
-        private void Host_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        private void Host_PreviewMouseUp(object? sender, MouseButtonEventArgs e)
         {
             if (!CanRouteMouseInput())
                 return;
@@ -650,7 +650,7 @@ namespace KkjQuicker.Overlay.Engine
             _inputRouter.DispatchMouseUp(e);
         }
 
-        private void Host_PreviewMouseMove(object sender, MouseEventArgs e)
+        private void Host_PreviewMouseMove(object? sender, MouseEventArgs e)
         {
             if (!CanRouteMouseInput())
                 return;
@@ -658,7 +658,7 @@ namespace KkjQuicker.Overlay.Engine
             _inputRouter.DispatchMouseMove(e);
         }
 
-        private void Host_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        private void Host_PreviewMouseWheel(object? sender, MouseWheelEventArgs e)
         {
             if (!CanRouteWheelInput())
                 return;
@@ -666,7 +666,7 @@ namespace KkjQuicker.Overlay.Engine
             _inputRouter.DispatchMouseWheel(e);
         }
 
-        private void Host_BecameVisible(object sender, EventArgs e)
+        private void Host_BecameVisible(object? sender, EventArgs e)
         {
             if (!_options.AutoFocus || !CanRouteKeyboardInput())
                 return;
@@ -721,12 +721,12 @@ namespace KkjQuicker.Overlay.Engine
             owner.Closed -= OnOwnerClosed;
         }
 
-        private void OnOwnerClosed(object sender, EventArgs e)
+        private void OnOwnerClosed(object? sender, EventArgs e)
         {
             Dispose();
         }
 
-        private void OnOwnerChanged(object sender, EventArgs e)
+        private void OnOwnerChanged(object? sender, EventArgs e)
         {
             ScheduleSyncToOwner();
         }
@@ -947,7 +947,7 @@ namespace KkjQuicker.Overlay.Engine
         public event MouseButtonEventHandler PreviewMouseUp;
         public event MouseEventHandler PreviewMouseMove;
         public event MouseWheelEventHandler PreviewMouseWheel;
-        public event EventHandler BecameVisible;
+        public event EventHandler? BecameVisible;
 
         public void SetBounds(Rect bounds)
         {
@@ -1058,28 +1058,28 @@ namespace KkjQuicker.Overlay.Engine
             window.SourceInitializedCompleted -= OnSourceInitializedCompletedInternal;
         }
 
-        private void OnPreviewKeyDownInternal(object sender, KeyEventArgs e)
+        private void OnPreviewKeyDownInternal(object? sender, KeyEventArgs e)
             => PreviewKeyDown?.Invoke(this, e);
 
-        private void OnPreviewKeyUpInternal(object sender, KeyEventArgs e)
+        private void OnPreviewKeyUpInternal(object? sender, KeyEventArgs e)
             => PreviewKeyUp?.Invoke(this, e);
 
-        private void OnPreviewMouseDownInternal(object sender, MouseButtonEventArgs e)
+        private void OnPreviewMouseDownInternal(object? sender, MouseButtonEventArgs e)
             => PreviewMouseDown?.Invoke(this, e);
 
-        private void OnPreviewMouseUpInternal(object sender, MouseButtonEventArgs e)
+        private void OnPreviewMouseUpInternal(object? sender, MouseButtonEventArgs e)
             => PreviewMouseUp?.Invoke(this, e);
 
-        private void OnPreviewMouseMoveInternal(object sender, MouseEventArgs e)
+        private void OnPreviewMouseMoveInternal(object? sender, MouseEventArgs e)
             => PreviewMouseMove?.Invoke(this, e);
 
-        private void OnPreviewMouseWheelInternal(object sender, MouseWheelEventArgs e)
+        private void OnPreviewMouseWheelInternal(object? sender, MouseWheelEventArgs e)
             => PreviewMouseWheel?.Invoke(this, e);
 
-        private void OnBecameVisibleInternal(object sender, EventArgs e)
+        private void OnBecameVisibleInternal(object? sender, EventArgs e)
             => BecameVisible?.Invoke(this, EventArgs.Empty);
 
-        private void OnSourceInitializedCompletedInternal(object sender, EventArgs e)
+        private void OnSourceInitializedCompletedInternal(object? sender, EventArgs e)
             => ApplyWindowStyles();
 
         private sealed class HostWindow : Window
@@ -1110,8 +1110,8 @@ namespace KkjQuicker.Overlay.Engine
 
             public Grid Root { get; private set; }
 
-            public event EventHandler BecameVisible;
-            public event EventHandler SourceInitializedCompleted;
+            public event EventHandler? BecameVisible;
+            public event EventHandler? SourceInitializedCompleted;
 
             protected override void OnSourceInitialized(EventArgs e)
             {
@@ -1159,7 +1159,7 @@ namespace KkjQuicker.Overlay.Engine
                 WindowHelper.SetTopMost(hwnd, true, noActivate: true, showIfHidden: false);
             }
 
-            private void OnIsVisibleChangedInternal(object sender, DependencyPropertyChangedEventArgs e)
+            private void OnIsVisibleChangedInternal(object? sender, DependencyPropertyChangedEventArgs e)
             {
                 if (!(bool)e.NewValue)
                     return;
@@ -1180,16 +1180,16 @@ namespace KkjQuicker.Overlay.Engine
         private long _seq;
         private Rect _ownerBounds;
 
-        private List<IOverlayInputLayer> _inputSnapshot;
+        private List<IOverlayInputLayer> _inputSnapshot = null!;
         private bool _inputSnapshotDirty = true;
 
         private sealed class LayerEntry
         {
-            public IOverlayLayer Layer;
-            public UIElement View;
+            public IOverlayLayer Layer = null!;
+            public UIElement View = null!;
             public int Priority;
             public long Seq;
-            public OverlayContext Context;
+            public OverlayContext Context = null!;
         }
 
         public int Count

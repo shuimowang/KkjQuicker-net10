@@ -806,7 +806,7 @@ namespace KkjQuicker.Overlay.Applications
                 _view.ClearBounds();
             }
 
-            private void OnOwnerBoundsChanged(object sender, EventArgs e)
+            private void OnOwnerBoundsChanged(object? sender, EventArgs e)
             {
                 _host.ApplyLayout();
             }

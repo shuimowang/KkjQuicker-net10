@@ -584,7 +584,7 @@ namespace KkjQuicker.Utilities.History
 
         private void RaiseChanged(HistoryChangeKind kind)
         {
-            EventHandler<HistoryChangedEventArgs> handler = HistoryChanged;
+            EventHandler<HistoryChangedEventArgs>? handler = HistoryChanged;
             if (handler == null)
                 return;
 

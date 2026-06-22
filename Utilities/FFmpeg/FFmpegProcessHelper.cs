@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -149,7 +149,7 @@ namespace KkjQuicker.Utilities.FFmpeg
                 var stderrClosed = new TaskCompletionSource<bool>();
                 var processExited = new TaskCompletionSource<bool>();
 
-                process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                process.OutputDataReceived += delegate (object? sender, DataReceivedEventArgs e)
                 {
                     if (e.Data == null)
                     {
@@ -166,7 +166,7 @@ namespace KkjQuicker.Utilities.FFmpeg
                         outputDataReceived(e.Data);
                 };
 
-                process.ErrorDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                process.ErrorDataReceived += delegate (object? sender, DataReceivedEventArgs e)
                 {
                     if (e.Data == null)
                     {
@@ -264,13 +264,13 @@ namespace KkjQuicker.Utilities.FFmpeg
             var process = new Process();
             process.StartInfo = CreateStartInfo(ffmpegExePath, arguments, workingDirectory);
 
-            process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
+            process.OutputDataReceived += delegate (object? sender, DataReceivedEventArgs e)
             {
                 if (e.Data != null && outputDataReceived != null)
                     outputDataReceived(e.Data);
             };
 
-            process.ErrorDataReceived += delegate (object sender, DataReceivedEventArgs e)
+            process.ErrorDataReceived += delegate (object? sender, DataReceivedEventArgs e)
             {
                 if (e.Data != null && errorDataReceived != null)
                     errorDataReceived(e.Data);

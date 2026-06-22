@@ -134,7 +134,7 @@ namespace KkjQuicker.Utilities
         /// 可选的 <see cref="JsonSerializerSettings"/>；为 <see langword="null"/> 时使用 Newtonsoft.Json 默认设置。
         /// </param>
         /// <returns>反序列化结果；若读取或解析失败则返回 <paramref name="defaultValue"/>。</returns>
-        public static T ReadJson<T>(string path, T defaultValue, JsonSerializerSettings settings = null)
+        public static T ReadJson<T>(string path, T defaultValue, JsonSerializerSettings? settings = null)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
                 return defaultValue;
@@ -145,7 +145,7 @@ namespace KkjQuicker.Utilities
                 if (string.IsNullOrWhiteSpace(json))
                     return defaultValue;
 
-                T value = JsonConvert.DeserializeObject<T>(json, settings);
+                T? value = JsonConvert.DeserializeObject<T>(json, settings);
                 return object.Equals(value, null) ? defaultValue : value!;
             }
             catch
@@ -168,7 +168,7 @@ namespace KkjQuicker.Utilities
         /// 若 <paramref name="path"/> 为空白，则不执行任何操作。
         /// 序列化或写入失败时异常会向上抛出，由调用方处理。
         /// </remarks>
-        public static void WriteJson<T>(string path, T value, bool indented = true, JsonSerializerSettings settings = null)
+        public static void WriteJson<T>(string path, T value, bool indented = true, JsonSerializerSettings? settings = null)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return;
@@ -451,7 +451,7 @@ namespace KkjQuicker.Utilities
             if (!string.Equals(fileNameOnly, newFileName, StringComparison.Ordinal))
                 return filePath;
 
-            string directory = Path.GetDirectoryName(filePath);
+            string? directory = Path.GetDirectoryName(filePath);
             string destinationPath = Path.Combine(directory ?? string.Empty, fileNameOnly);
 
             if (string.Equals(filePath, destinationPath, StringComparison.OrdinalIgnoreCase))

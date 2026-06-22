@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Overlay.Engine;
+using KkjQuicker.Overlay.Engine;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,7 +19,7 @@ namespace KkjQuicker.Overlay.Layers
         private readonly Grid _view;
         private readonly double _cycleSeconds;
         private bool _animationStarted;
-        private Storyboard _storyboard;
+        private Storyboard? _storyboard;
 
         /// <summary>
         /// 获取该图层的建议优先级。
@@ -74,7 +74,7 @@ namespace KkjQuicker.Overlay.Layers
             }
             else
             {
-                RoutedEventHandler handler = null;
+                RoutedEventHandler? handler = null;
                 handler = (s, e) =>
                 {
                     _view.Loaded -= handler;

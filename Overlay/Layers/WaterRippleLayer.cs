@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Overlay.Engine;
+using KkjQuicker.Overlay.Engine;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -40,7 +40,7 @@ namespace KkjQuicker.Overlay.Layers
         /// 所有波纹圆环动画播完后在 UI 线程触发。
         /// <para>典型用法：在此事件中调用 <c>engine.Dispose()</c> 以自动释放资源。</para>
         /// </summary>
-        public event EventHandler AnimationCompleted;
+        public event EventHandler? AnimationCompleted;
 
         /// <summary>
         /// 初始化水波纹通知图层。

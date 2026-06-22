@@ -216,9 +216,9 @@ namespace KkjQuicker.Overlay.Layers
             if (e.Key == Key.Escape) { CompleteCanceled(); e.Handled = true; }
         }
 
-        private void OnViewAccepted(object sender, BitmapSource bmp) => CompleteAccepted(bmp);
-        private void OnViewCanceled(object sender, EventArgs e) => CompleteCanceled();
-        private void OnViewCloseRequested(object sender, EventArgs e) => CompleteClosedWithoutCancel();
+        private void OnViewAccepted(object? sender, BitmapSource bmp) => CompleteAccepted(bmp);
+        private void OnViewCanceled(object? sender, EventArgs e) => CompleteCanceled();
+        private void OnViewCloseRequested(object? sender, EventArgs e) => CompleteClosedWithoutCancel();
 
         private void CompleteAccepted(BitmapSource bmp)
         {
@@ -265,8 +265,8 @@ namespace KkjQuicker.Overlay.Layers
     /// </summary>
     public sealed class EditorView : Canvas
     {
-        public event EventHandler<BitmapSource> Accepted;
-        public event EventHandler Canceled;
+        public event EventHandler<BitmapSource>? Accepted;
+        public event EventHandler? Canceled;
         internal event EventHandler CloseRequested;
 
         public enum EditTool { None, Pen, Rectangle, Arrow, Text, Number, Mosaic }
@@ -895,7 +895,7 @@ namespace KkjQuicker.Overlay.Layers
             return text + key;
         }
 
-        private void OnKeyDown(object sender, KeyEventArgs e)
+        private void OnKeyDown(object? sender, KeyEventArgs e)
         {
             if (Keyboard.FocusedElement is TextBox) return;
 
@@ -909,7 +909,7 @@ namespace KkjQuicker.Overlay.Layers
             if (TryHandleExtraToolbarShortcut(e)) e.Handled = true;
         }
 
-        private void OnMouseDown(object sender, MouseButtonEventArgs e)
+        private void OnMouseDown(object? sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left) return;
             Focus();
@@ -942,7 +942,7 @@ namespace KkjQuicker.Overlay.Layers
             }
         }
 
-        private void OnMouseMove(object sender, MouseEventArgs e)
+        private void OnMouseMove(object? sender, MouseEventArgs e)
         {
             if (_interactionMode == InteractionMode.ResizingSelection) return;
             Point p = e.GetPosition(this);
@@ -960,7 +960,7 @@ namespace KkjQuicker.Overlay.Layers
             else if (_interactionMode == InteractionMode.Drawing) { UpdateDrawing(p); }
         }
 
-        private void OnMouseUp(object sender, MouseButtonEventArgs e)
+        private void OnMouseUp(object? sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Middle) { OnMouseMiddleButtonUp(sender, e); e.Handled = true; return; }
             if (e.ChangedButton != MouseButton.Left) return;
@@ -980,7 +980,7 @@ namespace KkjQuicker.Overlay.Layers
             }
         }
 
-        private void OnMouseMiddleButtonUp(object sender, MouseButtonEventArgs e)
+        private void OnMouseMiddleButtonUp(object? sender, MouseButtonEventArgs e)
         {
             if (_opt?.MiddleClickHandler == null) return;
             try { if (_opt.MiddleClickHandler(this)) e.Handled = true; }

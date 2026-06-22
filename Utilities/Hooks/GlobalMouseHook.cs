@@ -1,4 +1,4 @@
-﻿using KkjQuicker.Utilities.Hooks.Interop;
+using KkjQuicker.Utilities.Hooks.Interop;
 using KkjQuicker.Utilities.Win32;
 using System;
 using System.Diagnostics;
@@ -47,7 +47,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// 仅包含消息类型与坐标，不支持拦截。
         /// 适合高频追踪场景；如需拦截或完整数据，请使用 <see cref="MouseEvent"/>。
         /// </summary>
-        public event Action<MouseRawInfo> MouseRawEvent;
+        public event Action<MouseRawInfo>? MouseRawEvent;
 
         /// <summary>
         /// 当收到鼠标消息时发生（完整事件参数）。
@@ -56,7 +56,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// 事件处理程序可通过设置 <see cref="MouseHookEventArgs.Handled"/> 为 <c>true</c>
         /// 来拦截当前鼠标消息，使其不再传递给后续 Hook 或目标窗口。
         /// </remarks>
-        public event EventHandler<MouseHookEventArgs> MouseEvent;
+        public event EventHandler<MouseHookEventArgs>? MouseEvent;
 
         /// <summary>
         /// 初始化一个全局低级鼠标 Hook。

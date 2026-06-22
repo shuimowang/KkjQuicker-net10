@@ -23,7 +23,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
     /// </remarks>
     public sealed class AliyunRealtimeAsrOptions
     {
-        private string _language = "zh";
+        private string? _language = "zh";
         private double _vadThreshold = 0.0;
         private int _silenceDurationMs = 400;
         private int _maxQueuedAudioFrames = 200;
@@ -35,7 +35,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         /// <remarks>
         /// 常见值如：<c>zh</c>、<c>en</c>。为空时表示不显式指定语种。
         /// </remarks>
-        public string Language
+        public string? Language
         {
             get { return _language; }
             set { _language = string.IsNullOrWhiteSpace(value) ? null : value; }
@@ -178,9 +178,9 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         private bool _audioStarted;
         private bool _sessionUpdateSent;
         private bool _sessionUpdated;
-        private BlockingCollection<byte[]> _audioSendQueue;
-        private CancellationTokenSource _audioSendCts;
-        private Task _audioSendTask;
+        private BlockingCollection<byte[]>? _audioSendQueue;
+        private CancellationTokenSource? _audioSendCts;
+        private Task? _audioSendTask;
         private int _audioQueueOverflowNotified;
 
         /// <summary>
@@ -190,7 +190,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         /// 该事件用于显示当前识别中的预览文本，适合绑定到实时字幕或状态区域。
         /// 中间文本可能被后续结果修正，不建议直接作为最终输出持久化。
         /// </remarks>
-        public event EventHandler<string> PartialTranscriptReceived;
+        public event EventHandler<string>? PartialTranscriptReceived;
 
         /// <summary>
         /// 当收到最终识别文本时发生。
@@ -198,7 +198,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         /// <remarks>
         /// 该事件表示当前语音分段已经完成识别，适合追加到最终文本结果中。
         /// </remarks>
-        public event EventHandler<string> FinalTranscriptReceived;
+        public event EventHandler<string>? FinalTranscriptReceived;
 
         /// <summary>
         /// 当状态文本发生变化时发生。
@@ -206,7 +206,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         /// <remarks>
         /// 该事件主要用于日志、调试或 UI 提示，不建议将其作为严格的状态机信号来源。
         /// </remarks>
-        public event EventHandler<string> StatusChanged;
+        public event EventHandler<string>? StatusChanged;
 
         /// <summary>
         /// 当收到原始服务端文本消息时发生。
@@ -215,13 +215,13 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         /// 适合用于协议调试、日志记录或观察服务端返回结构。
         /// 正常业务逻辑通常不需要依赖该事件。
         /// </remarks>
-        public event EventHandler<string> RawMessageReceived;
+        public event EventHandler<string>? RawMessageReceived;
 
         /// <summary>当发生错误时发生。</summary>
-        public event EventHandler<Exception> ErrorOccurred;
+        public event EventHandler<Exception>? ErrorOccurred;
 
         /// <summary>当服务端返回 <c>session.finished</c> 时发生。</summary>
-        public event EventHandler SessionFinished;
+        public event EventHandler? SessionFinished;
 
         /// <summary>
         /// 获取当前是否处于运行状态。
@@ -249,7 +249,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         public AliyunRealtimeAsrClient(
             ReliableWebSocketClient webSocket,
             IAudioFrameSource audioSource,
-            AliyunRealtimeAsrOptions options = null)
+            AliyunRealtimeAsrOptions? options = null)
         {
             if (webSocket == null)
                 throw new ArgumentNullException(nameof(webSocket));
@@ -505,7 +505,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         {
             var format = _audioSource.OutputFormat;
 
-            object turnDetection = null;
+            object? turnDetection = null;
             if (_options.EnableServerVad)
             {
                 turnDetection = new
@@ -516,7 +516,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
                 };
             }
 
-            object inputAudioTranscription = null;
+            object? inputAudioTranscription = null;
             if (!string.IsNullOrWhiteSpace(_options.Language))
             {
                 inputAudioTranscription = new
@@ -537,13 +537,13 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
 
         // ── 私有：事件处理 ────────────────────────────────────────────────────
 
-        private void OnAudioFrameReady(object sender, byte[] pcm)
+        private void OnAudioFrameReady(object? sender, byte[] pcm)
         {
             if (pcm == null || pcm.Length == 0)
                 return;
 
             bool canSend;
-            BlockingCollection<byte[]> queue;
+            BlockingCollection<byte[]>? queue;
             lock (_syncRoot)
             {
                 canSend = _isRunning && !_isStopping && _sessionUpdated;
@@ -572,7 +572,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
             }
         }
 
-        private void OnWebSocketTextMessageReceived(object sender, string text)
+        private void OnWebSocketTextMessageReceived(object? sender, string text)
         {
             RaiseRawMessage(text);
 
@@ -700,13 +700,13 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
             });
         }
 
-        private void OnWebSocketStateChanged(object sender, string message) =>
+        private void OnWebSocketStateChanged(object? sender, string message) =>
             RaiseStatus(message);
 
-        private void OnWebSocketError(object sender, Exception ex) =>
+        private void OnWebSocketError(object? sender, Exception ex) =>
             RaiseError(ex);
 
-        private void OnWebSocketDisconnected(object sender, EventArgs e)
+        private void OnWebSocketDisconnected(object? sender, EventArgs e)
         {
             StopAudioCapture();
             CancelAudioSendWorker();
@@ -717,7 +717,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
             RaiseStatus("WebSocket 已断开。");
         }
 
-        private void OnAudioSourceError(object sender, Exception ex) =>
+        private void OnAudioSourceError(object? sender, Exception ex) =>
             RaiseError(ex);
 
         // ── 私有：音频采集控制 ────────────────────────────────────────────────
@@ -802,9 +802,9 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
 
         private async Task DrainAudioSendQueueAsync(CancellationToken cancellationToken)
         {
-            BlockingCollection<byte[]> queue;
-            CancellationTokenSource cts;
-            Task task;
+            BlockingCollection<byte[]>? queue;
+            CancellationTokenSource? cts;
+            Task? task;
 
             lock (_syncRoot)
             {
@@ -850,9 +850,9 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
 
         private void CancelAudioSendWorker()
         {
-            BlockingCollection<byte[]> queue;
-            CancellationTokenSource cts;
-            Task task;
+            BlockingCollection<byte[]>? queue;
+            CancellationTokenSource? cts;
+            Task? task;
 
             lock (_syncRoot)
             {
@@ -957,12 +957,12 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
             return _webSocket.SendTextAsync(json, cancellationToken);
         }
 
-        private static string ReadString(JToken token, params string[] path)
+        private static string? ReadString(JToken token, params string[] path)
         {
             if (token == null || path == null || path.Length == 0)
                 return null;
 
-            JToken current = token;
+            JToken? current = token;
             for (int i = 0; i < path.Length; i++)
             {
                 if (current == null)
@@ -1012,7 +1012,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
             SafeRaise(SessionFinished, EventArgs.Empty);
         }
 
-        private void SafeRaise(EventHandler<string> handler, string value)
+        private void SafeRaise(EventHandler<string>? handler, string value)
         {
             if (handler == null)
                 return;
@@ -1024,7 +1024,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
             }
         }
 
-        private void SafeRaise(EventHandler handler, EventArgs args)
+        private void SafeRaise(EventHandler? handler, EventArgs args)
         {
             if (handler == null)
                 return;
@@ -1036,7 +1036,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
             }
         }
 
-        private void SafeRaise<T>(EventHandler<T> handler, T args)
+        private void SafeRaise<T>(EventHandler<T>? handler, T args)
         {
             if (handler == null)
                 return;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -18,7 +18,7 @@ namespace KkjQuicker.AI.OpenAI.Models
         /// <summary>消息正文。</summary>
         public string Content { get; }
 
-        private ChatMessage(string role, string content)
+        private ChatMessage(string role, string? content)
         {
             if (string.IsNullOrWhiteSpace(role))
                 throw new ArgumentException("Role 不能为空白。", nameof(role));
@@ -43,7 +43,7 @@ namespace KkjQuicker.AI.OpenAI.Models
         }
 
         /// <summary>仅供反序列化使用,对缺失的 role 给出兜底默认值,避免污染调用方异常路径。</summary>
-        internal static ChatMessage FromDeserialization(string role, string content)
+        internal static ChatMessage FromDeserialization(string? role, string? content)
         {
             return new ChatMessage(
                 string.IsNullOrWhiteSpace(role) ? "assistant" : role,
@@ -58,17 +58,17 @@ namespace KkjQuicker.AI.OpenAI.Models
             return objectType == typeof(ChatMessage);
         }
 
-        public override object ReadJson(
+        public override object? ReadJson(
             JsonReader reader,
             Type objectType,
-            object existingValue,
+            object? existingValue,
             JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.Null)
                 return null;
 
-            string role = null;
-            string content = null;
+            string? role = null;
+            string? content = null;
 
             while (reader.Read())
             {
@@ -78,7 +78,7 @@ namespace KkjQuicker.AI.OpenAI.Models
                 if (reader.TokenType != JsonToken.PropertyName)
                     continue;
 
-                string name = reader.Value as string;
+                string? name = reader.Value as string;
                 reader.Read();
 
                 if (string.Equals(name, "role", StringComparison.OrdinalIgnoreCase))
@@ -99,9 +99,9 @@ namespace KkjQuicker.AI.OpenAI.Models
             return ChatMessage.FromDeserialization(role, content);
         }
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+        public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {
-            ChatMessage m = (ChatMessage)value;
+            ChatMessage m = (ChatMessage)value!;
 
             writer.WriteStartObject();
 
@@ -121,16 +121,16 @@ namespace KkjQuicker.AI.OpenAI.Models
     public sealed class ChatResponse
     {
         [JsonProperty("id")]
-        public string Id { get; set; }
+        public string Id { get; set; } = null!;
 
         [JsonProperty("choices")]
-        public List<ChatResponseChoice> Choices { get; set; }
+        public List<ChatResponseChoice> Choices { get; set; } = null!;
 
         [JsonProperty("usage")]
-        public TokenUsage Usage { get; set; }
+        public TokenUsage Usage { get; set; } = null!;
 
         /// <summary>快捷获取首条回复文本，无有效消息时返回 null。</summary>
-        public string Content
+        public string? Content
         {
             get
             {
@@ -144,10 +144,10 @@ namespace KkjQuicker.AI.OpenAI.Models
     public sealed class ChatResponseChoice
     {
         [JsonProperty("message")]
-        public ChatMessage Message { get; set; }
+        public ChatMessage Message { get; set; } = null!;
 
         [JsonProperty("finish_reason")]
-        public string FinishReason { get; set; }
+        public string FinishReason { get; set; } = null!;
     }
 
     public sealed class TokenUsage
@@ -167,26 +167,26 @@ namespace KkjQuicker.AI.OpenAI.Models
     internal sealed class OpenAiChatStreamChunk
     {
         [JsonProperty("choices")]
-        public List<StreamChoice> Choices { get; set; }
+        public List<StreamChoice> Choices { get; set; } = null!;
     }
 
     internal sealed class StreamChoice
     {
         [JsonProperty("delta")]
-        public StreamDelta Delta { get; set; }
+        public StreamDelta Delta { get; set; } = null!;
 
         [JsonProperty("finish_reason")]
-        public string FinishReason { get; set; }
+        public string FinishReason { get; set; } = null!;
     }
 
     internal sealed class StreamDelta
     {
         [JsonProperty("content")]
-        public string Content { get; set; }
+        public string Content { get; set; } = null!;
 
         // 一些兼容服务可能会返回 reasoning_content。
         // 当前客户端仍只把 content 作为正式回复输出。
         [JsonProperty("reasoning_content")]
-        public string ReasoningContent { get; set; }
+        public string ReasoningContent { get; set; } = null!;
     }
 }

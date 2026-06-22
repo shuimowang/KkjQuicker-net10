@@ -712,13 +712,13 @@ namespace KkjQuicker.Overlay.Applications
 
         #region 事件处理
 
-        private void OnSidebarClosed(object sender, EventArgs e)
+        private void OnSidebarClosed(object? sender, EventArgs e)
         {
             _sidebarWindowClosed = true;
             Dispose();
         }
 
-        private void OnFallbackTick(object sender, EventArgs e)
+        private void OnFallbackTick(object? sender, EventArgs e)
         {
             if (!_isActive || _disposed) return;
 

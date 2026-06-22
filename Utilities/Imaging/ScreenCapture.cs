@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -31,7 +31,8 @@ namespace KkjQuicker.Utilities.Imaging
         /// </summary>
         public static Bitmap CapturePrimaryScreen()
         {
-            var screen = System.Windows.Forms.Screen.PrimaryScreen;
+            var screen = System.Windows.Forms.Screen.PrimaryScreen
+                ?? throw new InvalidOperationException("No primary screen available.");
             return CaptureScreenBounds(screen.Bounds);
         }
 

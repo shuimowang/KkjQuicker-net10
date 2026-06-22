@@ -52,7 +52,7 @@ namespace KkjQuicker.UI.Controls
                     FrameworkPropertyMetadataOptions.AffectsMeasure,
                     OnLayoutPropertyChanged));
 
-        private ItemsControl _itemsControl;
+        private ItemsControl _itemsControl = null!;
         private Size _extent;
         private Size _viewport;
         private Point _offset;
@@ -148,7 +148,7 @@ namespace KkjQuicker.UI.Controls
             _itemsControl = ItemsControl.GetItemsOwner(this);
         }
 
-        protected override void OnItemsChanged(object sender, ItemsChangedEventArgs args)
+        protected override void OnItemsChanged(object? sender, ItemsChangedEventArgs args)
         {
             base.OnItemsChanged(sender, args);
             InvalidateMeasure();
