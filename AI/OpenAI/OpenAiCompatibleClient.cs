@@ -25,6 +25,7 @@ namespace KkjQuicker.AI.OpenAI
     public sealed class OpenAiCompatibleClient : IDisposable
     {
         private readonly HttpClient _http;
+        private readonly bool _ownsHttpClient;
         private readonly string _url;
         private readonly string _key;
         private readonly string _model;
@@ -34,13 +35,13 @@ namespace KkjQuicker.AI.OpenAI
         /// <summary>每个 Session 最大保留消息条数，0 表示不保留历史。</summary>
         public int MaxSessionMessages
         {
-            get { return _sessions.MaxMessages; }
+            get => _sessions.MaxMessages;
             set { _sessions.MaxMessages = value; }
         }
 
         /// <param name="client">
         /// 可选的 <see cref="HttpClient"/> 实例。
-        /// 传入 <see langword="null"/> 时使用 <see cref="HttpClients.Default"/>（进程级共享实例）。
+        /// 传入 <see langword="null"/> 时创建一个由本客户端持有并在 <see cref="Dispose"/> 中释放的实例。
         /// 传入的实例生命周期由调用方管理，本类 <see cref="Dispose"/> 不会释放它。
         /// </param>
         public OpenAiCompatibleClient(
@@ -61,7 +62,8 @@ namespace KkjQuicker.AI.OpenAI
             _url = NormalizeChatCompletionsUrl(apiUrl);
             _key = apiKey.Trim();
             _model = model.Trim();
-            _http = client ?? HttpClients.Default;
+            _http = client ?? HttpClients.Create();
+            _ownsHttpClient = client == null;
         }
 
         // ── 公共 API ──────────────────────────────────────────────────────────
@@ -84,6 +86,26 @@ namespace KkjQuicker.AI.OpenAI
             Action<string> onChunk,
             CancellationToken token = default(CancellationToken))
         {
+            ArgumentNullException.ThrowIfNull(onChunk);
+
+            return ChatStreamAsync(
+                prompt,
+                chunk =>
+                {
+                    onChunk(chunk);
+                    return Task.CompletedTask;
+                },
+                token);
+        }
+
+        /// <summary>发送一次流式对话请求，按增量片段异步回调输出。</summary>
+        public Task ChatStreamAsync(
+            string prompt,
+            Func<string, Task> onChunk,
+            CancellationToken token = default(CancellationToken))
+        {
+            ArgumentNullException.ThrowIfNull(onChunk);
+
             if (string.IsNullOrWhiteSpace(prompt))
                 throw new ArgumentException("Prompt 不能为空白。", nameof(prompt));
 
@@ -106,7 +128,7 @@ namespace KkjQuicker.AI.OpenAI
                 .SendAsync(req, HttpCompletionOption.ResponseContentRead, token)
                 .ConfigureAwait(false))
             {
-                string raw = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                string raw = await resp.Content.ReadAsStringAsync(token).ConfigureAwait(false);
 
                 if (!resp.IsSuccessStatusCode)
                     throw MakeException(resp, raw);
@@ -129,15 +151,32 @@ namespace KkjQuicker.AI.OpenAI
             Action<string> onChunk,
             CancellationToken token = default(CancellationToken))
         {
-            if (onChunk == null)
-                throw new ArgumentNullException(nameof(onChunk));
+            ArgumentNullException.ThrowIfNull(onChunk);
+
+            await ChatStreamAsync(
+                request,
+                chunk =>
+                {
+                    onChunk(chunk);
+                    return Task.CompletedTask;
+                },
+                token).ConfigureAwait(false);
+        }
+
+        /// <summary>发送一次流式对话请求，按增量片段异步回调输出。</summary>
+        public async Task ChatStreamAsync(
+            ChatRequest request,
+            Func<string, Task> onChunk,
+            CancellationToken token = default(CancellationToken))
+        {
+            ArgumentNullException.ThrowIfNull(onChunk);
 
             Validate(request);
             ThrowIfDisposed();
 
             IList<object> messages = BuildMessages(request);
             RequestDto dto = BuildDto(request, messages, true);
-            StringBuilder buf = new StringBuilder(512);
+            StringBuilder buf = new(512);
 
             using (HttpRequestMessage req = MakeRequest(dto))
             using (HttpResponseMessage resp = await _http
@@ -146,13 +185,13 @@ namespace KkjQuicker.AI.OpenAI
             {
                 if (!resp.IsSuccessStatusCode)
                 {
-                    string err = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    string err = await resp.Content.ReadAsStringAsync(token).ConfigureAwait(false);
                     throw MakeException(resp, err);
                 }
 
                 await SseStreamReader.ReadAsync(
                     resp,
-                    payload =>
+                    async payload =>
                     {
                         if (string.IsNullOrWhiteSpace(payload))
                             return;
@@ -182,7 +221,7 @@ namespace KkjQuicker.AI.OpenAI
                         if (!string.IsNullOrEmpty(text))
                         {
                             buf.Append(text);
-                            onChunk(text);
+                            await onChunk(text).ConfigureAwait(false);
                         }
                     },
                     token).ConfigureAwait(false);
@@ -213,7 +252,11 @@ namespace KkjQuicker.AI.OpenAI
         public void Dispose()
         {
             if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
+            {
                 _sessions.Clear();
+                if (_ownsHttpClient)
+                    _http.Dispose();
+            }
         }
 
         // ── 私有辅助 ──────────────────────────────────────────────────────────
@@ -226,8 +269,7 @@ namespace KkjQuicker.AI.OpenAI
 
         private static void Validate(ChatRequest r)
         {
-            if (r == null)
-                throw new ArgumentNullException(nameof(r));
+            ArgumentNullException.ThrowIfNull(r);
 
             if (!string.IsNullOrWhiteSpace(r.SessionId) && r.History != null)
                 throw new ArgumentException(
@@ -243,18 +285,16 @@ namespace KkjQuicker.AI.OpenAI
         }
 
         private static bool ShouldSave(ChatRequest r)
-        {
-            return !string.IsNullOrWhiteSpace(r.SessionId) &&
-                   r.RawMessages == null &&
-                   !string.IsNullOrWhiteSpace(r.Prompt);
-        }
+            => !string.IsNullOrWhiteSpace(r.SessionId) &&
+               r.RawMessages == null &&
+               !string.IsNullOrWhiteSpace(r.Prompt);
 
         private IList<object> BuildMessages(ChatRequest r)
         {
             if (r.RawMessages != null)
                 return r.RawMessages.ToList();
 
-            List<object> list = new List<object>();
+            List<object> list = [];
 
             if (!string.IsNullOrWhiteSpace(r.SystemPrompt))
                 list.Add(ChatMessage.System(r.SystemPrompt));
@@ -330,9 +370,12 @@ namespace KkjQuicker.AI.OpenAI
                 throw new ArgumentException("API 地址不能为空白。", nameof(apiUrl));
 
             string url = apiUrl.Trim();
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) ||
+                (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+                throw new ArgumentException("API 地址必须是 http:// 或 https:// 绝对地址。", nameof(apiUrl));
 
             while (url.EndsWith("/", StringComparison.Ordinal))
-                url = url.Substring(0, url.Length - 1);
+                url = url[..^1];
 
             if (url.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase))
                 return url;
@@ -343,10 +386,7 @@ namespace KkjQuicker.AI.OpenAI
         private static HttpRequestException MakeException(HttpResponseMessage r, string body)
         {
             return new HttpRequestException(
-                "[" + (int)r.StatusCode + "] " +
-                r.ReasonPhrase +
-                Environment.NewLine +
-                body);
+                $"[{(int)r.StatusCode}] {r.ReasonPhrase}{Environment.NewLine}{body}");
         }
 
         // ── 私有嵌套：请求 DTO ────────────────────────────────────────────────
@@ -387,13 +427,13 @@ namespace KkjQuicker.AI.OpenAI
         private sealed class SessionStore
         {
             private readonly ConcurrentDictionary<string, List<ChatMessage>> _store =
-                new ConcurrentDictionary<string, List<ChatMessage>>();
+                new();
 
             private int _max = 50;
 
             public int MaxMessages
             {
-                get { return Volatile.Read(ref _max); }
+                get => Volatile.Read(ref _max);
                 set
                 {
                     if (value < 0)
@@ -406,7 +446,7 @@ namespace KkjQuicker.AI.OpenAI
             public IReadOnlyList<ChatMessage> Get(string id)
             {
                 if (string.IsNullOrWhiteSpace(id))
-                    return Array.Empty<ChatMessage>();
+                    return [];
 
                 List<ChatMessage>? h;
 
@@ -418,7 +458,7 @@ namespace KkjQuicker.AI.OpenAI
                     }
                 }
 
-                return Array.Empty<ChatMessage>();
+                return [];
             }
 
             public void Append(string? id, string? user, string? assistant)
@@ -426,12 +466,12 @@ namespace KkjQuicker.AI.OpenAI
                 if (string.IsNullOrWhiteSpace(id) || MaxMessages <= 0)
                     return;
 
-                List<ChatMessage> h = _store.GetOrAdd(id, _ => new List<ChatMessage>());
+                List<ChatMessage> h = _store.GetOrAdd(id, _ => []);
 
                 lock (h)
                 {
-                    h.Add(ChatMessage.User(user!));
-                    h.Add(ChatMessage.Assistant(assistant!));
+                    h.Add(ChatMessage.User(user ?? string.Empty));
+                    h.Add(ChatMessage.Assistant(assistant ?? string.Empty));
 
                     int limit = MaxMessages;
 

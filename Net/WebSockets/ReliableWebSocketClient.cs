@@ -13,64 +13,48 @@ namespace KkjQuicker.Net.WebSockets
     public sealed class WebSocketClientOptions
     {
         /// <summary>服务器地址（ws:// 或 wss://）。</summary>
-        public string Url { get; set; } = null!;
+        public string? Url { get; set; }
 
         /// <summary>自定义 HTTP 请求头，常用于传递 Token / API Key。</summary>
         public Dictionary<string, string>? Headers { get; set; } = null!;
 
         /// <summary>Keep-Alive 间隔，Zero 表示禁用。默认 30 秒。</summary>
-        public TimeSpan KeepAliveInterval { get; set; }
+        public TimeSpan KeepAliveInterval { get; set; } = TimeSpan.FromSeconds(30);
 
         /// <summary>单次接收缓冲区大小（字节）。默认 8192。</summary>
-        public int ReceiveBufferSize { get; set; }
+        public int ReceiveBufferSize { get; set; } = 8192;
 
         /// <summary>单条完整消息允许的最大字节数，0 表示不限制。默认 16 MB。</summary>
-        public int MaxMessageBytes { get; set; }
+        public int MaxMessageBytes { get; set; } = 16 * 1024 * 1024;
 
         /// <summary>连接超时，Zero 表示不限制。默认 15 秒。</summary>
-        public TimeSpan ConnectTimeout { get; set; }
+        public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(15);
 
         /// <summary>自动重连配置，null 表示禁用。</summary>
         public WebSocketReconnectOptions? Reconnect { get; set; }
 
-        public WebSocketClientOptions()
-        {
-            KeepAliveInterval = TimeSpan.FromSeconds(30);
-            ReceiveBufferSize = 8192;
-            MaxMessageBytes = 16 * 1024 * 1024;
-            ConnectTimeout = TimeSpan.FromSeconds(15);
-        }
     }
 
     /// <summary>表示 WebSocket 自动重连配置。</summary>
     public sealed class WebSocketReconnectOptions
     {
         /// <summary>是否启用自动重连。</summary>
-        public bool Enabled { get; set; }
+        public bool Enabled { get; set; } = true;
 
         /// <summary>最大重试次数。-1 表示无限重试。</summary>
-        public int MaxRetries { get; set; }
+        public int MaxRetries { get; set; } = 5;
 
         /// <summary>首次重连前的等待时长。</summary>
-        public TimeSpan InitialDelay { get; set; }
+        public TimeSpan InitialDelay { get; set; } = TimeSpan.FromSeconds(1);
 
         /// <summary>指数退避时的最大等待上限。Zero 表示不限制。</summary>
-        public TimeSpan MaxDelay { get; set; }
+        public TimeSpan MaxDelay { get; set; } = TimeSpan.FromSeconds(30);
 
         /// <summary>
         /// 是否使用指数退避策略；
         /// <see langword="false"/> 时固定使用 <see cref="InitialDelay"/>。
         /// </summary>
-        public bool UseExponentialBackoff { get; set; }
-
-        public WebSocketReconnectOptions()
-        {
-            Enabled = true;
-            MaxRetries = 5;
-            InitialDelay = TimeSpan.FromSeconds(1);
-            MaxDelay = TimeSpan.FromSeconds(30);
-            UseExponentialBackoff = true;
-        }
+        public bool UseExponentialBackoff { get; set; } = true;
     }
 
     /// <summary>
@@ -83,8 +67,9 @@ namespace KkjQuicker.Net.WebSockets
     /// </remarks>
     public sealed class ReliableWebSocketClient : IDisposable
     {
-        private readonly object _syncRoot = new object();
-        private readonly SemaphoreSlim _sendLock = new SemaphoreSlim(1, 1);
+        private readonly object _syncRoot = new();
+        private readonly SemaphoreSlim _sendLock = new(1, 1);
+        private readonly CancellationTokenSource _disposeCts = new();
         private readonly Uri _uri;
         private readonly WebSocketClientOptions _options;
 
@@ -95,6 +80,7 @@ namespace KkjQuicker.Net.WebSockets
 
         private volatile bool _disposed;
         private volatile bool _manualDisconnect;
+        private volatile bool _isConnecting;
         private volatile bool _isReconnecting;
 
         private int _reconnectAttempts;
@@ -121,10 +107,14 @@ namespace KkjQuicker.Net.WebSockets
 
         public ReliableWebSocketClient(WebSocketClientOptions options)
         {
-            if (options == null)
-                throw new ArgumentNullException(nameof(options));
+            ArgumentNullException.ThrowIfNull(options);
             if (string.IsNullOrWhiteSpace(options.Url))
                 throw new ArgumentException("Url 不能为空白。", nameof(options));
+
+            string url = options.Url.Trim();
+            if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) ||
+                (uri.Scheme != Uri.UriSchemeWs && uri.Scheme != Uri.UriSchemeWss))
+                throw new ArgumentException("Url 必须是 ws:// 或 wss:// 绝对地址。", nameof(options));
             if (options.ReceiveBufferSize <= 0)
                 throw new ArgumentOutOfRangeException(
                     "options.ReceiveBufferSize", "必须大于 0。");
@@ -149,8 +139,28 @@ namespace KkjQuicker.Net.WebSockets
                         "InitialDelay 不能大于 MaxDelay。", nameof(options));
             }
 
-            _options = options;
-            _uri = new Uri(options.Url, UriKind.Absolute);
+            _options = new WebSocketClientOptions
+            {
+                Url = url,
+                Headers = options.Headers != null
+                    ? new Dictionary<string, string>(options.Headers, StringComparer.OrdinalIgnoreCase)
+                    : null,
+                KeepAliveInterval = options.KeepAliveInterval,
+                ReceiveBufferSize = options.ReceiveBufferSize,
+                MaxMessageBytes = options.MaxMessageBytes,
+                ConnectTimeout = options.ConnectTimeout,
+                Reconnect = options.Reconnect == null
+                    ? null
+                    : new WebSocketReconnectOptions
+                    {
+                        Enabled = options.Reconnect.Enabled,
+                        MaxRetries = options.Reconnect.MaxRetries,
+                        InitialDelay = options.Reconnect.InitialDelay,
+                        MaxDelay = options.Reconnect.MaxDelay,
+                        UseExponentialBackoff = options.Reconnect.UseExponentialBackoff
+                    }
+            };
+            _uri = uri;
         }
 
         public ReliableWebSocketClient(string url, Dictionary<string, string>? headers = null)
@@ -171,6 +181,8 @@ namespace KkjQuicker.Net.WebSockets
                 if (_isReconnecting)
                     throw new InvalidOperationException(
                         "正在自动重连中，请勿手动调用 ConnectAsync。");
+                if (_isConnecting)
+                    throw new InvalidOperationException("WebSocket 正在连接。");
             }
 
             return ConnectCoreAsync(cancellationToken);
@@ -236,7 +248,7 @@ namespace KkjQuicker.Net.WebSockets
         public async Task SendTextAsync(
             string text, CancellationToken cancellationToken = default)
         {
-            if (text == null) throw new ArgumentNullException(nameof(text));
+            ArgumentNullException.ThrowIfNull(text);
             await SendAsyncCore(
                 Encoding.UTF8.GetBytes(text),
                 WebSocketMessageType.Text,
@@ -247,7 +259,7 @@ namespace KkjQuicker.Net.WebSockets
         public async Task SendBinaryAsync(
             byte[] data, CancellationToken cancellationToken = default)
         {
-            if (data == null) throw new ArgumentNullException(nameof(data));
+            ArgumentNullException.ThrowIfNull(data);
             await SendAsyncCore(data, WebSocketMessageType.Binary, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -255,18 +267,32 @@ namespace KkjQuicker.Net.WebSockets
         /// <summary>立即释放资源，不发送 Close 帧。</summary>
         public void Dispose()
         {
-            if (_disposed) return;
-            _disposed = true;
-            _manualDisconnect = true;
-
             lock (_syncRoot)
             {
+                if (_disposed) return;
+
+                _disposed = true;
+                _manualDisconnect = true;
                 _reconnectCts?.Cancel();
                 _receiveCts?.Cancel();
-                CleanupSocket_NoLock();
             }
 
-            _sendLock.Dispose();
+            // 先取消正在发送或等待发送锁的操作，再等待当前发送退出。
+            // SemaphoreSlim/CTS 刻意不在此释放：一个已经通过 Dispose 检查、
+            // 但尚未进入 WaitAsync 的发送操作仍可能短暂持有它们。保留这两个
+            // 纯托管同步对象直到实例被 GC，可避免 Dispose 与 SendAsync 互相
+            // 触发 ObjectDisposedException 或覆盖原始取消异常。
+            _disposeCts.Cancel();
+            _sendLock.Wait();
+            try
+            {
+                lock (_syncRoot)
+                    CleanupSocket_NoLock();
+            }
+            finally
+            {
+                _sendLock.Release();
+            }
         }
 
         // ── 私有：连接 ────────────────────────────────────────────────────────
@@ -282,12 +308,15 @@ namespace KkjQuicker.Net.WebSockets
                     (_socket.State == WebSocketState.Open ||
                      _socket.State == WebSocketState.Connecting))
                     throw new InvalidOperationException("WebSocket 已连接或正在连接。");
+                if (_isConnecting)
+                    throw new InvalidOperationException("WebSocket 正在连接。");
 
                 if (_receiveTask != null && !_receiveTask.IsCompleted)
                     throw new InvalidOperationException("上一次接收循环尚未结束，请先断开连接。");
 
                 _manualDisconnect = false;
                 CleanupSocket_NoLock();
+                _isConnecting = true;
 
                 socket = new ClientWebSocket();
 
@@ -311,6 +340,10 @@ namespace KkjQuicker.Net.WebSockets
 
                 lock (_syncRoot)
                 {
+                    if (!ReferenceEquals(_socket, socket))
+                        throw new InvalidOperationException("WebSocket 连接已被替换。");
+
+                    _isConnecting = false;
                     _reconnectAttempts = 0;
                     _receiveTask = Task.Run(() => ReceiveLoopAsync(socket, receiveCts.Token));
                 }
@@ -321,6 +354,7 @@ namespace KkjQuicker.Net.WebSockets
             {
                 lock (_syncRoot)
                 {
+                    _isConnecting = false;
                     if (ReferenceEquals(_socket, socket))
                         CleanupSocket_NoLock();
                 }
@@ -364,24 +398,36 @@ namespace KkjQuicker.Net.WebSockets
             WebSocketMessageType messageType,
             CancellationToken cancellationToken)
         {
-            ThrowIfDisposed();
-
-            ClientWebSocket socket;
+            CancellationToken disposeToken;
             lock (_syncRoot)
             {
-                if (_socket == null || _socket.State != WebSocketState.Open)
-                    throw new InvalidOperationException("WebSocket 未连接。");
-                socket = _socket;
+                ThrowIfDisposed();
+                disposeToken = _disposeCts.Token;
             }
 
-            await _sendLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken,
+                disposeToken);
+
+            await _sendLock.WaitAsync(linkedCts.Token).ConfigureAwait(false);
             try
             {
+                ClientWebSocket socket;
+                lock (_syncRoot)
+                {
+                    ThrowIfDisposed();
+
+                    if (_socket == null || _socket.State != WebSocketState.Open)
+                        throw new InvalidOperationException("WebSocket 未连接。");
+
+                    socket = _socket;
+                }
+
                 await socket.SendAsync(
                     new ArraySegment<byte>(data),
                     messageType,
                     true,
-                    cancellationToken).ConfigureAwait(false);
+                    linkedCts.Token).ConfigureAwait(false);
             }
             finally
             {

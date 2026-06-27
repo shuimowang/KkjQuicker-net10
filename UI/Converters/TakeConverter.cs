@@ -46,7 +46,7 @@ namespace KkjQuicker.UI.Converters
         {
             if (string.IsNullOrWhiteSpace(text))
                 return string.Empty;
-            var lines = new List<string>();
+            List<string> lines = [];
             bool started = false;
             using (var reader = new StringReader(text))
             {
@@ -71,7 +71,7 @@ namespace KkjQuicker.UI.Converters
 
         private static IList TakeItems(IEnumerable source, int count)
         {
-            var result = new List<object>();
+            List<object> result = [];
             foreach (var item in source)
             {
                 result.Add(item);

@@ -31,7 +31,7 @@ namespace KkjQuicker.Utilities.Input
         /// </summary>
         public static IInputSimulator Simulator
         {
-            get { return new InputSimulator(); }
+            get => new InputSimulator();
         }
 
         // ============================================================

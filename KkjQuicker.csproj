@@ -9,22 +9,93 @@
     <OutputType>Library</OutputType>
     <RootNamespace>KkjQuicker</RootNamespace>
     <AssemblyName>KkjQuicker</AssemblyName>
+    <Title>KkjQuicker</Title>
+    <AssemblyTitle>KkjQuicker</AssemblyTitle>
+    <Description>KkjQuicker 桌面能力类库。</Description>
+    <Company></Company>
+    <Product>KkjQuicker</Product>
+    <Copyright>Copyright © 2025</Copyright>
+    <Trademark></Trademark>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>1.0.0.0</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
-    <LangVersion>13.0</LangVersion>
+    <LangVersion>14.0</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <NoWarn>CA1416;CS8600;CS8601;CS8602;CS8603;CS8604;CS8612;CS8618;CS8622;CS8625;CS8765;CS8767;WFDEV005;NU1510;NU1603</NoWarn>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <PackageReadmeFile>说明.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NAudio" Version="2.2.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="QRCoder" Version="1.6.0" />
-    <PackageReference Include="System.Drawing.Common" Version="10.0.0-preview.1.25080.5" />
-    <PackageReference Include="InputSimulatorCore" Version="1.0.5" />
-    <PackageReference Include="ZXing.Net" Version="0.16.9" />
-    <PackageReference Include="FontAwesome5" Version="2.1.11" />
+    <Reference Include="FontAwesomeIconsWpf">
+      <HintPath>C:\Program Files\Quicker\FontAwesomeIconsWpf.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio">
+      <HintPath>C:\Program Files\Quicker\NAudio.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.Asio">
+      <HintPath>C:\Program Files\Quicker\NAudio.Asio.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.Core">
+      <HintPath>C:\Program Files\Quicker\NAudio.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.Midi">
+      <HintPath>C:\Program Files\Quicker\NAudio.Midi.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.Wasapi">
+      <HintPath>C:\Program Files\Quicker\NAudio.Wasapi.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.WinForms">
+      <HintPath>C:\Program Files\Quicker\NAudio.WinForms.dll</HintPath>
+    </Reference>
+    <Reference Include="NAudio.WinMM">
+      <HintPath>C:\Program Files\Quicker\NAudio.WinMM.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>C:\Program Files\Quicker\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="QRCoder">
+      <HintPath>C:\Program Files\Quicker\QRCoder.dll</HintPath>
+    </Reference>
+    <Reference Include="ToastNotifications">
+      <HintPath>C:\Program Files\Quicker\ToastNotifications.dll</HintPath>
+    </Reference>
+    <Reference Include="ToastNotifications.Messages">
+      <HintPath>C:\Program Files\Quicker\ToastNotifications.Messages.dll</HintPath>
+    </Reference>
+    <Reference Include="WindowsInput">
+      <HintPath>C:\Program Files\Quicker\WindowsInput.dll</HintPath>
+    </Reference>
+    <Reference Include="zxing">
+      <HintPath>C:\Program Files\Quicker\zxing.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Update="FontAwesomeIconsWpf;NAudio;NAudio.Asio;NAudio.Core;NAudio.Midi;NAudio.Wasapi;NAudio.WinForms;NAudio.WinMM;Newtonsoft.Json;QRCoder;ToastNotifications;ToastNotifications.Messages;WindowsInput;zxing">
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyCompanyAttribute">
+      <_Parameter1></_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.InteropServices.ComVisibleAttribute">
+      <_Parameter1>false</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.InteropServices.GuidAttribute">
+      <_Parameter1>186d68c2-e3c8-4a76-a2dd-d2a470c7f08f</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="说明.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

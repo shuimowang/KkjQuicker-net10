@@ -48,13 +48,7 @@ namespace KkjQuicker.Domain.ClipboardHistory
         /// 界面显示标题，不持久化。
         /// </summary>
         [JsonIgnore]
-        public string DisplayTitle
-        {
-            get
-            {
-                return string.IsNullOrWhiteSpace(Title) ? Text : Title;
-            }
-        }
+        public string DisplayTitle => string.IsNullOrWhiteSpace(Title) ? Text : Title;
 
         /// <summary>
         /// 内容图标,例如颜色文本显示颜色块,网址文本显示 favicon。
@@ -100,17 +94,12 @@ namespace KkjQuicker.Domain.ClipboardHistory
         public string RawJson { get; set; } = null!;
 
         /// <summary>展示列表,例如动作步骤列表。</summary>
-        public List<CustomFormatDisplayItem> DisplayItems { get; set; }
-
-        public CustomFormatClipboardItem()
-        {
-            DisplayItems = new List<CustomFormatDisplayItem>();
-        }
+        public List<CustomFormatDisplayItem> DisplayItems { get; set; } = [];
 
         public void EnsureDisplayItems()
         {
             if (DisplayItems == null)
-                DisplayItems = new List<CustomFormatDisplayItem>();
+                DisplayItems = [];
         }
     }
 
@@ -160,7 +149,7 @@ namespace KkjQuicker.Domain.ClipboardHistory
     /// </summary>
     public static class ClipboardHistoryJson
     {
-        private static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
+        private static readonly JsonSerializerSettings Settings = new()
         {
             Converters = { new ClipboardItemConverter() }
         };
@@ -168,14 +157,14 @@ namespace KkjQuicker.Domain.ClipboardHistory
         public static List<ClipboardItem> ReadItems(string json)
         {
             if (string.IsNullOrWhiteSpace(json))
-                return new List<ClipboardItem>();
+                return [];
 
             try
             {
                 var items = JsonConvert.DeserializeObject<List<ClipboardItem>>(json, Settings);
 
                 if (items == null)
-                    return new List<ClipboardItem>();
+                    return [];
 
                 return items
                     .Where(x => x != null)
@@ -183,13 +172,13 @@ namespace KkjQuicker.Domain.ClipboardHistory
             }
             catch
             {
-                return new List<ClipboardItem>();
+                return [];
             }
         }
 
         public static ObservableCollection<ClipboardItem> ReadItemsCollection(string json)
         {
-            return new ObservableCollection<ClipboardItem>(ReadItems(json));
+            return new(ReadItems(json));
         }
 
         public static string WriteItems(IEnumerable<ClipboardItem> items)
@@ -257,10 +246,7 @@ namespace KkjQuicker.Domain.ClipboardHistory
             return item;
         }
 
-        public override bool CanWrite
-        {
-            get { return false; }
-        }
+        public override bool CanWrite => false;
 
         public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
         {

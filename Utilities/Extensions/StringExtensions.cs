@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -15,6 +15,8 @@ namespace KkjQuicker.Utilities.Extensions
     /// </remarks>
     public static class StringExtensions
     {
+        private static readonly TimeSpan DefaultRegexTimeout = TimeSpan.FromSeconds(1);
+
         /// <summary>
         /// 按行分割字符串。
         /// </summary>
@@ -27,7 +29,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <remarks>
         /// 同时支持 <c>\r\n</c>、<c>\n</c> 和 <c>\r</c> 三种常见换行形式。
         /// </remarks>
-        public static string[] SplitLines(this string value, bool removeEmptyEntries = true)
+        public static string[] SplitLines(this string? value, bool removeEmptyEntries = true)
         {
             if (string.IsNullOrEmpty(value))
                 return Array.Empty<string>();
@@ -69,7 +71,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// 本方法按 <see cref="string.Length"/> 计数，不保证按用户可见字符边界裁剪。
         /// </para>
         /// </remarks>
-        public static string ToPreviewText(this string value, int maxChars, int maxLines)
+        public static string ToPreviewText(this string? value, int maxChars, int maxLines)
         {
             if (string.IsNullOrEmpty(value) || maxChars <= 0 || maxLines <= 0)
             {
@@ -88,7 +90,7 @@ namespace KkjQuicker.Utilities.Extensions
             bool truncatedByLines = lines.Length > maxLines;
 
             int lineCount = truncatedByLines ? maxLines : lines.Length;
-            var sb = new StringBuilder(value.Length);
+            StringBuilder sb = new(value.Length);
 
             for (int i = 0; i < lineCount; i++)
             {
@@ -120,7 +122,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <remarks>
         /// 按 <see cref="CultureInfo.InvariantCulture"/> 解析。
         /// </remarks>
-        public static int ToInt(this string value, int defaultValue = 0)
+        public static int ToInt(this string? value, int defaultValue = 0)
         {
             int result;
             return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out result)
@@ -137,7 +139,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <remarks>
         /// 按 <see cref="CultureInfo.InvariantCulture"/> 解析。
         /// </remarks>
-        public static double ToDouble(this string value, double defaultValue = 0)
+        public static double ToDouble(this string? value, double defaultValue = 0)
         {
             double result;
             return double.TryParse(
@@ -160,7 +162,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// 支持以下假值：<c>false</c>、<c>0</c>、<c>no</c>、<c>n</c>、<c>off</c>。
         /// 比较时忽略大小写。
         /// </remarks>
-        public static bool ToBool(this string value, bool defaultValue = false)
+        public static bool ToBool(this string? value, bool defaultValue = false)
         {
             if (string.IsNullOrWhiteSpace(value))
                 return defaultValue;
@@ -182,15 +184,27 @@ namespace KkjQuicker.Utilities.Extensions
         /// <param name="value">要匹配的字符串。</param>
         /// <param name="pattern">正则表达式模式。</param>
         /// <param name="options">正则匹配选项。</param>
+        /// <param name="timeout">正则匹配超时；为 <see langword="null"/> 时使用默认超时。</param>
         /// <returns>
         /// 当字符串匹配指定模式时返回 <see langword="true"/>；否则返回 <see langword="false"/>。
         /// </returns>
-        public static bool IsMatch(this string value, string pattern, RegexOptions options = RegexOptions.None)
+        public static bool IsMatch(
+            this string? value,
+            string? pattern,
+            RegexOptions options = RegexOptions.None,
+            TimeSpan? timeout = null)
         {
             if (string.IsNullOrEmpty(value) || string.IsNullOrEmpty(pattern))
                 return false;
 
-            return Regex.IsMatch(value, pattern, options);
+            try
+            {
+                return Regex.IsMatch(value, pattern, options, timeout ?? DefaultRegexTimeout);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -200,18 +214,31 @@ namespace KkjQuicker.Utilities.Extensions
         /// <param name="pattern">正则表达式模式。</param>
         /// <param name="groupIndex">要返回的分组索引。</param>
         /// <param name="options">正则匹配选项。</param>
+        /// <param name="timeout">正则匹配超时；为 <see langword="null"/> 时使用默认超时。</param>
         /// <returns>
         /// 若匹配成功且分组存在，则返回对应分组值；否则返回空字符串。
         /// </returns>
-        public static string MatchValue(this string value, string pattern, int groupIndex = 1, RegexOptions options = RegexOptions.None)
+        public static string MatchValue(
+            this string? value,
+            string? pattern,
+            int groupIndex = 1,
+            RegexOptions options = RegexOptions.None,
+            TimeSpan? timeout = null)
         {
             if (string.IsNullOrEmpty(value) || string.IsNullOrEmpty(pattern) || groupIndex < 0)
                 return string.Empty;
 
-            Match match = Regex.Match(value, pattern, options);
-            return match.Success && match.Groups.Count > groupIndex
-                ? match.Groups[groupIndex].Value
-                : string.Empty;
+            try
+            {
+                Match match = Regex.Match(value, pattern, options, timeout ?? DefaultRegexTimeout);
+                return match.Success && match.Groups.Count > groupIndex
+                    ? match.Groups[groupIndex].Value
+                    : string.Empty;
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                return string.Empty;
+            }
         }
 
         /// <summary>
@@ -223,7 +250,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <returns>
         /// 当当前字符串等于任意一个候选值时返回 <see langword="true"/>；否则返回 <see langword="false"/>。
         /// </returns>
-        public static bool EqualsAny(this string value, bool ignoreCase, params string[] others)
+        public static bool EqualsAny(this string? value, bool ignoreCase, params string?[]? others)
         {
             if (others == null || others.Length == 0)
                 return false;
@@ -243,7 +270,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <returns>
         /// 当当前字符串包含任意一个非空子串时返回 <see langword="true"/>；否则返回 <see langword="false"/>。
         /// </returns>
-        public static bool ContainsAny(this string value, params string[] patterns)
+        public static bool ContainsAny(this string? value, params string?[]? patterns)
         {
             return ContainsAny(value, false, patterns);
         }
@@ -257,7 +284,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <returns>
         /// 当当前字符串包含任意一个非空子串时返回 <see langword="true"/>；否则返回 <see langword="false"/>。
         /// </returns>
-        public static bool ContainsAny(this string value, bool ignoreCase, params string[] patterns)
+        public static bool ContainsAny(this string? value, bool ignoreCase, params string?[]? patterns)
         {
             if (string.IsNullOrEmpty(value) || patterns == null)
                 return false;
@@ -271,6 +298,60 @@ namespace KkjQuicker.Utilities.Extensions
         }
 
         /// <summary>
+        /// 从文本中提取常见 URL。
+        /// </summary>
+        /// <param name="inputText">要扫描的文本。</param>
+        /// <returns>提取到的 URL 列表；以 <c>www.</c> 开头的地址会补全为 <c>https://</c>。</returns>
+        /// <remarks>
+        /// 本方法会剔除 URL 末尾常见的中英文标点，并为内部正则匹配设置超时。
+        /// </remarks>
+        public static List<string> ExtractUrls(this string? inputText)
+        {
+            List<string> list = [];
+
+            if (string.IsNullOrWhiteSpace(inputText))
+            {
+                return list;
+            }
+
+            string pattern = @"\b(?:(?:https?|ftp)://|www\.)[^\s<>'""]+";
+
+            try
+            {
+                foreach (Match match in Regex.Matches(
+                    inputText,
+                    pattern,
+                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+                    DefaultRegexTimeout))
+                {
+                    string url = match.Value.TrimEnd(
+                        '.', ',', ';', ':', '!', '?',
+                        '。', '，', '；', '：', '！', '？',
+                        ')', ']', '}',
+                        '）', '】', '》', '、');
+
+                    if (string.IsNullOrWhiteSpace(url))
+                    {
+                        continue;
+                    }
+
+                    if (url.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+                    {
+                        url = "https://" + url;
+                    }
+
+                    list.Add(url);
+                }
+            }
+            catch (RegexMatchTimeoutException)
+            {
+            }
+
+            return list;
+        }
+
+
+        /// <summary>
         /// 判断当前字符串是否以任意一个指定前缀开头。
         /// </summary>
         /// <param name="value">当前字符串。</param>
@@ -279,7 +360,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <returns>
         /// 当当前字符串以任意一个指定前缀开头时返回 <see langword="true"/>；否则返回 <see langword="false"/>。
         /// </returns>
-        public static bool StartsWithAny(this string value, bool ignoreCase, params string[] others)
+        public static bool StartsWithAny(this string? value, bool ignoreCase, params string?[]? others)
         {
             if (string.IsNullOrEmpty(value) || others == null || others.Length == 0)
                 return false;
@@ -300,7 +381,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <returns>
         /// 当当前字符串以任意一个指定后缀结尾时返回 <see langword="true"/>；否则返回 <see langword="false"/>。
         /// </returns>
-        public static bool EndsWithAny(this string value, bool ignoreCase, params string[] others)
+        public static bool EndsWithAny(this string? value, bool ignoreCase, params string?[]? others)
         {
             if (string.IsNullOrEmpty(value) || others == null || others.Length == 0)
                 return false;
@@ -363,7 +444,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <item><description><c>{guid8}</c> — GUID 前 8 位</description></item>
         /// </list>
         /// </remarks>
-        public static string ResolveTemplate(this string template)
+        public static string ResolveTemplate(this string? template)
         {
             if (string.IsNullOrEmpty(template))
                 return string.Empty;
@@ -379,8 +460,9 @@ namespace KkjQuicker.Utilities.Extensions
             s = s.Replace("{ss}", now.ToString("ss", CultureInfo.InvariantCulture));
             s = s.Replace("{fff}", now.ToString("fff", CultureInfo.InvariantCulture));
 
-            s = s.Replace("{guid8}", Guid.NewGuid().ToString("N").Substring(0, 8));
-            s = s.Replace("{guid}", Guid.NewGuid().ToString("N"));
+            string guid = Guid.NewGuid().ToString("N");
+            s = s.Replace("{guid8}", guid.Substring(0, 8));
+            s = s.Replace("{guid}", guid);
 
             return s;
         }

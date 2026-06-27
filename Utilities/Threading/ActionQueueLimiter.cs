@@ -44,8 +44,8 @@ namespace KkjQuicker.Utilities.Threading
         private bool _disposed;
         private bool _isProcessing;
 
-        private CancellationTokenSource? _delayCts = null!;
-        private CancellationTokenSource? _currentExecutionCts = null!;
+        private CancellationTokenSource? _delayCts;
+        private CancellationTokenSource? _currentExecutionCts;
 
         /// <summary>
         /// 初始化 <see cref="ActionQueueLimiter"/>。
@@ -102,8 +102,7 @@ namespace KkjQuicker.Utilities.Threading
         /// <exception cref="ArgumentNullException"><paramref name="action"/> 为 <see langword="null"/>。</exception>
         public void Enqueue(Action action)
         {
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
+            ArgumentNullException.ThrowIfNull(action);
 
             EnqueueCore(new QueueItem(action));
         }
@@ -123,8 +122,7 @@ namespace KkjQuicker.Utilities.Threading
         /// <exception cref="ArgumentNullException"><paramref name="action"/> 为 <see langword="null"/>。</exception>
         public Task<bool> EnqueueAsync(Func<CancellationToken, Task> action)
         {
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
+            ArgumentNullException.ThrowIfNull(action);
 
             var item = new QueueItem(action);
             EnqueueCore(item);
@@ -271,10 +269,7 @@ namespace KkjQuicker.Utilities.Threading
             if (!shouldStart)
                 return;
 
-            var task = Task.Run(ProcessLoopAsync);
-            task.ContinueWith(
-                t => { var _ = t.Exception; },
-                TaskContinuationOptions.OnlyOnFaulted);
+            ObserveBackgroundTask(Task.Run(ProcessLoopAsync));
         }
 
         private async Task ProcessLoopAsync()
@@ -364,7 +359,7 @@ namespace KkjQuicker.Utilities.Threading
                         executionCts = _currentExecutionCts;
                     }
 
-                    await item.AsyncAction(executionCts.Token).ConfigureAwait(false);
+                    await item.AsyncAction!(executionCts.Token).ConfigureAwait(false);
                     item.TrySetSucceeded();
                 }
                 catch (OperationCanceledException)
@@ -395,12 +390,26 @@ namespace KkjQuicker.Utilities.Threading
 
             try
             {
-                item.SyncAction();
+                item.SyncAction?.Invoke();
             }
             catch (Exception ex)
             {
                 Debug.WriteLine(ex);
             }
+        }
+
+        private static void ObserveBackgroundTask(Task task)
+        {
+            task.ContinueWith(
+                faultedTask =>
+                {
+                    AggregateException? exception = faultedTask.Exception;
+                    if (exception != null)
+                        Debug.WriteLine(exception.Flatten());
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
         }
 
         private static void CancelToken(CancellationTokenSource? cts)
@@ -443,13 +452,13 @@ namespace KkjQuicker.Utilities.Threading
 
         private sealed class QueueItem
         {
-            public readonly Action SyncAction = null!;
-            public readonly Func<CancellationToken, Task> AsyncAction = null!;
-            public readonly TaskCompletionSource<bool> Completion = null!;
+            public readonly Action? SyncAction;
+            public readonly Func<CancellationToken, Task>? AsyncAction;
+            public readonly TaskCompletionSource<bool>? Completion;
 
             public bool IsAsync
             {
-                get { return AsyncAction != null; }
+                get => AsyncAction != null;
             }
 
             public QueueItem(Action action)

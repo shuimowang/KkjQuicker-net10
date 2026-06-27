@@ -215,7 +215,7 @@ namespace KkjQuicker.Utilities.Imaging
 
         private sealed class LayoutResult
         {
-            public readonly List<GlyphLayout> Glyphs = new List<GlyphLayout>();
+            public readonly List<GlyphLayout> Glyphs = [];
             public RectangleF BackgroundRect;
             public int BitmapWidth;
             public int BitmapHeight;
@@ -248,7 +248,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <exception cref="ArgumentNullException"><paramref name="text"/> 为 null 时抛出。</exception>
         public static BitmapSource Render(string text, TextStickerOptions? opt = null, Visual? relativeTo = null)
         {
-            if (text == null) throw new ArgumentNullException("text");
+            ArgumentNullException.ThrowIfNull(text);
 
             using (Bitmap bitmap = RenderGdiBitmap(text, opt ?? new TextStickerOptions(), relativeTo))
             {
@@ -268,7 +268,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <exception cref="ArgumentNullException"><paramref name="text"/> 为 null 时抛出。</exception>
         public static byte[] RenderToPng(string text, TextStickerOptions? opt = null, Visual? relativeTo = null)
         {
-            if (text == null) throw new ArgumentNullException("text");
+            ArgumentNullException.ThrowIfNull(text);
 
             using (Bitmap bitmap = RenderGdiBitmap(text, opt ?? new TextStickerOptions(), relativeTo))
             using (MemoryStream ms = new MemoryStream())
@@ -292,7 +292,6 @@ namespace KkjQuicker.Utilities.Imaging
             if (imgWidthDip <= 0 || imgHeightDip <= 0 || workAreaDip.IsEmpty)
                 return 1.0;
 
-            // Fix #3: maxRatio 非正值会使 scale<=0 被 scale<1.0 条件放行返回,先拦截
             if (maxRatio <= 0)
                 return 1.0;
 
@@ -307,7 +306,7 @@ namespace KkjQuicker.Utilities.Imaging
 
         #region 主流程
 
-        // Fix #4: 透传 relativeTo,使 MeasureLayout 能取到正确屏幕的 work area
+        // relativeTo 用于让测量阶段取到与渲染 DPI 一致的屏幕工作区。
         private static Bitmap RenderGdiBitmap(string text, TextStickerOptions options, Visual? relativeTo)
         {
             string normalized = NormalizeText(text);
@@ -350,14 +349,12 @@ namespace KkjQuicker.Utilities.Imaging
             }
         }
 
-        // Fix #1: 使用字体基准行高统一每行步进,避免按字符高度换行带来的行距参差
-        // Fix #2: 最后一行底部只计字符本身高度,不叠加 (lineHeightScale-1) 的行后间距
-        // Fix #4: 降级路径取 work area 时传入 relativeTo,使 work area 与 resolvedDpi 取自同一屏
+        // 使用字体基准行高统一每行步进，并让工作区与 resolvedDpi 取自同一屏幕。
         private static LayoutResult MeasureLayout(
             string text, Graphics g, Font font, TextStickerOptions options, float pxScale, Visual? relativeTo)
         {
             LayoutResult result = new LayoutResult();
-            List<float> lineWidths = new List<float>();
+            List<float> lineWidths = [];
 
             float maxWidthPx = ToPx((float)options.MaxTextWidthDip, pxScale);
             if (maxWidthPx <= 0)

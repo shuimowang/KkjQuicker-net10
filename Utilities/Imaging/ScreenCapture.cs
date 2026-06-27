@@ -7,21 +7,11 @@ using PixelFormat = System.Drawing.Imaging.PixelFormat;
 namespace KkjQuicker.Utilities.Imaging
 {
     /// <summary>
-    /// ScreenCapture（Pro 版）
-    /// ------------------------------------------------------------
-    /// 工业级截图工具
-    ///
-    /// 支持：
-    /// ✔ 多显示器
-    /// ✔ 任意区域截图
-    /// ✔ WPF Visual 渲染
-    /// ✔ 高 DPI 正确处理
-    /// ✔ 无 GDI 泄漏
-    ///
-    /// 设计原则：
-    /// - GDI 使用 PArgb（与 WPF Pbgra32 对齐）
-    /// - Visual 使用真实 DPI scale（避免模糊）
+    /// 提供屏幕区域与 WPF Visual 的截图辅助方法。
     /// </summary>
+    /// <remarks>
+    /// GDI 截图返回 32bpp PArgb 位图，WPF Visual 截图使用目标 Visual 的实际 DPI 渲染。
+    /// </remarks>
     public static class ScreenCapture
     {
         #region ===== 屏幕截图 =====
@@ -91,8 +81,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// </summary>
         public static BitmapSource CaptureVisualToBitmapSource(Visual element)
         {
-            if (element == null)
-                throw new ArgumentNullException(nameof(element));
+            ArgumentNullException.ThrowIfNull(element);
 
             var rect = VisualTreeHelper.GetDescendantBounds(element);
 
@@ -112,7 +101,15 @@ namespace KkjQuicker.Utilities.Imaging
                 dpi.PixelsPerInchY,
                 PixelFormats.Pbgra32);
 
-            rtb.Render(element);
+            var visual = new DrawingVisual();
+            using (DrawingContext dc = visual.RenderOpen())
+            {
+                dc.PushTransform(new TranslateTransform(-rect.X, -rect.Y));
+                dc.DrawRectangle(new VisualBrush(element), null, rect);
+                dc.Pop();
+            }
+
+            rtb.Render(visual);
             rtb.Freeze();
 
             return rtb;

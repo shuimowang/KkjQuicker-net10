@@ -142,8 +142,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <returns>Base64 字符串；可选附带 data URL 头。</returns>
         public static string ToBase64(this Bitmap bitmap, bool includeDataHeader = false, ImageFormat? format = null, long jpegQuality = 90)
         {
-            if (bitmap == null)
-                throw new ArgumentNullException(nameof(bitmap));
+            ArgumentNullException.ThrowIfNull(bitmap);
 
             if (format == null)
                 format = ImageFormat.Png;
@@ -196,8 +195,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <returns>Base64 字符串；可选附带 data URL 头。</returns>
         public static string ToBase64(this BitmapSource source, bool includeDataHeader = false, string imageExtension = ".png", long jpegQuality = 90)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
+            ArgumentNullException.ThrowIfNull(source);
 
             if (string.IsNullOrWhiteSpace(imageExtension))
                 imageExtension = ".png";
@@ -228,8 +226,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <returns>缩放后的新位图。</returns>
         public static Bitmap Resize(Bitmap bitmap, int width, int height)
         {
-            if (bitmap == null)
-                throw new ArgumentNullException(nameof(bitmap));
+            ArgumentNullException.ThrowIfNull(bitmap);
 
             if (width <= 0)
                 throw new ArgumentOutOfRangeException(nameof(width));
@@ -277,8 +274,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <returns>缩放后的新位图。</returns>
         public static Bitmap ResizeByScale(Bitmap bitmap, double scale)
         {
-            if (bitmap == null)
-                throw new ArgumentNullException(nameof(bitmap));
+            ArgumentNullException.ThrowIfNull(bitmap);
 
             if (scale <= 0)
                 throw new ArgumentOutOfRangeException(nameof(scale));
@@ -301,8 +297,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <returns>缩放后的新位图。</returns>
         public static Bitmap ResizeToFit(Bitmap bitmap, int maxWidth, int maxHeight, bool upscale = false)
         {
-            if (bitmap == null)
-                throw new ArgumentNullException(nameof(bitmap));
+            ArgumentNullException.ThrowIfNull(bitmap);
 
             if (maxWidth <= 0)
                 throw new ArgumentOutOfRangeException(nameof(maxWidth));
@@ -332,8 +327,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <returns>裁剪后的新位图。</returns>
         public static Bitmap Crop(Bitmap bitmap, Rectangle cropRect)
         {
-            if (bitmap == null)
-                throw new ArgumentNullException(nameof(bitmap));
+            ArgumentNullException.ThrowIfNull(bitmap);
 
             var validRect = Rectangle.Intersect(
                 new Rectangle(0, 0, bitmap.Width, bitmap.Height),
@@ -361,8 +355,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <returns>裁剪后的新图像。</returns>
         public static BitmapSource Crop(BitmapSource source, Rect cropRectDip)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
+            ArgumentNullException.ThrowIfNull(source);
 
             double scaleX = (source.DpiX > 0 ? source.DpiX : 96.0) / 96.0;
             double scaleY = (source.DpiY > 0 ? source.DpiY : 96.0) / 96.0;
@@ -401,8 +394,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <returns>转换后的 <see cref="BitmapSource"/>。</returns>
         public static BitmapSource ToBitmapSource(this Bitmap bitmap)
         {
-            if (bitmap == null)
-                throw new ArgumentNullException(nameof(bitmap));
+            ArgumentNullException.ThrowIfNull(bitmap);
 
             bool hasAlpha = Image.IsAlphaPixelFormat(bitmap.PixelFormat);
             return hasAlpha ? ToBitmapSourceSafeAlpha(bitmap) : ToBitmapSourceFastOpaque(bitmap);
@@ -419,8 +411,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <returns>转换后的 <see cref="Bitmap"/>。</returns>
         public static Bitmap ToBitmap(this BitmapSource source)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
+            ArgumentNullException.ThrowIfNull(source);
 
             BitmapSource converted = source.Format == PixelFormats.Bgra32
                 ? source
@@ -471,8 +462,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="jpegQuality">JPEG 质量，范围建议为 0~100；超范围时会自动钳制。</param>
         public static void SaveToFile(this Bitmap bitmap, string path, ImageFormat? format = null, long jpegQuality = 90)
         {
-            if (bitmap == null)
-                throw new ArgumentNullException(nameof(bitmap));
+            ArgumentNullException.ThrowIfNull(bitmap);
 
             if (string.IsNullOrWhiteSpace(path))
                 throw new ArgumentNullException(nameof(path));
@@ -515,8 +505,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="jpegQuality">JPEG 质量，范围建议为 0~100；超范围时会自动钳制。</param>
         public static void SaveToFile(this BitmapSource source, string path, long jpegQuality = 90)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
+            ArgumentNullException.ThrowIfNull(source);
 
             if (string.IsNullOrWhiteSpace(path))
                 throw new ArgumentNullException(nameof(path));
@@ -545,8 +534,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="source">要写入剪贴板的图像。</param>
         public static void CopyToClipboard(this BitmapSource source)
         {
-            if (source == null)
-                throw new ArgumentNullException(nameof(source));
+            ArgumentNullException.ThrowIfNull(source);
 
             System.Windows.Clipboard.SetImage(source);
         }

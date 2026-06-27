@@ -12,6 +12,8 @@ namespace KkjQuicker.Utilities.Hooks
         //   WM_XBUTTON*                    → XButton 编号（1 = XBUTTON1, 2 = XBUTTON2）
         private const uint XBUTTON1 = 0x0001;
         private const uint XBUTTON2 = 0x0002;
+        private const uint LLMHF_INJECTED = 0x0001;
+        private const uint LLMHF_LOWER_IL_INJECTED = 0x0002;
 
         /// <summary>
         /// 初始化一个鼠标 Hook 事件参数实例。
@@ -24,11 +26,18 @@ namespace KkjQuicker.Utilities.Hooks
             MouseMessage message,
             int x,
             int y,
-            uint mouseData)
+            uint mouseData,
+            uint flags,
+            uint time,
+            IntPtr extraInfo)
         {
             Message = message;
             X = x;
             Y = y;
+            RawMouseData = mouseData;
+            Flags = flags;
+            Time = time;
+            ExtraInfo = extraInfo;
 
             uint highWord = mouseData >> 16;
 
@@ -86,6 +95,36 @@ namespace KkjQuicker.Utilities.Hooks
         public uint XButton { get; }
 
         /// <summary>
+        /// 获取原始鼠标附加数据。
+        /// </summary>
+        public uint RawMouseData { get; }
+
+        /// <summary>
+        /// 获取低级鼠标 Hook 标志位。
+        /// </summary>
+        public uint Flags { get; }
+
+        /// <summary>
+        /// 获取事件时间戳。
+        /// </summary>
+        public uint Time { get; }
+
+        /// <summary>
+        /// 获取事件附加信息。
+        /// </summary>
+        public IntPtr ExtraInfo { get; }
+
+        /// <summary>
+        /// 获取当前鼠标事件是否由注入输入产生。
+        /// </summary>
+        public bool IsInjected => (Flags & LLMHF_INJECTED) != 0;
+
+        /// <summary>
+        /// 获取当前鼠标事件是否由低完整性级别进程注入产生。
+        /// </summary>
+        public bool IsLowerIntegrityInjected => (Flags & LLMHF_LOWER_IL_INJECTED) != 0;
+
+        /// <summary>
         /// 获取或设置是否拦截当前鼠标消息。
         /// </summary>
         /// <remarks>
@@ -98,7 +137,14 @@ namespace KkjQuicker.Utilities.Hooks
         /// </summary>
         public override string ToString()
         {
-            return string.Format("{0} ({1},{2}) Δ={3} Handled={4}", Message, X, Y, WheelDelta, Handled);
+            return string.Format(
+                "{0} ({1},{2}) Δ={3} Injected={4} Handled={5}",
+                Message,
+                X,
+                Y,
+                WheelDelta,
+                IsInjected,
+                Handled);
         }
     }
 

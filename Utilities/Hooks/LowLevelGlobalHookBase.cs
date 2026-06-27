@@ -136,8 +136,8 @@ namespace KkjQuicker.Utilities.Hooks
                 if (_disposed)
                     return;
 
-                Dispose(true);
                 _disposed = true;
+                Dispose(true);
             }
             GC.SuppressFinalize(this);
         }

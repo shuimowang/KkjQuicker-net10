@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Windows.Data;
@@ -21,7 +21,7 @@ namespace KkjQuicker.UI.Converters
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            throw new NotSupportedException(nameof(PathToFileNameConverter) + " does not support ConvertBack.");
+            return Binding.DoNothing;
         }
     }
 }

@@ -45,7 +45,7 @@ namespace KkjQuicker.Audio
         /// <returns>设备名称列表。若获取失败，则返回空集合。</returns>
         public static IReadOnlyList<string> GetInputDeviceNames()
         {
-            var result = new List<string>();
+            List<string> result = [];
 
             try
             {
@@ -107,7 +107,7 @@ namespace KkjQuicker.Audio
         /// <returns>设备名称列表。若获取失败，则返回空集合。</returns>
         public static IReadOnlyList<string> GetOutputDeviceNames()
         {
-            var result = new List<string>();
+            List<string> result = [];
 
             try
             {

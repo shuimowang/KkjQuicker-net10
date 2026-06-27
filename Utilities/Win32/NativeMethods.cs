@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -123,6 +123,12 @@ namespace KkjQuicker.Utilities.Win32
         public const uint SMTO_BLOCK = 0x0001;
         public const uint SMTO_ABORTIFHUNG = 0x0002;
 
+        // === mouse_event 标志 ===
+        public const int MOUSEEVENTF_WHEEL = 0x0800;
+
+        // === 鼠标消息 ===
+        public const int WM_MOUSEWHEEL = 0x020A;
+
         // ------------------------------
         // Window lookup / enumeration
         // ------------------------------
@@ -134,7 +140,7 @@ namespace KkjQuicker.Utilities.Win32
         /// <param name="lpWindowName">窗口标题；传 <see langword="null"/> 表示忽略标题。</param>
         /// <returns>成功时返回窗口句柄；失败时返回 <see cref="IntPtr.Zero"/>。</returns>
         [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+        public static extern IntPtr FindWindow(string? lpClassName, string? lpWindowName);
 
         /// <summary>
         /// 在指定父窗口下查找子窗口。
@@ -145,7 +151,7 @@ namespace KkjQuicker.Utilities.Win32
         /// <param name="windowTitle">窗口标题；传 <see langword="null"/> 表示忽略标题。</param>
         /// <returns>成功时返回子窗口句柄；失败时返回 <see cref="IntPtr.Zero"/>。</returns>
         [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        public static extern IntPtr FindWindowEx(IntPtr parentHandle, IntPtr childAfter, string className, string windowTitle);
+        public static extern IntPtr FindWindowEx(IntPtr parentHandle, IntPtr childAfter, string? className, string? windowTitle);
 
         /// <summary>
         /// 枚举顶级窗口时使用的回调委托。
@@ -452,12 +458,27 @@ namespace KkjQuicker.Utilities.Win32
         public static extern bool SetCursorPos(int X, int Y);
 
         /// <summary>
+        /// 合成鼠标事件。
+        /// </summary>
+        /// <param name="dwFlags">鼠标事件标志。</param>
+        /// <param name="dx">X 坐标或移动量。</param>
+        /// <param name="dy">Y 坐标或移动量。</param>
+        /// <param name="dwData">滚轮增量或按键信息。</param>
+        /// <param name="dwExtraInfo">附加信息。</param>
+        [DllImport("user32.dll")]
+        public static extern void mouse_event(int dwFlags, int dx, int dy, int dwData, UIntPtr dwExtraInfo);
+
+        /// <summary>
         /// 获取指定点所在的窗口句柄。
         /// </summary>
         /// <param name="p">屏幕坐标点。</param>
         /// <returns>命中的窗口句柄；失败时返回 <see cref="IntPtr.Zero"/>。</returns>
         [DllImport("user32.dll")]
         public static extern IntPtr WindowFromPoint(POINT p);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool PostMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
 
         /// <summary>
         /// 获取指定虚拟键的异步状态。
@@ -603,7 +624,7 @@ namespace KkjQuicker.Utilities.Win32
         /// <param name="lpModuleName">模块名称；传 <see langword="null"/> 表示当前进程主模块。</param>
         /// <returns>成功时返回模块句柄；失败时返回 <see cref="IntPtr.Zero"/>。</returns>
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        public static extern IntPtr GetModuleHandle(string lpModuleName);
+        public static extern IntPtr GetModuleHandle(string? lpModuleName);
 
         // ------------------------------
         // GDI

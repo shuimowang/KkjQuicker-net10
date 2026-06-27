@@ -1,4 +1,5 @@
 using FontAwesome5;
+using FontAwesome5.WPF;
 using KkjQuicker.Overlay.Engine;
 using KkjQuicker.UI;
 using KkjQuicker.Utilities.History;
@@ -13,7 +14,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
@@ -39,7 +39,7 @@ namespace KkjQuicker.Overlay.Layers
         public Func<EditorView, bool>? MiddleClickHandler { get; set; }
 
         /// <summary>额外工具栏按钮（可选）。</summary>
-        public List<ToolbarButton> ExtraToolbarButtons { get; set; } = new List<ToolbarButton>();
+        public List<ToolbarButton> ExtraToolbarButtons { get; set; } = [];
 
         /// <summary>右键菜单构造器（可选）。</summary>
         public Func<EditorView, ContextMenu>? CreateContextMenu { get; set; }
@@ -55,6 +55,24 @@ namespace KkjQuicker.Overlay.Layers
 
         /// <summary>马赛克像素块大小。</summary>
         public int MosaicPixelSize { get; set; } = 14;
+
+        /// <summary>内置长截图最多捕获帧数;用于防止忘记停止。</summary>
+        public int LongScreenshotMaxFrames { get; set; } = 120;
+
+        /// <summary>内置长截图单次滚轮增量；负数表示向下滚动。</summary>
+        public int LongScreenshotWheelDelta { get; set; } = -120;
+
+        /// <summary>内置长截图每次滚动后的等待时间（毫秒）。</summary>
+        public int LongScreenshotScrollDelayMs { get; set; } = 650;
+
+        /// <summary>内置长截图每帧最少新增像素；低于该值视为到底。</summary>
+        public int LongScreenshotMinAppendPixels { get; set; } = 8;
+
+        /// <summary>内置长截图参与匹配的最大重叠像素。</summary>
+        public int LongScreenshotMaxOverlapPixels { get; set; } = 800;
+
+        /// <summary>内置长截图重叠匹配容差，值越小越严格。</summary>
+        public double LongScreenshotOverlapTolerance { get; set; } = 18.0;
     }
 
     /// <summary>
@@ -91,8 +109,8 @@ namespace KkjQuicker.Overlay.Layers
         private readonly Action? _onCanceled = null!;
         private readonly EditorOptions _options = null!;
 
-        private readonly TaskCompletionSource<BitmapSource> _tcs =
-            new TaskCompletionSource<BitmapSource>(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<BitmapSource?> _tcs =
+            new TaskCompletionSource<BitmapSource?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         private bool _finished;
 
@@ -100,7 +118,7 @@ namespace KkjQuicker.Overlay.Layers
         public override UIElement View => _view;
 
         /// <summary>获取编辑完成任务。取消或关闭时结果为 null。</summary>
-        public Task<BitmapSource> Completion => _tcs.Task;
+        public Task<BitmapSource?> Completion => _tcs.Task;
 
         /// <summary>
         /// 静态截图便捷构造函数。
@@ -141,7 +159,7 @@ namespace KkjQuicker.Overlay.Layers
         /// <param name="options">编辑器配置项。</param>
         /// <exception cref="ArgumentException"><paramref name="canvasPixelBounds"/> 无效。</exception>
         public ScreenshotEditorLayer(
-            BitmapSource fullImage,
+            BitmapSource? fullImage,
             Int32Rect canvasPixelBounds,
             Int32Rect initialSelectionPixelRect,
             Action<BitmapSource, Int32Rect>? onAccepted = null,
@@ -213,7 +231,15 @@ namespace KkjQuicker.Overlay.Layers
 
         public override void OnPreviewKeyDown(KeyEventArgs e)
         {
-            if (e.Key == Key.Escape) { CompleteCanceled(); e.Handled = true; }
+            if (e.Key == Key.Escape)
+            {
+                if (_view.IsLongScreenshotRecording)
+                    _view.RequestLongScreenshotStop();
+                else
+                    CompleteCanceled();
+
+                e.Handled = true;
+            }
         }
 
         private void OnViewAccepted(object? sender, BitmapSource bmp) => CompleteAccepted(bmp);
@@ -276,7 +302,7 @@ namespace KkjQuicker.Overlay.Layers
         private readonly EditorOptions _opt = null!;
         private readonly HistoryManager _history = new HistoryManager();
 
-        private BitmapSource _fullImage = null!;
+        private BitmapSource? _fullImage;
         private readonly Int32Rect _canvasPixelBounds;
         private int _imgPxW, _imgPxH;
         private double _imgDipW, _imgDipH;
@@ -284,6 +310,7 @@ namespace KkjQuicker.Overlay.Layers
         private bool _selectionBorderVisible = true;
         private bool _thumbsVisible = true;
         private bool _infoBadgeVisible = true;
+        private bool _longScreenshotGuideVisible;
         private bool _maskVisible = true;
 
         private Image _backgroundImage = null!;
@@ -305,17 +332,22 @@ namespace KkjQuicker.Overlay.Layers
         private bool IsDrawingMode => _currentTool != EditTool.None;
 
         private Border _selectionBorder = null!;
+        private Canvas _longScreenshotGuide = null!;
+        private Rectangle _longScreenshotGuideTop = null!;
+        private Rectangle _longScreenshotGuideLeft = null!;
+        private Rectangle _longScreenshotGuideRight = null!;
         private Grid _clipHost = null!;
         private RectangleGeometry _clipRect = null!;
         private Canvas _inkLayer = null!;
         private Image _mosaicImage = null!;
         private Canvas _mosaicMask = null!;
-        private BitmapSource _mosaicBitmap = null!;
+        private BitmapSource? _mosaicBitmap;
 
         private Border _toolBarBorder = null!;
         private StackPanel _mainToolbar = null!;
         private StackPanel _settingsBar = null!;
         private Border _currentColorSwatch = null!;
+        private Button _longScreenshotButton = null!;
 
         private Border _infoBorder = null!;
         private TextBlock _infoText = null!;
@@ -328,8 +360,8 @@ namespace KkjQuicker.Overlay.Layers
         private Shape _tempShape = null!;
         private Polyline _tempPolyline = null!;
 
-        private readonly List<TextBox> _liveTextInputs = new List<TextBox>();
-        private readonly Dictionary<Thumb, ThumbHit> _thumbMap = new Dictionary<Thumb, ThumbHit>();
+        private readonly List<TextBox> _liveTextInputs = [];
+        private readonly Dictionary<Thumb, ThumbHit> _thumbMap = [];
 
         private int _mosaicPixelSize;
         private bool _effectSliderDragging;
@@ -338,18 +370,32 @@ namespace KkjQuicker.Overlay.Layers
         private int _lastMosaicPixelSize = -1;
         private Int32Rect _selectionPixelRect;
         private bool _finished;
+        private bool _longScreenshotRunning;
+        private bool _longScreenshotStopRequested;
 
         private const double MinSelDip = 10.0;
+        private const double LongScreenshotGuideThickness = 2.0;
         private static readonly Brush InteractiveTransparentBrush = CreateInteractiveTransparentBrush();
 
         /// <summary>获取当前选区的像素矩形范围。</summary>
         public Int32Rect SelectionPixelRect => _selectionPixelRect;
 
         /// <summary>获取原始全屏截图。</summary>
-        public BitmapSource FullImage => _fullImage;
+        public BitmapSource? FullImage => _fullImage;
 
         /// <summary>是否具有背景图片(区分静态截图与实时模式)。</summary>
         public bool HasBackgroundImage => _fullImage != null;
+
+        internal bool IsLongScreenshotRecording => _longScreenshotRunning;
+
+        internal void RequestLongScreenshotStop()
+        {
+            if (!_longScreenshotRunning)
+                return;
+
+            _longScreenshotStopRequested = true;
+            UpdateLongScreenshotButton(isStopping: false);
+        }
 
         #region ===== 遮罩:GhostWindow(实时模式) + InlineMask(静态模式) =====
 
@@ -359,6 +405,7 @@ namespace KkjQuicker.Overlay.Layers
         private RectangleGeometry _maskOuter = null!;
         private RectangleGeometry _maskHole = null!;
         private Path _maskPath = null!;
+        private bool _ghostHostEventsHooked;
 
         // InlineMask:静态截图模式下使用。作为 EditorView 的子元素参与 Z 轴,
         // 天然位于工具栏/选框/手柄/信息标签之下,无需挖洞。
@@ -418,44 +465,23 @@ namespace KkjQuicker.Overlay.Layers
 
             _ghostWindow.SourceInitialized += (s, e) =>
             {
-                IntPtr hwnd = new WindowInteropHelper(_ghostWindow).Handle;
+                IntPtr hwnd = _ghostWindow.GetHandle();
                 WindowHelper.SetExStyleFlag(hwnd, WindowStyles.WS_EX_TRANSPARENT, true);
                 WindowHelper.SetExStyleFlag(hwnd, WindowStyles.WS_EX_TOOLWINDOW, true);
             };
 
-            // 本地函数:显示 ghost 并建立与宿主的 Z 轴所有者关系
-            void OnHostLoaded()
-            {
-                if (_ghostWindow == null) return;
-
-                _ghostWindow.Show();
-                var parentWin = Window.GetWindow(this);
-                if (parentWin != null)
-                {
-                    IntPtr parentHwnd = new WindowInteropHelper(parentWin).Handle;
-                    IntPtr ghostHwnd = new WindowInteropHelper(_ghostWindow).Handle;
-
-                    // 2. 核心:建立所有者关系(即便 ghost 没有 Owner 属性)
-                    // 在 Win32 层面,这能确保 ghost 始终跟随 parent 的 Z 轴变动
-                    NativeMethods.SetWindowLongPtr(ghostHwnd, -8, parentHwnd); // GWL_HWNDPARENT
-                }
-
-                // 若构造后、Loaded 前已将 _maskVisible 置为 false,需在此同步一次,
-                // 否则 Show() 会把可见性拉回 Visible
-                if (!_maskVisible)
-                    _ghostWindow.Visibility = Visibility.Hidden;
-            }
-
-            this.Loaded += (s, e) => OnHostLoaded();
-            this.Unloaded += (s, e) => CloseGhostWindow();
+            HookGhostHostEvents();
 
             // 若 Init 时本视图已经 Loaded(例如运行期 SetFullImage(null) 切入实时模式),
             // Loaded 事件不会再触发,立即执行一次以完成 Show 与 Z 轴绑定
-            if (this.IsLoaded) OnHostLoaded();
+            if (IsLoaded)
+                OnHostLoadedForGhost(this, new RoutedEventArgs());
         }
 
         private void CloseGhostWindow()
         {
+            UnhookGhostHostEvents();
+
             if (_ghostWindow != null)
             {
                 try { _ghostWindow.Close(); } catch { }
@@ -464,6 +490,51 @@ namespace KkjQuicker.Overlay.Layers
             _maskOuter = null;
             _maskHole = null;
             _maskPath = null;
+        }
+
+        private void HookGhostHostEvents()
+        {
+            if (_ghostHostEventsHooked)
+                return;
+
+            Loaded += OnHostLoadedForGhost;
+            Unloaded += OnHostUnloadedForGhost;
+            _ghostHostEventsHooked = true;
+        }
+
+        private void UnhookGhostHostEvents()
+        {
+            if (!_ghostHostEventsHooked)
+                return;
+
+            Loaded -= OnHostLoadedForGhost;
+            Unloaded -= OnHostUnloadedForGhost;
+            _ghostHostEventsHooked = false;
+        }
+
+        private void OnHostLoadedForGhost(object? sender, RoutedEventArgs e)
+        {
+            if (_ghostWindow == null)
+                return;
+
+            _ghostWindow.Show();
+            Window? parentWin = Window.GetWindow(this);
+            if (parentWin != null)
+            {
+                IntPtr parentHwnd = parentWin.GetHandle();
+                IntPtr ghostHwnd = _ghostWindow.GetHandle();
+
+                // 在 Win32 层面建立 owner 关系,确保 ghost 跟随宿主 Z 轴。
+                NativeMethods.SetWindowLongPtr(ghostHwnd, -8, parentHwnd); // GWL_HWNDPARENT
+            }
+
+            if (!_maskVisible)
+                _ghostWindow.Visibility = Visibility.Hidden;
+        }
+
+        private void OnHostUnloadedForGhost(object? sender, RoutedEventArgs e)
+        {
+            CloseGhostWindow();
         }
 
         private void InitInlineMask()
@@ -503,7 +574,7 @@ namespace KkjQuicker.Overlay.Layers
         /// <summary>
         /// 创建一个新的截图编辑器视图。
         /// </summary>
-        public EditorView(BitmapSource fullImage, Int32Rect canvasPixelBounds, Rect initialRect, EditorOptions options)
+        public EditorView(BitmapSource? fullImage, Int32Rect canvasPixelBounds, Rect initialRect, EditorOptions options)
         {
             if (canvasPixelBounds.Width <= 0 || canvasPixelBounds.Height <= 0)
                 throw new ArgumentException("画布像素范围无效。", nameof(canvasPixelBounds));
@@ -535,7 +606,7 @@ namespace KkjQuicker.Overlay.Layers
         /// 运行期切换背景图。传入 <see langword="null"/> 进入实时透传模式,
         /// 传入非空位图进入静态冻结模式。遮罩载体会随之自动切换。
         /// </summary>
-        public void SetFullImage(BitmapSource fullImage)
+        public void SetFullImage(BitmapSource? fullImage)
         {
             CleanupTransientUiForModeSwitch();
             ApplyImageAndCanvas(fullImage);
@@ -592,6 +663,16 @@ namespace KkjQuicker.Overlay.Layers
             if (_infoBorder != null) _infoBorder.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        private void SetLongScreenshotGuideVisible(bool visible)
+        {
+            _longScreenshotGuideVisible = visible;
+            if (_longScreenshotGuide != null)
+            {
+                UpdateLongScreenshotGuidePosition();
+                _longScreenshotGuide.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
         /// <summary>
         /// 设置遮罩可见性。
         /// <para>实时模式下整个 GhostWindow 即语义上的遮罩,会随之显隐;
@@ -615,8 +696,9 @@ namespace KkjQuicker.Overlay.Layers
             CleanupTransientTextInputs();
         }
 
-        private void ApplyImageAndCanvas(BitmapSource fullImage)
+        private void ApplyImageAndCanvas(BitmapSource? fullImage)
         {
+            LayoutTransform = Transform.Identity;
             _fullImage = fullImage;
             _imgPxW = _fullImage != null ? _fullImage.PixelWidth : _canvasPixelBounds.Width;
             _imgPxH = _fullImage != null ? _fullImage.PixelHeight : _canvasPixelBounds.Height;
@@ -658,6 +740,7 @@ namespace KkjQuicker.Overlay.Layers
             };
             Children.Add(_selectionBorder);
 
+            BuildLongScreenshotGuide();
             BuildThumbs();
             BuildInfoBadge();
             BuildToolbars();
@@ -668,6 +751,37 @@ namespace KkjQuicker.Overlay.Layers
             PreviewMouseUp += OnMouseUp;
 
             Unloaded += (s, e) => _mosaicRebuildLimiter?.Dispose();
+        }
+
+        private void BuildLongScreenshotGuide()
+        {
+            var brush = new SolidColorBrush(Color.FromRgb(30, 144, 255));
+            brush.Freeze();
+
+            _longScreenshotGuide = new Canvas
+            {
+                IsHitTestVisible = false,
+                Visibility = Visibility.Collapsed
+            };
+
+            _longScreenshotGuideTop = CreateLongScreenshotGuideLine(brush);
+            _longScreenshotGuideLeft = CreateLongScreenshotGuideLine(brush);
+            _longScreenshotGuideRight = CreateLongScreenshotGuideLine(brush);
+
+            _longScreenshotGuide.Children.Add(_longScreenshotGuideTop);
+            _longScreenshotGuide.Children.Add(_longScreenshotGuideLeft);
+            _longScreenshotGuide.Children.Add(_longScreenshotGuideRight);
+            Children.Add(_longScreenshotGuide);
+        }
+
+        private static Rectangle CreateLongScreenshotGuideLine(Brush brush)
+        {
+            return new Rectangle
+            {
+                Fill = brush,
+                SnapsToDevicePixels = true,
+                IsHitTestVisible = false
+            };
         }
 
         private void BuildInfoBadge()
@@ -757,6 +871,8 @@ namespace KkjQuicker.Overlay.Layers
 
             _mainToolbar.Children.Add(new Separator { Margin = new Thickness(8, 0, 8, 0), Background = Brushes.DimGray });
             _mainToolbar.Children.Add(UiFactory.ToolButton(CreateToolbarContent(EFontAwesomeIcon.Solid_Times), "取消 (Esc)", Cancel));
+            _longScreenshotButton = UiFactory.ToolButton(CreateToolbarContent(EFontAwesomeIcon.Solid_Scroll), "长截图", ToggleLongScreenshot);
+            _mainToolbar.Children.Add(_longScreenshotButton);
             _mainToolbar.Children.Add(UiFactory.ToolButton(CreateToolbarContent(EFontAwesomeIcon.Solid_Save), "保存为图片 (V)", SaveAsImage));
             _mainToolbar.Children.Add(UiFactory.ToolButton(CreateToolbarContent(EFontAwesomeIcon.Regular_Copy), "复制 (C)", Copy));
             _mainToolbar.Children.Add(UiFactory.ToolButton(CreateToolbarContent(EFontAwesomeIcon.Solid_Check), "确认 (Enter)", Accept));
@@ -899,7 +1015,16 @@ namespace KkjQuicker.Overlay.Layers
         {
             if (Keyboard.FocusedElement is TextBox) return;
 
-            if (e.Key == Key.Escape) { Cancel(); e.Handled = true; return; }
+            if (e.Key == Key.Escape)
+            {
+                if (_longScreenshotRunning)
+                    RequestLongScreenshotStop();
+                else
+                    Cancel();
+
+                e.Handled = true;
+                return;
+            }
             if (e.Key == Key.Enter) { Accept(); e.Handled = true; return; }
             if (e.Key == Key.C && Keyboard.Modifiers == ModifierKeys.None) { Copy(); e.Handled = true; return; }
             if (e.Key == Key.V && Keyboard.Modifiers == ModifierKeys.None) { SaveAsImage(); e.Handled = true; return; }
@@ -915,13 +1040,10 @@ namespace KkjQuicker.Overlay.Layers
             Focus();
             if (_interactionMode == InteractionMode.ResizingSelection) return;
 
-            if (e.OriginalSource is DependencyObject dep)
-            {
-                if (FindVisualParent<Thumb>(dep) != null) return;
-                if (IsInToolbar(dep)) return;
-                if (FindVisualParent<TextBox>(dep) != null) return;
-                if (FindVisualParent<ButtonBase>(dep) != null) return;
-            }
+            if (UiHelper.FindOriginalSourceAncestor<Thumb>(e) != null) return;
+            if (UiHelper.FindOriginalSourceAncestor<TextBox>(e) != null) return;
+            if (UiHelper.FindOriginalSourceAncestor<ButtonBase>(e) != null) return;
+            if (e.OriginalSource is DependencyObject dep && IsInToolbar(dep)) return;
 
             Point p = e.GetPosition(this);
 
@@ -1168,11 +1290,47 @@ namespace KkjQuicker.Overlay.Layers
         {
             for (int i = _liveTextInputs.Count - 1; i >= 0; i--)
             {
-                var tb = _liveTextInputs[i];
-                if (tb == null) { _liveTextInputs.RemoveAt(i); continue; }
-                if (tb.Parent == _inkLayer && string.IsNullOrWhiteSpace(tb.Text)) _inkLayer.Children.Remove(tb);
+                TextBox input = _liveTextInputs[i];
+                if (input == null)
+                {
+                    _liveTextInputs.RemoveAt(i);
+                    continue;
+                }
+
+                CommitOrRemoveTransientTextInput(input);
                 _liveTextInputs.RemoveAt(i);
             }
+        }
+
+        private void CommitOrRemoveTransientTextInput(TextBox input)
+        {
+            if (input.Parent != _inkLayer)
+                return;
+
+            double left = GetLeft(input);
+            double top = GetTop(input);
+            if (double.IsNaN(left)) left = 0;
+            if (double.IsNaN(top)) top = 0;
+
+            _inkLayer.Children.Remove(input);
+
+            string text = input.Text;
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
+            var tb = new TextBlock
+            {
+                Text = text,
+                Foreground = input.Foreground,
+                FontSize = input.FontSize
+            };
+
+            TextOptions.SetTextFormattingMode(tb, TextFormattingMode.Display);
+            TextOptions.SetTextHintingMode(tb, TextHintingMode.Fixed);
+
+            SetLeft(tb, left);
+            SetTop(tb, top);
+            _inkLayer.Children.Add(tb);
         }
 
         private void EnsureMosaicBitmap()
@@ -1225,6 +1383,7 @@ namespace KkjQuicker.Overlay.Layers
             SetLeft(_selectionBorder, _selection.X); SetTop(_selectionBorder, _selection.Y);
             _selectionBorder.Width = _selection.Width; _selectionBorder.Height = _selection.Height;
             PositionThumbs();
+            UpdateLongScreenshotGuidePosition();
 
             _selectionPixelRect = GetSelectionPixelRectCore();
             UpdateInfoText();
@@ -1234,6 +1393,33 @@ namespace KkjQuicker.Overlay.Layers
             if (_infoBorder != null) _infoBorder.Visibility = _infoBadgeVisible ? Visibility.Visible : Visibility.Collapsed;
 
             foreach (var thumb in _thumbMap.Keys) thumb.Visibility = _thumbsVisible ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void UpdateLongScreenshotGuidePosition()
+        {
+            if (_longScreenshotGuide == null || !_longScreenshotGuideVisible)
+                return;
+
+            double t = LongScreenshotGuideThickness;
+            double left = _selection.Left;
+            double top = _selection.Top;
+            double width = Math.Max(0, _selection.Width);
+            double height = Math.Max(0, _selection.Height);
+
+            _longScreenshotGuideTop.Width = width;
+            _longScreenshotGuideTop.Height = t;
+            SetLeft(_longScreenshotGuideTop, left);
+            SetTop(_longScreenshotGuideTop, top);
+
+            _longScreenshotGuideLeft.Width = t;
+            _longScreenshotGuideLeft.Height = height;
+            SetLeft(_longScreenshotGuideLeft, left);
+            SetTop(_longScreenshotGuideLeft, top);
+
+            _longScreenshotGuideRight.Width = t;
+            _longScreenshotGuideRight.Height = height;
+            SetLeft(_longScreenshotGuideRight, left + Math.Max(0, width - t));
+            SetTop(_longScreenshotGuideRight, top);
         }
 
         private void UpdateToolbarPosition()
@@ -1311,7 +1497,7 @@ namespace KkjQuicker.Overlay.Layers
             return (_selectionPixelRect.Width <= 0 || _selectionPixelRect.Height <= 0) ? new Int32Rect(0, 0, 0, 0) : _selectionPixelRect;
         }
 
-        private BitmapSource RenderSelectionComposite(Int32Rect cropRect)
+        private BitmapSource? RenderSelectionComposite(Int32Rect cropRect)
         {
             if (_fullImage == null) return CaptureCurrentSelectionFromScreen();
 
@@ -1336,7 +1522,7 @@ namespace KkjQuicker.Overlay.Layers
             rtb.Render(dv); rtb.Freeze(); return rtb;
         }
 
-        private BitmapSource CaptureCurrentSelectionFromScreen()
+        private BitmapSource? CaptureCurrentSelectionFromScreen()
         {
             Int32Rect rectPx = SelectionPixelRect; if (rectPx.Width <= 0 || rectPx.Height <= 0) return null;
 
@@ -1352,7 +1538,13 @@ namespace KkjQuicker.Overlay.Layers
                     IntPtr hBitmap = bmp.GetHbitmap();
                     try
                     {
-                        var source = Imaging.CreateBitmapSourceFromHBitmap(hBitmap, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions()); source.Freeze(); return source;
+                        var source = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+                            hBitmap,
+                            IntPtr.Zero,
+                            Int32Rect.Empty,
+                            BitmapSizeOptions.FromEmptyOptions());
+                        source.Freeze();
+                        return source;
                     }
                     finally { NativeMethods.DeleteObject(hBitmap); }
                 }
@@ -1367,13 +1559,13 @@ namespace KkjQuicker.Overlay.Layers
         /// <summary>
         /// 将当前选区(含所有标注)导出为位图。
         /// </summary>
-        public BitmapSource ExportWithAnnotations()
+        public BitmapSource? ExportWithAnnotations()
         {
             Int32Rect cropRect = GetValidSelectionPixelRect(); if (cropRect.Width <= 0 || cropRect.Height <= 0) return null;
             try { return RenderSelectionComposite(cropRect); } catch (Exception ex) { _opt?.OnError?.Invoke(ex); return null; }
         }
 
-        private bool TryExport(out BitmapSource bmp)
+        private bool TryExport(out BitmapSource? bmp)
         {
             CleanupTransientTextInputs(); bmp = null;
             try { bmp = ExportWithAnnotations(); return bmp != null; }
@@ -1386,9 +1578,534 @@ namespace KkjQuicker.Overlay.Layers
             CloseRequested?.Invoke(this, EventArgs.Empty);
         }
 
+        private async void ToggleLongScreenshot()
+        {
+            if (_finished)
+                return;
+
+            if (_longScreenshotRunning)
+            {
+                _longScreenshotStopRequested = true;
+                UpdateLongScreenshotButton(isStopping: false);
+                return;
+            }
+
+            await StartLongScreenshotAsync();
+        }
+
+        private async Task StartLongScreenshotAsync()
+        {
+            if (_finished || _longScreenshotRunning)
+                return;
+
+            _longScreenshotRunning = true;
+            _longScreenshotStopRequested = false;
+            Cursor? oldCursor = Cursor;
+            Cursor = Cursors.Arrow;
+            UpdateLongScreenshotButton(isStopping: false);
+            LongScreenshotVisualState visualState = BeginLongScreenshotTransparentMode();
+            bool applied = false;
+
+            try
+            {
+                BitmapSource? result = await RecordLongScreenshotAsync();
+
+                if (result == null || _finished)
+                    return;
+
+                ApplyLongScreenshotResult(result);
+                applied = true;
+            }
+            catch (Exception ex)
+            {
+                _opt?.OnError?.Invoke(ex);
+            }
+            finally
+            {
+                _longScreenshotRunning = false;
+                _longScreenshotStopRequested = false;
+                Cursor = oldCursor;
+
+                if (!_finished)
+                {
+                    EndLongScreenshotTransparentMode(visualState, applied);
+                    SetToolbarVisible(true);
+                    UpdateLongScreenshotButton(isStopping: false);
+                }
+            }
+        }
+
+        private LongScreenshotVisualState BeginLongScreenshotTransparentMode()
+        {
+            var state = new LongScreenshotVisualState
+            {
+                Background = Background,
+                BackgroundImageVisibility = _backgroundImage?.Visibility,
+                InlineMaskVisibility = _inlineMaskPath?.Visibility,
+                ClipHostVisibility = _clipHost?.Visibility,
+                SelectionBorderVisible = _selectionBorderVisible,
+                ThumbsVisible = _thumbsVisible,
+                InfoBadgeVisible = _infoBadgeVisible
+            };
+
+            Background = null;
+            SetSelectionBorderVisible(false);
+            SetThumbsVisible(false);
+            SetInfoBadgeVisible(false);
+            SetLongScreenshotGuideVisible(true);
+            if (_backgroundImage != null)
+                _backgroundImage.Visibility = Visibility.Hidden;
+            if (_inlineMaskPath != null)
+                _inlineMaskPath.Visibility = Visibility.Hidden;
+            if (_clipHost != null)
+                _clipHost.Visibility = Visibility.Hidden;
+
+            return state;
+        }
+
+        private void EndLongScreenshotTransparentMode(LongScreenshotVisualState state, bool resultApplied)
+        {
+            if (state == null)
+                return;
+
+            if (resultApplied)
+            {
+                UpdateInteractionSurface();
+                SetSelectionBorderVisible(state.SelectionBorderVisible);
+                SetThumbsVisible(state.ThumbsVisible);
+                SetInfoBadgeVisible(state.InfoBadgeVisible);
+                SetLongScreenshotGuideVisible(false);
+                if (_backgroundImage != null)
+                    _backgroundImage.Visibility = _fullImage != null ? Visibility.Visible : Visibility.Collapsed;
+                if (_inlineMaskPath != null)
+                    _inlineMaskPath.Visibility = _maskVisible ? Visibility.Visible : Visibility.Collapsed;
+                if (_clipHost != null)
+                    _clipHost.Visibility = Visibility.Visible;
+                return;
+            }
+
+            Background = state.Background;
+            SetSelectionBorderVisible(state.SelectionBorderVisible);
+            SetThumbsVisible(state.ThumbsVisible);
+            SetInfoBadgeVisible(state.InfoBadgeVisible);
+            SetLongScreenshotGuideVisible(false);
+            if (_backgroundImage != null && state.BackgroundImageVisibility.HasValue)
+                _backgroundImage.Visibility = state.BackgroundImageVisibility.Value;
+            if (_inlineMaskPath != null && state.InlineMaskVisibility.HasValue)
+                _inlineMaskPath.Visibility = state.InlineMaskVisibility.Value;
+            if (_clipHost != null && state.ClipHostVisibility.HasValue)
+                _clipHost.Visibility = state.ClipHostVisibility.Value;
+        }
+
+        private sealed class LongScreenshotVisualState
+        {
+            public Brush? Background { get; set; }
+            public Visibility? BackgroundImageVisibility { get; set; }
+            public Visibility? InlineMaskVisibility { get; set; }
+            public Visibility? ClipHostVisibility { get; set; }
+            public bool SelectionBorderVisible { get; set; }
+            public bool ThumbsVisible { get; set; }
+            public bool InfoBadgeVisible { get; set; }
+        }
+
+        private void UpdateLongScreenshotButton(bool isStopping)
+        {
+            if (_longScreenshotButton == null)
+                return;
+
+            bool recording = _longScreenshotRunning;
+            _longScreenshotButton.Content = CreateToolbarContent(recording ? EFontAwesomeIcon.Solid_StopCircle : EFontAwesomeIcon.Solid_Scroll);
+            _longScreenshotButton.ToolTip = new ToolTip
+            {
+                Content = isStopping
+                    ? "正在合成长截图"
+                    : _longScreenshotStopRequested ? "正在停止长截图" : recording ? "停止长截图" : "长截图",
+                Placement = PlacementMode.Mouse
+            };
+            _longScreenshotButton.IsEnabled = !isStopping;
+            _longScreenshotButton.Foreground = recording ? Brushes.OrangeRed : Brushes.White;
+        }
+
+        private void ApplyLongScreenshotResult(BitmapSource result)
+        {
+            CleanupTransientUiForModeSwitch();
+
+            if (_inkLayer != null)
+                _inkLayer.Children.Clear();
+            if (_mosaicMask != null)
+            {
+                _mosaicMask.Children.Clear();
+                _mosaicMask.Visibility = Visibility.Collapsed;
+            }
+
+            _mosaicBitmap = null;
+            if (_mosaicImage != null)
+                _mosaicImage.Source = null;
+
+            _sequenceNumber = 1;
+            _currentTool = EditTool.None;
+
+            _history.Clear();
+            _history.MarkClean();
+
+            SetFullImage(result);
+            _selection = new Rect(0, 0, _imgDipW, _imgDipH);
+            ApplyLongScreenshotDisplayScale();
+
+            if (_settingsBar != null)
+                _settingsBar.Visibility = Visibility.Collapsed;
+
+            UpdateInteractionSurface();
+            UpdateToolButtonStyles();
+            UpdateSettingsUI();
+            UpdateVisuals(false);
+            Focus();
+        }
+
+        private async Task<BitmapSource?> RecordLongScreenshotAsync()
+        {
+            CleanupTransientTextInputs();
+
+            Int32Rect rectPx = GetValidSelectionPixelRect();
+            if (rectPx.Width <= 0 || rectPx.Height <= 0)
+                return null;
+
+            int maxFrames = Math.Max(1, _opt.LongScreenshotMaxFrames);
+            int delayMs = Math.Max(50, _opt.LongScreenshotScrollDelayMs);
+
+            List<BitmapSource> frames = [];
+
+            POINT scrollPoint = new POINT
+            {
+                X = rectPx.X + rectPx.Width / 2,
+                Y = rectPx.Y + rectPx.Height / 2
+            };
+            IntPtr scrollTarget = GetLongScreenshotScrollTarget(scrollPoint);
+
+            BitmapSource? first = await CaptureLongScreenshotFrameAsync(rectPx);
+            if (first == null)
+                return null;
+
+            frames.Add(first);
+
+            while (!_longScreenshotStopRequested && frames.Count < maxFrames)
+            {
+                SendLongScreenshotWheel(scrollTarget, scrollPoint);
+
+                await WaitLongScreenshotScrollDelayAsync(delayMs);
+                if (_longScreenshotStopRequested)
+                    break;
+
+                BitmapSource? next = await CaptureLongScreenshotFrameAsync(rectPx);
+                if (next == null)
+                    break;
+
+                frames.Add(next);
+            }
+
+            return BuildLongScreenshot(frames);
+        }
+
+        private async Task WaitLongScreenshotScrollDelayAsync(int delayMs)
+        {
+            int remaining = delayMs;
+            while (remaining > 0 && !_longScreenshotStopRequested)
+            {
+                int current = Math.Min(50, remaining);
+                await Task.Delay(current);
+                remaining -= current;
+            }
+        }
+
+        private async Task<BitmapSource?> CaptureLongScreenshotFrameAsync(Int32Rect rectPx)
+        {
+            bool oldSelectionVisible = _selectionBorderVisible;
+            bool oldThumbsVisible = _thumbsVisible;
+            bool oldInfoVisible = _infoBadgeVisible;
+            bool oldGuideVisible = _longScreenshotGuideVisible;
+            Visibility oldGhostVisibility = _ghostWindow?.Visibility ?? Visibility.Visible;
+
+            try
+            {
+                SetSelectionBorderVisible(false);
+                SetThumbsVisible(false);
+                SetInfoBadgeVisible(false);
+                SetLongScreenshotGuideVisible(false);
+                if (_ghostWindow != null)
+                    _ghostWindow.Visibility = Visibility.Hidden;
+
+                await FlushRenderAsync();
+                await Task.Delay(45);
+                await FlushRenderAsync();
+                return CaptureScreenRegion(rectPx);
+            }
+            finally
+            {
+                SetSelectionBorderVisible(oldSelectionVisible);
+                SetThumbsVisible(oldThumbsVisible);
+                SetInfoBadgeVisible(oldInfoVisible);
+                SetLongScreenshotGuideVisible(oldGuideVisible);
+
+                if (_ghostWindow != null)
+                    _ghostWindow.Visibility = oldGhostVisibility;
+
+                await FlushRenderAsync();
+            }
+        }
+
+        private IntPtr GetLongScreenshotScrollTarget(POINT point)
+        {
+            Window? window = Window.GetWindow(this);
+            IntPtr hwnd = window?.GetHandle() ?? IntPtr.Zero;
+            IntPtr oldExStyle = IntPtr.Zero;
+            bool restoreExStyle = hwnd != IntPtr.Zero && NativeMethods.IsWindow(hwnd);
+
+            try
+            {
+                if (restoreExStyle)
+                {
+                    oldExStyle = NativeMethods.GetWindowLongPtr(hwnd, NativeMethods.GWL_EXSTYLE);
+                    WindowHelper.SetTransparent(hwnd, true);
+                }
+
+                IntPtr target = NativeMethods.WindowFromPoint(point);
+                return target != hwnd ? target : IntPtr.Zero;
+            }
+            finally
+            {
+                if (restoreExStyle)
+                    NativeMethods.SetWindowLongPtr(hwnd, NativeMethods.GWL_EXSTYLE, oldExStyle);
+            }
+        }
+
+        private void SendLongScreenshotWheel(IntPtr target, POINT point)
+        {
+            if (target != IntPtr.Zero && NativeMethods.IsWindow(target))
+            {
+                NativeMethods.PostMessage(
+                    target,
+                    NativeMethods.WM_MOUSEWHEEL,
+                    PackMouseWheelWParam(_opt.LongScreenshotWheelDelta),
+                    PackMouseLParam(point));
+                return;
+            }
+
+            NativeMethods.mouse_event(
+                NativeMethods.MOUSEEVENTF_WHEEL,
+                0,
+                0,
+                _opt.LongScreenshotWheelDelta,
+                UIntPtr.Zero);
+        }
+
+        private static IntPtr PackMouseWheelWParam(int delta)
+        {
+            return new IntPtr(unchecked(delta << 16));
+        }
+
+        private static IntPtr PackMouseLParam(POINT point)
+        {
+            int value = unchecked((point.X & 0xFFFF) | ((point.Y & 0xFFFF) << 16));
+            return new IntPtr(value);
+        }
+
+        private BitmapSource? BuildLongScreenshot(IReadOnlyList<BitmapSource> frames)
+        {
+            if (frames == null || frames.Count == 0)
+                return null;
+            if (frames.Count == 1)
+                return frames[0];
+
+            List<BitmapSource> acceptedFrames = [frames[0]];
+            List<int> overlaps = [0];
+            int minAppendPixels = Math.Max(1, _opt.LongScreenshotMinAppendPixels);
+
+            for (int i = 1; i < frames.Count; i++)
+            {
+                BitmapSource previous = acceptedFrames[acceptedFrames.Count - 1];
+                BitmapSource next = frames[i];
+
+                int overlap = FindBestVerticalOverlap(previous, next, out double score);
+                if (overlap <= 0 || score > _opt.LongScreenshotOverlapTolerance)
+                    overlap = 0;
+
+                int appendHeight = next.PixelHeight - overlap;
+                if (appendHeight < minAppendPixels)
+                    continue;
+
+                acceptedFrames.Add(next);
+                overlaps.Add(overlap);
+            }
+
+            return StitchVerticalFrames(acceptedFrames, overlaps);
+        }
+
+        private void ApplyLongScreenshotDisplayScale()
+        {
+            double maxWidth = Math.Max(1, _canvasPixelBounds.Width * 0.92);
+            double maxHeight = Math.Max(1, _canvasPixelBounds.Height * 0.86);
+            double scale = Math.Min(1.0, Math.Min(maxWidth / _imgPxW, maxHeight / _imgPxH));
+
+            LayoutTransform = scale < 0.995
+                ? new ScaleTransform(scale, scale)
+                : Transform.Identity;
+        }
+
+        private Task FlushRenderAsync()
+        {
+            return Dispatcher.InvokeAsync(static () => { }, DispatcherPriority.Render).Task
+                .ContinueWith(
+                    static _ => NativeMethods.DwmFlush(),
+                    TaskScheduler.FromCurrentSynchronizationContext());
+        }
+
+        private static BitmapSource? CaptureScreenRegion(Int32Rect rectPx)
+        {
+            if (rectPx.Width <= 0 || rectPx.Height <= 0)
+                return null;
+
+            using (var bmp = ScreenCapture.CaptureScreenBounds(
+                new System.Drawing.Rectangle(rectPx.X, rectPx.Y, rectPx.Width, rectPx.Height)))
+            {
+                BitmapSource source = bmp.ToBitmapSource();
+                source.Freeze();
+                return source;
+            }
+        }
+
+        private int FindBestVerticalOverlap(BitmapSource previous, BitmapSource next, out double bestScore)
+        {
+            bestScore = double.MaxValue;
+
+            if (previous == null || next == null)
+                return 0;
+
+            int width = Math.Min(previous.PixelWidth, next.PixelWidth);
+            int maxOverlap = Math.Min(
+                Math.Min(previous.PixelHeight, next.PixelHeight) - 1,
+                Math.Max(1, _opt.LongScreenshotMaxOverlapPixels));
+
+            if (width <= 0 || maxOverlap <= 0)
+                return 0;
+
+            int minOverlap = Math.Min(maxOverlap, Math.Max(8, _opt.LongScreenshotMinAppendPixels));
+            int step = Math.Max(1, (maxOverlap - minOverlap) / 96);
+
+            byte[] prevPixels = CopyComparablePixels(previous, out int prevStride);
+            byte[] nextPixels = CopyComparablePixels(next, out int nextStride);
+
+            int bestOverlap = 0;
+            for (int overlap = maxOverlap; overlap >= minOverlap; overlap -= step)
+            {
+                double score = CalculateOverlapScore(
+                    prevPixels,
+                    previous.PixelHeight,
+                    prevStride,
+                    nextPixels,
+                    nextStride,
+                    width,
+                    overlap);
+
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    bestOverlap = overlap;
+                }
+            }
+
+            return bestOverlap;
+        }
+
+        private static byte[] CopyComparablePixels(BitmapSource source, out int stride)
+        {
+            BitmapSource comparable = source.Format == PixelFormats.Bgra32 || source.Format == PixelFormats.Pbgra32
+                ? source
+                : new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
+
+            stride = comparable.PixelWidth * 4;
+            byte[] pixels = new byte[stride * comparable.PixelHeight];
+            comparable.CopyPixels(pixels, stride, 0);
+            return pixels;
+        }
+
+        private static double CalculateOverlapScore(
+            byte[] prevPixels,
+            int previousHeight,
+            int prevStride,
+            byte[] nextPixels,
+            int nextStride,
+            int width,
+            int overlap)
+        {
+            int rowSamples = Math.Min(24, overlap);
+            int colSamples = Math.Min(32, width);
+            int rowStep = Math.Max(1, overlap / rowSamples);
+            int colStep = Math.Max(1, width / colSamples);
+
+            long diff = 0;
+            int samples = 0;
+
+            for (int y = 0; y < overlap; y += rowStep)
+            {
+                int prevRow = (previousHeight - overlap + y) * prevStride;
+                int nextRow = y * nextStride;
+
+                for (int x = 0; x < width; x += colStep)
+                {
+                    int prevOffset = prevRow + x * 4;
+                    int nextOffset = nextRow + x * 4;
+
+                    diff += Math.Abs(prevPixels[prevOffset] - nextPixels[nextOffset]);
+                    diff += Math.Abs(prevPixels[prevOffset + 1] - nextPixels[nextOffset + 1]);
+                    diff += Math.Abs(prevPixels[prevOffset + 2] - nextPixels[nextOffset + 2]);
+                    samples += 3;
+                }
+            }
+
+            return samples == 0 ? double.MaxValue : (double)diff / samples;
+        }
+
+        private static BitmapSource? StitchVerticalFrames(IReadOnlyList<BitmapSource> frames, IReadOnlyList<int> overlaps)
+        {
+            if (frames == null || frames.Count == 0)
+                return null;
+
+            if (frames.Count == 1)
+                return frames[0];
+
+            int width = frames[0].PixelWidth;
+            int totalHeight = frames[0].PixelHeight;
+
+            for (int i = 1; i < frames.Count; i++)
+                totalHeight += Math.Max(1, frames[i].PixelHeight - Math.Max(0, overlaps[i]));
+
+            var visual = new DrawingVisual();
+            using (DrawingContext dc = visual.RenderOpen())
+            {
+                double y = 0;
+                dc.DrawImage(frames[0], new Rect(0, 0, frames[0].PixelWidth, frames[0].PixelHeight));
+                y = frames[0].PixelHeight;
+
+                for (int i = 1; i < frames.Count; i++)
+                {
+                    int overlap = Math.Max(0, overlaps[i]);
+                    y -= overlap;
+                    dc.DrawImage(frames[i], new Rect(0, y, frames[i].PixelWidth, frames[i].PixelHeight));
+                    y += frames[i].PixelHeight;
+                }
+            }
+
+            double dpiX = frames[0].DpiX > 0 ? frames[0].DpiX : 96;
+            double dpiY = frames[0].DpiY > 0 ? frames[0].DpiY : 96;
+            var result = new RenderTargetBitmap(width, totalHeight, dpiX, dpiY, PixelFormats.Pbgra32);
+            result.Render(visual);
+            result.Freeze();
+            return result;
+        }
+
         private void SaveAsImage()
         {
-            if (!TryExport(out BitmapSource bmp)) return;
+            if (!TryExport(out BitmapSource? bmp) || bmp == null) return;
             try
             {
                 if (_opt.SaveHandler != null && _opt.SaveHandler(this, bmp)) { RequestClose(); return; }
@@ -1407,7 +2124,7 @@ namespace KkjQuicker.Overlay.Layers
         public void Accept()
         {
             if (_finished) return;
-            if (!TryExport(out BitmapSource bmp)) return;
+            if (!TryExport(out BitmapSource? bmp) || bmp == null) return;
             _finished = true;
             CloseGhostWindow();
             Accepted?.Invoke(this, bmp);
@@ -1415,7 +2132,7 @@ namespace KkjQuicker.Overlay.Layers
 
         private void Copy()
         {
-            try { if (!TryExport(out BitmapSource bmp)) return; Clipboard.SetImage(bmp); RequestClose(); }
+            try { if (!TryExport(out BitmapSource? bmp) || bmp == null) return; Clipboard.SetImage(bmp); RequestClose(); }
             catch (Exception ex) { _opt?.OnError?.Invoke(ex); }
         }
 

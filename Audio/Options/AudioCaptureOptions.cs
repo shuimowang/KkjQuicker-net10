@@ -24,7 +24,7 @@ namespace KkjQuicker.Audio.Options
         /// <exception cref="ArgumentOutOfRangeException">值必须大于 0。</exception>
         public int SampleRate
         {
-            get { return _sampleRate; }
+            get => _sampleRate;
             set
             {
                 if (value <= 0)
@@ -42,7 +42,7 @@ namespace KkjQuicker.Audio.Options
         /// <exception cref="ArgumentOutOfRangeException">值必须是 8、16、24 或 32。</exception>
         public int BitsPerSample
         {
-            get { return _bitsPerSample; }
+            get => _bitsPerSample;
             set
             {
                 if (value != 8 && value != 16 && value != 24 && value != 32)
@@ -60,7 +60,7 @@ namespace KkjQuicker.Audio.Options
         /// <exception cref="ArgumentOutOfRangeException">值必须是 1 或 2。</exception>
         public int Channels
         {
-            get { return _channels; }
+            get => _channels;
             set
             {
                 if (value != 1 && value != 2)
@@ -80,7 +80,7 @@ namespace KkjQuicker.Audio.Options
         /// <exception cref="ArgumentOutOfRangeException">值必须位于 1 到 1000 之间。</exception>
         public int BufferMilliseconds
         {
-            get { return _bufferMilliseconds; }
+            get => _bufferMilliseconds;
             set
             {
                 if (value <= 0 || value > 1000)

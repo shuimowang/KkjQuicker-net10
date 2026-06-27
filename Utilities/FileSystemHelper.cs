@@ -39,7 +39,7 @@ namespace KkjQuicker.Utilities
         /// <remarks>
         /// 读取时会优先根据文件 BOM 自动识别文本编码；若未检测到 BOM，则默认按 UTF-8 处理。
         /// </remarks>
-        public static string ReadAllText(string path)
+        public static string ReadAllText(string? path)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
                 return string.Empty;
@@ -59,7 +59,7 @@ namespace KkjQuicker.Utilities
         /// 读取时会优先根据文件 BOM 自动识别文本编码；若未检测到 BOM，则默认按 UTF-8 处理。
         /// 使用异步 FileStream，避免阻塞调用线程。
         /// </remarks>
-        public static async Task<string> ReadAllTextAsync(string path)
+        public static async Task<string> ReadAllTextAsync(string? path)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
                 return string.Empty;
@@ -83,7 +83,7 @@ namespace KkjQuicker.Utilities
         /// <remarks>
         /// 若 <paramref name="path"/> 为空白，则不执行任何操作。
         /// </remarks>
-        public static void WriteAllText(string path, string content)
+        public static void WriteAllText(string? path, string? content)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return;
@@ -102,7 +102,7 @@ namespace KkjQuicker.Utilities
         /// 若 <paramref name="path"/> 为空白，则直接返回。
         /// 使用异步 FileStream，避免阻塞调用线程。
         /// </remarks>
-        public static async Task WriteAllTextAsync(string path, string content)
+        public static async Task WriteAllTextAsync(string? path, string? content)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return;
@@ -134,7 +134,7 @@ namespace KkjQuicker.Utilities
         /// 可选的 <see cref="JsonSerializerSettings"/>；为 <see langword="null"/> 时使用 Newtonsoft.Json 默认设置。
         /// </param>
         /// <returns>反序列化结果；若读取或解析失败则返回 <paramref name="defaultValue"/>。</returns>
-        public static T ReadJson<T>(string path, T defaultValue, JsonSerializerSettings? settings = null)
+        public static T ReadJson<T>(string? path, T defaultValue, JsonSerializerSettings? settings = null)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
                 return defaultValue;
@@ -168,7 +168,7 @@ namespace KkjQuicker.Utilities
         /// 若 <paramref name="path"/> 为空白，则不执行任何操作。
         /// 序列化或写入失败时异常会向上抛出，由调用方处理。
         /// </remarks>
-        public static void WriteJson<T>(string path, T value, bool indented = true, JsonSerializerSettings? settings = null)
+        public static void WriteJson<T>(string? path, T? value, bool indented = true, JsonSerializerSettings? settings = null)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return;
@@ -185,7 +185,7 @@ namespace KkjQuicker.Utilities
         /// <returns>
         /// 文件字节数组；若 <paramref name="path"/> 为空白或文件不存在，则返回空数组。
         /// </returns>
-        public static byte[] ReadAllBytes(string path)
+        public static byte[] ReadAllBytes(string? path)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
                 return Array.Empty<byte>();
@@ -201,7 +201,7 @@ namespace KkjQuicker.Utilities
         /// <remarks>
         /// 若 <paramref name="path"/> 为空白，或 <paramref name="bytes"/> 为 <see langword="null"/>，则不执行任何操作。
         /// </remarks>
-        public static void WriteAllBytes(string path, byte[] bytes)
+        public static void WriteAllBytes(string? path, byte[]? bytes)
         {
             if (string.IsNullOrWhiteSpace(path) || bytes == null)
                 return;
@@ -222,7 +222,7 @@ namespace KkjQuicker.Utilities
         /// 删除前会尝试将文件属性设置为 <see cref="FileAttributes.Normal"/>。
         /// 若发生 IO、权限、占用等异常，方法会静默忽略。
         /// </remarks>
-        public static void DeleteFile(string path)
+        public static void DeleteFile(string? path)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
                 return;
@@ -244,36 +244,14 @@ namespace KkjQuicker.Utilities
         /// <remarks>
         /// 删除前会尝试将目录下所有文件和子目录属性设置为 <see cref="FileAttributes.Normal"/>。
         /// 若过程中发生异常，方法会静默忽略。
+        /// 遇到符号链接、目录联接等重分析点时只删除链接本身，不递归进入链接目标。
         /// </remarks>
-        public static void DeleteDirectory(string directory)
+        public static void DeleteDirectory(string? directory)
         {
             if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
                 return;
 
-            try
-            {
-                foreach (var file in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
-                {
-                    TrySetNormalAttributes(file);
-                }
-
-                var directories = Directory.GetDirectories(directory, "*", SearchOption.AllDirectories);
-                Array.Sort(directories, delegate (string left, string right)
-                {
-                    return GetPathDepth(right).CompareTo(GetPathDepth(left));
-                });
-
-                foreach (var dir in directories)
-                {
-                    TrySetNormalAttributes(dir);
-                }
-
-                TrySetNormalAttributes(directory);
-                Directory.Delete(directory, true);
-            }
-            catch
-            {
-            }
+            DeleteDirectoryCore(directory);
         }
 
         /// <summary>
@@ -283,26 +261,21 @@ namespace KkjQuicker.Utilities
         /// <remarks>
         /// 若目录不存在，则忽略。
         /// 删除过程中发生异常时，会静默忽略并继续处理其他项。
+        /// 遇到符号链接、目录联接等重分析点时只删除链接本身，不递归进入链接目标。
         /// </remarks>
-        public static void ClearDirectory(string directory)
+        public static void ClearDirectory(string? directory)
         {
             if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
                 return;
 
-            try
+            foreach (var file in GetFilesSafe(directory))
             {
-                foreach (var file in Directory.GetFiles(directory))
-                {
-                    DeleteFile(file);
-                }
-
-                foreach (var dir in Directory.GetDirectories(directory))
-                {
-                    DeleteDirectory(dir);
-                }
+                DeleteFile(file);
             }
-            catch
+
+            foreach (var dir in GetDirectoriesSafe(directory))
             {
+                DeleteDirectory(dir);
             }
         }
 
@@ -316,17 +289,17 @@ namespace KkjQuicker.Utilities
         /// <paramref name="overwrite"/> 为 <see langword="false"/> 且目标文件已存在。
         /// </exception>
         /// <remarks>
-        /// 若源文件不存在、路径无效，或源路径与目标路径指向同一文件（按不区分大小写比较），
+        /// 若源文件不存在、路径无效，或源路径与目标路径指向同一文件（规范化后按不区分大小写比较），
         /// 则不执行任何操作。
         /// </remarks>
-        public static void CopyFile(string sourceFilePath, string destinationFilePath, bool overwrite = true)
+        public static void CopyFile(string? sourceFilePath, string? destinationFilePath, bool overwrite = true)
         {
             if (string.IsNullOrWhiteSpace(sourceFilePath) ||
                 string.IsNullOrWhiteSpace(destinationFilePath) ||
                 !File.Exists(sourceFilePath))
                 return;
 
-            if (string.Equals(sourceFilePath, destinationFilePath, StringComparison.OrdinalIgnoreCase))
+            if (IsSamePath(sourceFilePath, destinationFilePath))
                 return;
 
             EnsureParentDirectory(destinationFilePath);
@@ -348,7 +321,7 @@ namespace KkjQuicker.Utilities
         /// 若源文件不存在或路径无效，则不执行任何操作。
         /// </para>
         /// <para>
-        /// 若源路径与目标路径指向同一文件（按不区分大小写比较），则视为无操作直接返回，
+        /// 若源路径与目标路径指向同一文件（规范化后按不区分大小写比较），则视为无操作直接返回，
         /// 避免在覆盖模式下误删源文件。本方法不支持仅修改文件名大小写的“重命名”。
         /// </para>
         /// <para>
@@ -356,14 +329,14 @@ namespace KkjQuicker.Utilities
         /// 若源文件删除失败，将抛出 <see cref="IOException"/>；此时目标文件已写入，源文件仍保留。
         /// </para>
         /// </remarks>
-        public static void MoveFile(string sourceFilePath, string destinationFilePath, bool overwrite = true)
+        public static void MoveFile(string? sourceFilePath, string? destinationFilePath, bool overwrite = true)
         {
             if (string.IsNullOrWhiteSpace(sourceFilePath) ||
                 string.IsNullOrWhiteSpace(destinationFilePath) ||
                 !File.Exists(sourceFilePath))
                 return;
 
-            if (string.Equals(sourceFilePath, destinationFilePath, StringComparison.OrdinalIgnoreCase))
+            if (IsSamePath(sourceFilePath, destinationFilePath))
                 return;
 
             EnsureParentDirectory(destinationFilePath);
@@ -426,7 +399,7 @@ namespace KkjQuicker.Utilities
         /// <remarks>
         /// 若 <paramref name="newFileName"/> 包含目录部分、为绝对路径或不是有效文件名，则视为无效输入。
         /// </remarks>
-        public static string RenameFile(string filePath, string newFileName, bool overwrite = true)
+        public static string RenameFile(string? filePath, string? newFileName, bool overwrite = true)
         {
             if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
                 return filePath ?? string.Empty;
@@ -451,10 +424,13 @@ namespace KkjQuicker.Utilities
             if (!string.Equals(fileNameOnly, newFileName, StringComparison.Ordinal))
                 return filePath;
 
+            if (!IsValidFileName(fileNameOnly))
+                return filePath;
+
             string? directory = Path.GetDirectoryName(filePath);
             string destinationPath = Path.Combine(directory ?? string.Empty, fileNameOnly);
 
-            if (string.Equals(filePath, destinationPath, StringComparison.OrdinalIgnoreCase))
+            if (IsSamePath(filePath, destinationPath))
                 return filePath;
 
             MoveFile(filePath, destinationPath, overwrite);
@@ -473,7 +449,7 @@ namespace KkjQuicker.Utilities
         /// 若原路径不存在，则返回原路径；
         /// 若已存在，则返回自动追加序号后的新路径。
         /// </returns>
-        public static string GetUniqueFilePath(string filePath)
+        public static string GetUniqueFilePath(string? filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath))
                 return string.Empty;
@@ -507,8 +483,9 @@ namespace KkjQuicker.Utilities
         /// <param name="replacement">替换字符；若该字符本身属于非法字符，则改用 '_'。</param>
         /// <returns>
         /// 替换非法字符后的文件名；若 <paramref name="fileName"/> 为 <see langword="null"/>，则返回空字符串。
+        /// 对 Windows 保留设备名会添加前缀 <c>_</c>，末尾空格或点会被移除。
         /// </returns>
-        public static string GetSafeFileName(string fileName, char replacement = '_')
+        public static string GetSafeFileName(string? fileName, char replacement = '_')
         {
             if (fileName == null)
                 return string.Empty;
@@ -527,7 +504,11 @@ namespace KkjQuicker.Utilities
                 result = result.Replace(invalidChars[i], replacement);
             }
 
-            return result;
+            result = result.TrimEnd(' ', '.');
+            if (string.IsNullOrWhiteSpace(result))
+                return "_";
+
+            return IsReservedFileName(result) ? "_" + result : result;
         }
 
         #endregion
@@ -541,7 +522,7 @@ namespace KkjQuicker.Utilities
         /// <returns>
         /// 文件大小（字节）；若路径无效或文件不存在，则返回 0。
         /// </returns>
-        public static long GetFileSize(string path)
+        public static long GetFileSize(string? path)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
                 return 0;
@@ -592,7 +573,7 @@ namespace KkjQuicker.Utilities
         /// <returns>
         /// 目录路径本身；若输入为空白，则返回空字符串。
         /// </returns>
-        public static string EnsureDirectory(string directory)
+        public static string EnsureDirectory(string? directory)
         {
             if (string.IsNullOrWhiteSpace(directory))
                 return string.Empty;
@@ -605,8 +586,11 @@ namespace KkjQuicker.Utilities
 
         #region 私有辅助
 
-        private static void EnsureParentDirectory(string path)
+        private static void EnsureParentDirectory(string? path)
         {
+            if (string.IsNullOrWhiteSpace(path))
+                return;
+
             string? directory = Path.GetDirectoryName(path);
             if (string.IsNullOrWhiteSpace(directory))
                 return;
@@ -614,8 +598,11 @@ namespace KkjQuicker.Utilities
             Directory.CreateDirectory(directory);
         }
 
-        private static void TrySetNormalAttributes(string path)
+        private static void TrySetNormalAttributes(string? path)
         {
+            if (string.IsNullOrWhiteSpace(path))
+                return;
+
             try
             {
                 File.SetAttributes(path, FileAttributes.Normal);
@@ -625,21 +612,126 @@ namespace KkjQuicker.Utilities
             }
         }
 
-        private static int GetPathDepth(string path)
+        private static void DeleteDirectoryCore(string directory)
         {
-            if (string.IsNullOrEmpty(path))
-                return 0;
-
-            int depth = 0;
-
-            for (int i = 0; i < path.Length; i++)
+            try
             {
-                char c = path[i];
-                if (c == Path.DirectorySeparatorChar || c == Path.AltDirectorySeparatorChar)
-                    depth++;
-            }
+                if (IsReparsePoint(directory))
+                {
+                    TrySetNormalAttributes(directory);
+                    Directory.Delete(directory, false);
+                    return;
+                }
 
-            return depth;
+                foreach (var file in GetFilesSafe(directory))
+                {
+                    DeleteFile(file);
+                }
+
+                foreach (var dir in GetDirectoriesSafe(directory))
+                {
+                    DeleteDirectoryCore(dir);
+                }
+
+                TrySetNormalAttributes(directory);
+                Directory.Delete(directory, false);
+            }
+            catch
+            {
+            }
+        }
+
+        private static string[] GetFilesSafe(string directory)
+        {
+            try
+            {
+                return Directory.GetFiles(directory);
+            }
+            catch
+            {
+                return Array.Empty<string>();
+            }
+        }
+
+        private static string[] GetDirectoriesSafe(string directory)
+        {
+            try
+            {
+                return Directory.GetDirectories(directory);
+            }
+            catch
+            {
+                return Array.Empty<string>();
+            }
+        }
+
+        private static bool IsReparsePoint(string path)
+        {
+            try
+            {
+                return (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool IsSamePath(string? left, string? right)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right))
+                    return false;
+
+                string fullLeft = Path.GetFullPath(left);
+                string fullRight = Path.GetFullPath(right);
+                return string.Equals(fullLeft, fullRight, StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return string.Equals(left, right, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        private static bool IsValidFileName(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return false;
+
+            if (fileName == "." || fileName == "..")
+                return false;
+
+            if (fileName.EndsWith(" ", StringComparison.Ordinal) ||
+                fileName.EndsWith(".", StringComparison.Ordinal))
+                return false;
+
+            if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                return false;
+
+            return !IsReservedFileName(fileName);
+        }
+
+        private static bool IsReservedFileName(string fileName)
+        {
+            string name = Path.GetFileNameWithoutExtension(fileName).TrimEnd(' ', '.');
+
+            return string.Equals(name, "CON", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(name, "PRN", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(name, "AUX", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(name, "NUL", StringComparison.OrdinalIgnoreCase) ||
+                   IsReservedDeviceName(name, "COM") ||
+                   IsReservedDeviceName(name, "LPT");
+        }
+
+        private static bool IsReservedDeviceName(string name, string prefix)
+        {
+            if (name.Length != 4)
+                return false;
+
+            return name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) &&
+                   name[3] >= '1' &&
+                   name[3] <= '9';
         }
 
         #endregion

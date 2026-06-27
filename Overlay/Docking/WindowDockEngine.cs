@@ -24,8 +24,8 @@ namespace KkjQuicker.Overlay.Docking
     public static class WindowDockManager
     {
         private static readonly object Gate = new object();
-        private static WindowDockEngine _engine = null!;
-        private static WindowDockOptions _defaultOptions = null!;
+        private static WindowDockEngine? _engine;
+        private static WindowDockOptions _defaultOptions = new WindowDockOptions();
 
         /// <summary>
         /// 获取一个值，表示默认引擎当前是否正在运行。
@@ -112,7 +112,7 @@ namespace KkjQuicker.Overlay.Docking
         /// </summary>
         public static void Stop()
         {
-            WindowDockEngine engine;
+            WindowDockEngine? engine;
 
             lock (Gate)
             {
@@ -303,16 +303,19 @@ namespace KkjQuicker.Overlay.Docking
         /// </summary>
         public static void RestoreAll()
         {
+            WindowDockEngine engine;
+
             lock (Gate)
             {
                 CompactEngine_NoLock();
 
-                if (_engine == null)
+                engine = _engine;
+                if (engine == null)
                     return;
-
-                _engine.RestoreAll();
-                CompactEngine_NoLock();
             }
+
+            engine.RestoreAll();
+            CompactEngine(engine);
         }
 
         /// <summary>
@@ -347,7 +350,7 @@ namespace KkjQuicker.Overlay.Docking
         /// </para>
         /// </summary>
         /// <param name="callback">快照回调。传入 <see langword="null"/> 可取消回调。</param>
-        public static void SetSnapshotCallback(Action<WindowDockSnapshot[]> callback)
+        public static void SetSnapshotCallback(Action<WindowDockSnapshot[]>? callback)
         {
             if (callback == null)
             {
@@ -379,16 +382,19 @@ namespace KkjQuicker.Overlay.Docking
         /// </summary>
         public static void Tick()
         {
+            WindowDockEngine engine;
+
             lock (Gate)
             {
                 CompactEngine_NoLock();
 
-                if (_engine == null)
+                engine = _engine;
+                if (engine == null)
                     return;
-
-                _engine.Tick();
-                CompactEngine_NoLock();
             }
+
+            engine.Tick();
+            CompactEngine(engine);
         }
 
         private static WindowDockEngine EnsureEngine()
@@ -595,7 +601,7 @@ namespace KkjQuicker.Overlay.Docking
             if (SuppressHideAfterActivateMilliseconds < 0) SuppressHideAfterActivateMilliseconds = 0;
         }
 
-        internal static WindowDockOptions Clone(WindowDockOptions options)
+        internal static WindowDockOptions Clone(WindowDockOptions? options)
         {
             if (options == null)
             {
@@ -827,18 +833,18 @@ namespace KkjQuicker.Overlay.Docking
         private const int MinVisiblePixelsOnNormalize = 48;
 
         private readonly object _sync = new object();
-        private readonly List<WindowDockInfo> _windows = new List<WindowDockInfo>(8);
-        private readonly Dictionary<IntPtr, AnimState> _anims = new Dictionary<IntPtr, AnimState>(8);
-        private readonly List<IntPtr> _animRemove = new List<IntPtr>(8);
+        private readonly List<WindowDockInfo> _windows = new(8);
+        private readonly Dictionary<IntPtr, AnimState> _anims = new(8);
+        private readonly List<IntPtr> _animRemove = new(8);
         private readonly SemaphoreSlim _checkSemaphore = new SemaphoreSlim(1, 1);
 
-        private WindowDockOptions _opt = null!;
-        private Action<WindowDockSnapshot[]> _snapshotCallback = null!;
+        private WindowDockOptions _opt;
+        private Action<WindowDockSnapshot[]>? _snapshotCallback;
 
-        private GlobalMouseHook _mouseHook = null!;
-        private Timer _throttleTimer = null!;
-        private Timer _animTimer = null!;
-        private Timer _pollTimer = null!;
+        private GlobalMouseHook? _mouseHook;
+        private Timer? _throttleTimer;
+        private Timer? _animTimer;
+        private Timer? _pollTimer;
 
         private volatile bool _running;
         private volatile bool _mouseDown;
@@ -857,7 +863,7 @@ namespace KkjQuicker.Overlay.Docking
         /// 初始化一个新的 <see cref="WindowDockEngine"/> 实例。
         /// </summary>
         /// <param name="options">引擎配置。传入 <see langword="null"/> 时使用默认配置。</param>
-        public WindowDockEngine(WindowDockOptions options)
+        public WindowDockEngine(WindowDockOptions? options = null)
         {
             _opt = WindowDockOptions.Clone(options);
             _opt.Normalize();
@@ -897,12 +903,13 @@ namespace KkjQuicker.Overlay.Docking
         /// </para>
         /// </summary>
         /// <param name="options">新的配置对象。传入 <see langword="null"/> 时重置为默认配置。</param>
-        public void UpdateOptions(WindowDockOptions options)
+        public void UpdateOptions(WindowDockOptions? options)
         {
             ThrowIfDisposed();
 
             WindowDockOptions newOptions = WindowDockOptions.Clone(options);
             newOptions.Normalize();
+            Timer? oldPollTimer = null;
 
             lock (_sync)
             {
@@ -918,7 +925,7 @@ namespace KkjQuicker.Overlay.Docking
                         }
                         else
                         {
-                            _pollTimer.Dispose();
+                            oldPollTimer = _pollTimer;
                             _pollTimer = null;
                         }
                     }
@@ -928,6 +935,8 @@ namespace KkjQuicker.Overlay.Docking
                     }
                 }
             }
+
+            DisposeTimer_NoThrow(oldPollTimer);
         }
 
         /// <summary>
@@ -945,24 +954,51 @@ namespace KkjQuicker.Overlay.Docking
                 if (_running)
                     return;
 
-                _opt.Normalize();
-
-                _anims.Clear();
-                _animRemove.Clear();
-
-                _throttleTimer = new Timer(OnThrottleTimer, null, Timeout.Infinite, Timeout.Infinite);
-                _animTimer = new Timer(OnAnimTimer, null, Timeout.Infinite, Timeout.Infinite);
-
-                if (_opt.PollIntervalMilliseconds > 0)
+                try
                 {
-                    _pollTimer = new Timer(OnPollTimer, null, _opt.PollIntervalMilliseconds, _opt.PollIntervalMilliseconds);
+                    _opt.Normalize();
+
+                    _anims.Clear();
+                    _animRemove.Clear();
+
+                    _throttleTimer = new Timer(OnThrottleTimer, null, Timeout.Infinite, Timeout.Infinite);
+                    _animTimer = new Timer(OnAnimTimer, null, Timeout.Infinite, Timeout.Infinite);
+
+                    if (_opt.PollIntervalMilliseconds > 0)
+                    {
+                        _pollTimer = new Timer(OnPollTimer, null, _opt.PollIntervalMilliseconds, _opt.PollIntervalMilliseconds);
+                    }
+
+                    _mouseHook = new GlobalMouseHook();
+                    _mouseHook.MouseRawEvent += OnMouseRawEvent;
+                    _mouseHook.Install();
+
+                    _running = true;
                 }
+                catch
+                {
+                    GlobalMouseHook? failedHook = _mouseHook;
+                    Timer? failedThrottle = _throttleTimer;
+                    Timer? failedAnim = _animTimer;
+                    Timer? failedPoll = _pollTimer;
 
-                _mouseHook = new GlobalMouseHook();
-                _mouseHook.MouseRawEvent += OnMouseRawEvent;
-                _mouseHook.Install();
+                    _mouseHook = null;
+                    _throttleTimer = null;
+                    _animTimer = null;
+                    _pollTimer = null;
+                    _running = false;
+                    _pendingCheck = false;
+                    _throttleArmed = 0;
+                    _pendingBounce = 0;
+                    _anims.Clear();
+                    _animRemove.Clear();
 
-                _running = true;
+                    DisposeHook_NoThrow(failedHook);
+                    DisposeTimer_NoThrow(failedThrottle);
+                    DisposeTimer_NoThrow(failedAnim);
+                    DisposeTimer_NoThrow(failedPoll);
+                    throw;
+                }
             }
         }
 
@@ -1143,10 +1179,7 @@ namespace KkjQuicker.Overlay.Docking
             if (!hadAny)
                 return false;
 
-            if (removed != null)
-            {
-                RestoreOne(removed, true, false);
-            }
+            RestoreOne(removed, true, false);
 
             if (shouldStop)
             {
@@ -1245,17 +1278,7 @@ namespace KkjQuicker.Overlay.Docking
             lock (_sync)
             {
                 CleanupDeadWindows_NoLock();
-
-                if (_windows.Count == 0)
-                    return Array.Empty<WindowDockSnapshot>();
-
-                WindowDockSnapshot[] result = new WindowDockSnapshot[_windows.Count];
-                for (int i = 0; i < _windows.Count; i++)
-                {
-                    result[i] = CreateSnapshot(_windows[i]);
-                }
-
-                return result;
+                return CreateSnapshots_NoLock();
             }
         }
 
@@ -1269,7 +1292,7 @@ namespace KkjQuicker.Overlay.Docking
         /// </para>
         /// </summary>
         /// <param name="callback">快照回调。传入 <see langword="null"/> 可取消回调。</param>
-        public void SetSnapshotCallback(Action<WindowDockSnapshot[]> callback)
+        public void SetSnapshotCallback(Action<WindowDockSnapshot[]>? callback)
         {
             ThrowIfDisposed();
 
@@ -1293,16 +1316,23 @@ namespace KkjQuicker.Overlay.Docking
 
         private void StopCore()
         {
-            GlobalMouseHook hook;
-            Timer throttle;
-            Timer anim;
-            Timer poll;
+            GlobalMouseHook? hook;
+            Timer? throttle;
+            Timer? anim;
+            Timer? poll;
             WindowDockInfo[] copy;
 
             lock (_sync)
             {
-                if (!_running && _windows.Count == 0)
+                if (!_running &&
+                    _windows.Count == 0 &&
+                    _mouseHook == null &&
+                    _throttleTimer == null &&
+                    _animTimer == null &&
+                    _pollTimer == null)
+                {
                     return;
+                }
 
                 copy = _windows.ToArray();
                 _windows.Clear();
@@ -1329,48 +1359,44 @@ namespace KkjQuicker.Overlay.Docking
                 _pendingBounce = 0;
             }
 
-            try
-            {
-                if (hook != null)
-                {
-                    hook.MouseRawEvent -= OnMouseRawEvent;
-                    hook.Dispose();
-                }
-            }
-            catch (Exception ex)
-            {
-                DebugIgnore(ex);
-            }
-
-            try
-            {
-                if (throttle != null) throttle.Dispose();
-            }
-            catch (Exception ex)
-            {
-                DebugIgnore(ex);
-            }
-
-            try
-            {
-                if (anim != null) anim.Dispose();
-            }
-            catch (Exception ex)
-            {
-                DebugIgnore(ex);
-            }
-
-            try
-            {
-                if (poll != null) poll.Dispose();
-            }
-            catch (Exception ex)
-            {
-                DebugIgnore(ex);
-            }
+            DisposeHook_NoThrow(hook);
+            DisposeTimer_NoThrow(throttle);
+            DisposeTimer_NoThrow(anim);
+            DisposeTimer_NoThrow(poll);
 
             RestoreAll(copy, true, false);
             FireSnapshot(Array.Empty<WindowDockSnapshot>());
+        }
+
+        private void DisposeHook_NoThrow(GlobalMouseHook? hook)
+        {
+            if (hook == null)
+                return;
+
+            try
+            {
+                hook.MouseRawEvent -= OnMouseRawEvent;
+                hook.Dispose();
+            }
+            catch (Exception ex)
+            {
+                DebugIgnore(ex);
+            }
+        }
+
+        private static void DisposeTimer_NoThrow(Timer? timer)
+        {
+            if (timer == null)
+                return;
+
+            try
+            {
+                timer.Dispose();
+            }
+            catch (Exception ex)
+            {
+                DebugIgnore(ex);
+            }
         }
 
         private void ThrowIfDisposed()
@@ -1434,9 +1460,6 @@ namespace KkjQuicker.Overlay.Docking
 
         private static WindowDockSnapshot CreateSnapshot(WindowDockInfo item)
         {
-            if (item == null)
-                return null;
-
             return new WindowDockSnapshot(
                 item.Handle,
                 item.Title,
@@ -1445,6 +1468,20 @@ namespace KkjQuicker.Overlay.Docking
                 item.IsDocked,
                 item.OriginalShownOnTaskbar,
                 item.TaskbarHiddenByEngine);
+        }
+
+        private WindowDockSnapshot[] CreateSnapshots_NoLock()
+        {
+            if (_windows.Count == 0)
+                return Array.Empty<WindowDockSnapshot>();
+
+            WindowDockSnapshot[] result = new WindowDockSnapshot[_windows.Count];
+            for (int i = 0; i < _windows.Count; i++)
+            {
+                result[i] = CreateSnapshot(_windows[i]);
+            }
+
+            return result;
         }
 
         private WindowDockInfo[] GetInfoItems_NoThrow()
@@ -1456,22 +1493,16 @@ namespace KkjQuicker.Overlay.Docking
             }
         }
 
-        private void RestoreAll(WindowDockInfo[] copy, bool tryBringToFront, bool animate)
+        private void RestoreAll(WindowDockInfo[] items, bool tryBringToFront, bool animate)
         {
-            if (copy == null)
-                return;
-
-            for (int i = 0; i < copy.Length; i++)
+            for (int i = 0; i < items.Length; i++)
             {
-                RestoreOne(copy[i], tryBringToFront, animate);
+                RestoreOne(items[i], tryBringToFront, animate);
             }
         }
 
         private void RestoreOne(WindowDockInfo dw, bool tryBringToFront, bool animate)
         {
-            if (dw == null)
-                return;
-
             IntPtr hwnd = dw.Handle;
             if (hwnd == IntPtr.Zero)
                 return;
@@ -1564,7 +1595,7 @@ namespace KkjQuicker.Overlay.Docking
             }
         }
 
-        private void OnPollTimer(object state)
+        private void OnPollTimer(object? state)
         {
             if (!_running)
                 return;
@@ -1574,7 +1605,7 @@ namespace KkjQuicker.Overlay.Docking
 
         private void StopThrottle()
         {
-            Timer t = _throttleTimer;
+            Timer? t = _throttleTimer;
             if (t != null)
             {
                 try
@@ -1596,7 +1627,7 @@ namespace KkjQuicker.Overlay.Docking
 
             if (Interlocked.Exchange(ref _throttleArmed, 1) == 0)
             {
-                Timer t = _throttleTimer;
+                Timer? t = _throttleTimer;
                 if (t == null)
                     return;
 
@@ -1618,7 +1649,7 @@ namespace KkjQuicker.Overlay.Docking
             ExecuteCheck();
         }
 
-        private void OnThrottleTimer(object state)
+        private void OnThrottleTimer(object? state)
         {
             Interlocked.Exchange(ref _throttleArmed, 0);
 
@@ -1635,28 +1666,16 @@ namespace KkjQuicker.Overlay.Docking
             lock (_sync)
             {
                 CleanupDeadWindows_NoLock();
-
-                if (_windows.Count == 0)
-                {
-                    snap = Array.Empty<WindowDockSnapshot>();
-                }
-                else
-                {
-                    snap = new WindowDockSnapshot[_windows.Count];
-                    for (int i = 0; i < _windows.Count; i++)
-                    {
-                        snap[i] = CreateSnapshot(_windows[i]);
-                    }
-                }
+                snap = CreateSnapshots_NoLock();
             }
 
             FireSnapshot(snap);
             ExecuteCheck();
         }
 
-        private void FireSnapshot(WindowDockSnapshot[] snapshot)
+        private void FireSnapshot(WindowDockSnapshot[]? snapshot)
         {
-            Action<WindowDockSnapshot[]> cb;
+            Action<WindowDockSnapshot[]>? cb;
 
             lock (_sync)
             {
@@ -1774,23 +1793,15 @@ namespace KkjQuicker.Overlay.Docking
 
         private bool CheckRuntimeCore()
         {
-            WindowDockInfo[]? list;
+            WindowDockInfo[] list;
 
             lock (_sync)
             {
                 CleanupDeadWindows_NoLock();
-
-                if (_windows.Count == 0)
-                {
-                    list = null;
-                }
-                else
-                {
-                    list = _windows.ToArray();
-                }
+                list = _windows.Count == 0 ? Array.Empty<WindowDockInfo>() : _windows.ToArray();
             }
 
-            if (list == null || list.Length == 0)
+            if (list.Length == 0)
                 return true;
 
             int mx;
@@ -1819,8 +1830,6 @@ namespace KkjQuicker.Overlay.Docking
             for (int i = 0; i < list.Length; i++)
             {
                 WindowDockInfo dw = list[i];
-                if (dw == null)
-                    continue;
 
                 IntPtr hwnd = dw.Handle;
                 if (hwnd == IntPtr.Zero)
@@ -2055,7 +2064,6 @@ namespace KkjQuicker.Overlay.Docking
             for (int i = 0; i < list.Length; i++)
             {
                 WindowDockInfo dw = list[i];
-                if (dw == null) continue;
                 if (dw.IsDocked) continue;
 
                 IntPtr hwnd = dw.Handle;
@@ -2178,15 +2186,15 @@ namespace KkjQuicker.Overlay.Docking
         }
 
         private void StartAnimation(
-    IntPtr hwnd,
-    int sx,
-    int sy,
-    int tx,
-    int ty,
-    double? durationSeconds = null,
-    AnimEase ease = AnimEase.InOutQuad,
-    double springOmega = 16.0,
-    double springZeta = 0.86)
+            IntPtr hwnd,
+            int sx,
+            int sy,
+            int tx,
+            int ty,
+            double? durationSeconds = null,
+            AnimEase ease = AnimEase.InOutQuad,
+            double springOmega = 16.0,
+            double springZeta = 0.86)
         {
             double dur;
 
@@ -2213,7 +2221,7 @@ namespace KkjQuicker.Overlay.Docking
 
             lock (_sync)
             {
-                Timer t = _animTimer;
+                Timer? t = _animTimer;
                 if (!_running || t == null)
                 {
                     _anims.Remove(hwnd);
@@ -2249,7 +2257,7 @@ namespace KkjQuicker.Overlay.Docking
             }
         }
 
-        private void OnAnimTimer(object state)
+        private void OnAnimTimer(object? state)
         {
             if (!_running)
                 return;
@@ -2371,7 +2379,7 @@ namespace KkjQuicker.Overlay.Docking
             public double SpringZeta;
         }
 
-        private WindowDockInfo Add_NoLock(IntPtr hwnd)
+        private WindowDockInfo? Add_NoLock(IntPtr hwnd)
         {
             if (hwnd == IntPtr.Zero) return null;
             if (!NativeMethods.IsWindow(hwnd)) return null;
@@ -2395,7 +2403,7 @@ namespace KkjQuicker.Overlay.Docking
             return info;
         }
 
-        private WindowDockInfo FindByHandle_NoLock(IntPtr hwnd)
+        private WindowDockInfo? FindByHandle_NoLock(IntPtr hwnd)
         {
             if (hwnd == IntPtr.Zero)
                 return null;
@@ -2446,7 +2454,7 @@ namespace KkjQuicker.Overlay.Docking
         {
             lock (_sync)
             {
-                WindowDockInfo item = FindByHandle_NoLock(hwnd);
+                WindowDockInfo? item = FindByHandle_NoLock(hwnd);
                 if (item != null)
                 {
                     item.IsDocked = docked;
@@ -2458,7 +2466,7 @@ namespace KkjQuicker.Overlay.Docking
         {
             lock (_sync)
             {
-                WindowDockInfo item = FindByHandle_NoLock(hwnd);
+                WindowDockInfo? item = FindByHandle_NoLock(hwnd);
                 if (item != null)
                 {
                     item.Side = side;
@@ -2470,7 +2478,7 @@ namespace KkjQuicker.Overlay.Docking
         {
             lock (_sync)
             {
-                WindowDockInfo item = FindByHandle_NoLock(hwnd);
+                WindowDockInfo? item = FindByHandle_NoLock(hwnd);
                 if (item != null)
                 {
                     item.TaskbarHiddenByEngine = value;
@@ -2480,9 +2488,6 @@ namespace KkjQuicker.Overlay.Docking
 
         private void NormalizeWindowOnAdd(WindowDockInfo dw)
         {
-            if (dw == null)
-                return;
-
             IntPtr hwnd = dw.Handle;
             if (hwnd == IntPtr.Zero || !NativeMethods.IsWindow(hwnd))
                 return;

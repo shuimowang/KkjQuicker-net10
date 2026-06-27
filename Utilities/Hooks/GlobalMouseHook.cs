@@ -39,7 +39,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// </summary>
         protected override int HookType
         {
-            get { return NativeConstants.WH_MOUSE_LL; }
+            get => NativeConstants.WH_MOUSE_LL;
         }
 
         /// <summary>
@@ -77,7 +77,16 @@ namespace KkjQuicker.Utilities.Hooks
                 // 轻量事件：先触发，无分配
                 Action<MouseRawInfo>? rawHandler = MouseRawEvent;
                 if (rawHandler != null)
-                    rawHandler(new MouseRawInfo(message, data.pt.x, data.pt.y));
+                {
+                    try
+                    {
+                        rawHandler(new MouseRawInfo(message, data.pt.x, data.pt.y));
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine("GlobalMouseHook.MouseRawEvent handler failed: " + ex);
+                    }
+                }
 
                 // 完整事件：支持拦截
                 EventHandler<MouseHookEventArgs>? handler = MouseEvent;
@@ -87,7 +96,10 @@ namespace KkjQuicker.Utilities.Hooks
                         message,
                         data.pt.x,
                         data.pt.y,
-                        data.mouseData);
+                        data.mouseData,
+                        data.flags,
+                        data.time,
+                        data.dwExtraInfo);
                     try
                     {
                         handler(this, args);

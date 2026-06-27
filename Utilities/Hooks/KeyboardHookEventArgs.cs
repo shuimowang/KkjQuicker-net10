@@ -58,7 +58,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// </summary>
         public Key Key
         {
-            get { return KeyInterop.KeyFromVirtualKey((int)VirtualKeyCode); }
+            get => KeyInterop.KeyFromVirtualKey((int)VirtualKeyCode);
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// </summary>
         public bool IsExtended
         {
-            get { return (Flags & LLKHF_EXTENDED) != 0; }
+            get => (Flags & LLKHF_EXTENDED) != 0;
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// </remarks>
         public bool IsInjected
         {
-            get { return (Flags & LLKHF_INJECTED) != 0; }
+            get => (Flags & LLKHF_INJECTED) != 0;
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// </summary>
         public bool IsLowerIlInjected
         {
-            get { return (Flags & LLKHF_LOWER_IL_INJECTED) != 0; }
+            get => (Flags & LLKHF_LOWER_IL_INJECTED) != 0;
         }
 
         /// <summary>
@@ -99,7 +99,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// </remarks>
         public bool IsAltDown
         {
-            get { return (Flags & LLKHF_ALTDOWN) != 0; }
+            get => (Flags & LLKHF_ALTDOWN) != 0;
         }
 
         /// <summary>

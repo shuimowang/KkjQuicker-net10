@@ -48,7 +48,7 @@ namespace KkjQuicker.Audio.Sources
         /// </summary>
         public WaveFormat OutputFormat
         {
-            get { return _outputFormat; }
+            get => _outputFormat;
         }
 
         /// <summary>

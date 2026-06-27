@@ -157,7 +157,7 @@ namespace KkjQuicker.UI
         /// </summary>
         private static object NormalizeToolButtonContent(object content)
         {
-            var fa = content as SvgAwesome;
+            var fa = content as FontAwesome5.WPF.SvgAwesome;
             if (fa != null)
             {
                 fa.SetBinding(Control.ForegroundProperty, new Binding("Foreground")

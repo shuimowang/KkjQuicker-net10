@@ -25,7 +25,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// </summary>
         protected override int HookType
         {
-            get { return NativeConstants.WH_KEYBOARD_LL; }
+            get => NativeConstants.WH_KEYBOARD_LL;
         }
 
         /// <summary>

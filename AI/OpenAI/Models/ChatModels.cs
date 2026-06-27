@@ -121,13 +121,13 @@ namespace KkjQuicker.AI.OpenAI.Models
     public sealed class ChatResponse
     {
         [JsonProperty("id")]
-        public string Id { get; set; } = null!;
+        public string? Id { get; set; }
 
         [JsonProperty("choices")]
-        public List<ChatResponseChoice> Choices { get; set; } = null!;
+        public List<ChatResponseChoice>? Choices { get; set; }
 
         [JsonProperty("usage")]
-        public TokenUsage Usage { get; set; } = null!;
+        public TokenUsage? Usage { get; set; }
 
         /// <summary>快捷获取首条回复文本，无有效消息时返回 null。</summary>
         public string? Content
@@ -144,10 +144,10 @@ namespace KkjQuicker.AI.OpenAI.Models
     public sealed class ChatResponseChoice
     {
         [JsonProperty("message")]
-        public ChatMessage Message { get; set; } = null!;
+        public ChatMessage? Message { get; set; }
 
         [JsonProperty("finish_reason")]
-        public string FinishReason { get; set; } = null!;
+        public string? FinishReason { get; set; }
     }
 
     public sealed class TokenUsage
@@ -167,26 +167,26 @@ namespace KkjQuicker.AI.OpenAI.Models
     internal sealed class OpenAiChatStreamChunk
     {
         [JsonProperty("choices")]
-        public List<StreamChoice> Choices { get; set; } = null!;
+        public List<StreamChoice>? Choices { get; set; }
     }
 
     internal sealed class StreamChoice
     {
         [JsonProperty("delta")]
-        public StreamDelta Delta { get; set; } = null!;
+        public StreamDelta? Delta { get; set; }
 
         [JsonProperty("finish_reason")]
-        public string FinishReason { get; set; } = null!;
+        public string? FinishReason { get; set; }
     }
 
     internal sealed class StreamDelta
     {
         [JsonProperty("content")]
-        public string Content { get; set; } = null!;
+        public string? Content { get; set; }
 
         // 一些兼容服务可能会返回 reasoning_content。
         // 当前客户端仍只把 content 作为正式回复输出。
         [JsonProperty("reasoning_content")]
-        public string ReasoningContent { get; set; } = null!;
+        public string? ReasoningContent { get; set; }
     }
 }

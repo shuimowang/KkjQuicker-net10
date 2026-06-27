@@ -116,8 +116,8 @@ namespace KkjQuicker.UI
             DependencyObject element, PropertyPath path,
             int durationInMilliseconds, Color? from, Color? to)
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
-            if (path == null) throw new ArgumentNullException(nameof(path));
+            ArgumentNullException.ThrowIfNull(element);
+            ArgumentNullException.ThrowIfNull(path);
 
             ColorAnimation animation = CreateColorAnimation(durationInMilliseconds, from, to);
             Storyboard.SetTarget(animation, element);
@@ -161,8 +161,8 @@ namespace KkjQuicker.UI
             int durationInMilliseconds, double? from, double? to,
             IEasingFunction? easingFunction = null)
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
-            if (path == null) throw new ArgumentNullException(nameof(path));
+            ArgumentNullException.ThrowIfNull(element);
+            ArgumentNullException.ThrowIfNull(path);
 
             DoubleAnimation animation = CreateDoubleAnimation(durationInMilliseconds, from, to, easingFunction);
             Storyboard.SetTarget(animation, element);
@@ -263,7 +263,7 @@ namespace KkjQuicker.UI
         /// <returns>创建好的 <see cref="Storyboard"/>。</returns>
         public static Storyboard CreateStoryboard(params AnimationTimeline[] timelines)
         {
-            if (timelines == null) throw new ArgumentNullException(nameof(timelines));
+            ArgumentNullException.ThrowIfNull(timelines);
 
             var storyboard = new Storyboard();
             foreach (AnimationTimeline t in timelines)
@@ -290,7 +290,7 @@ namespace KkjQuicker.UI
         /// </remarks>
         public static Storyboard FadeIn(this UIElement element, int durationInMilliseconds)
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
+            ArgumentNullException.ThrowIfNull(element);
 
             Storyboard storyboard = CreateStoryboard(
                 CreateOpacityAnimation(element, durationInMilliseconds, null, 1d));
@@ -312,7 +312,7 @@ namespace KkjQuicker.UI
         /// </remarks>
         public static Storyboard FadeOut(this UIElement element, int durationInMilliseconds)
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
+            ArgumentNullException.ThrowIfNull(element);
 
             Storyboard storyboard = CreateStoryboard(
                 CreateOpacityAnimation(element, durationInMilliseconds, null, 0d));
@@ -332,7 +332,7 @@ namespace KkjQuicker.UI
         /// </remarks>
         public static Storyboard FadeOutAndHide(this UIElement element, int durationInMilliseconds)
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
+            ArgumentNullException.ThrowIfNull(element);
 
             DoubleAnimation animation = CreateOpacityAnimation(element, durationInMilliseconds, null, 0d);
             animation.FillBehavior = FillBehavior.Stop;
@@ -364,7 +364,7 @@ namespace KkjQuicker.UI
         /// </remarks>
         public static Storyboard FadeOutAndRemove(this UIElement element, int durationInMilliseconds)
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
+            ArgumentNullException.ThrowIfNull(element);
 
             // 提前捕获父容器，避免动画期间父容器变化导致移除失败或异常。
             Panel? parent = (element as FrameworkElement)?.Parent as Panel;
@@ -433,7 +433,7 @@ namespace KkjQuicker.UI
         /// </remarks>
         public static TranslateTransform GetOrCreateTranslateTransform(UIElement element)
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
+            ArgumentNullException.ThrowIfNull(element);
 
             if (element.RenderTransform is TranslateTransform existing)
                 return existing;
@@ -480,7 +480,7 @@ namespace KkjQuicker.UI
         /// </remarks>
         public static ScaleTransform GetOrCreateScaleTransform(UIElement element)
         {
-            if (element == null) throw new ArgumentNullException(nameof(element));
+            ArgumentNullException.ThrowIfNull(element);
 
             if (element.RenderTransform is ScaleTransform existing)
                 return existing;

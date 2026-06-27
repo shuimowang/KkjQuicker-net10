@@ -8,7 +8,7 @@ namespace KkjQuicker.Utilities.Win32
 {
     public sealed class ForegroundWindowInfo
     {
-        private string _className = null!;
+        private string? _className;
 
         public IntPtr Handle { get; internal set; }
 
@@ -35,7 +35,7 @@ namespace KkjQuicker.Utilities.Win32
 
         public bool IsEmpty
         {
-            get { return Handle == IntPtr.Zero; }
+            get => Handle == IntPtr.Zero;
         }
 
         public override string ToString()
@@ -52,17 +52,25 @@ namespace KkjQuicker.Utilities.Win32
     {
         public ForegroundWindowInfo ActivatedWindow { get; private set; }
 
-        public ForegroundWindowInfo DeactivatedWindow { get; private set; }
+        public ForegroundWindowInfo? DeactivatedWindow { get; private set; }
 
         public ForegroundWindowChangedEventArgs(
             ForegroundWindowInfo activatedWindow,
-            ForegroundWindowInfo deactivatedWindow)
+            ForegroundWindowInfo? deactivatedWindow)
         {
             ActivatedWindow = activatedWindow;
             DeactivatedWindow = deactivatedWindow;
         }
     }
 
+    /// <summary>
+    /// 监听系统前台窗口变化，并记录当前、上一个以及最近的外部窗口信息。
+    /// </summary>
+    /// <remarks>
+    /// 一个实例可以被多个窗口共享：在应用入口创建并启动一次，各窗口订阅
+    /// <see cref="ForegroundWindowChanged"/> 读取状态即可。窗口关闭时只需解除订阅，
+    /// 不要各自启动或释放同一个共享实例。
+    /// </remarks>
     public sealed class ForegroundWindowMonitor : IDisposable
     {
         private const uint WINEVENT_OUTOFCONTEXT = 0x0000;
@@ -75,38 +83,38 @@ namespace KkjQuicker.Utilities.Win32
         private volatile bool _isDisposed;
         private volatile bool _isRunning;
         private int _version;
-        private SynchronizationContext _synchronizationContext = null!;
+        private SynchronizationContext? _synchronizationContext;
 
-        private volatile ForegroundWindowInfo _currentWindow = null!;
-        private volatile ForegroundWindowInfo _previousWindow = null!;
-        private volatile ForegroundWindowInfo _lastExternalWindow = null!;
+        private volatile ForegroundWindowInfo? _currentWindow;
+        private volatile ForegroundWindowInfo? _previousWindow;
+        private volatile ForegroundWindowInfo? _lastExternalWindow;
 
         // volatile backing field，确保后台任务读取到最新值
         private volatile bool _marshalEventToContext;
 
         // volatile backing field，确保后台任务读取到最新值
-        private volatile Func<ForegroundWindowInfo, bool> _ignorePredicate = null!;
+        private volatile Func<ForegroundWindowInfo, bool>? _ignorePredicate;
 
-        public ForegroundWindowInfo CurrentWindow
+        public ForegroundWindowInfo? CurrentWindow
         {
-            get { return _currentWindow; }
+            get => _currentWindow;
         }
 
-        public ForegroundWindowInfo PreviousWindow
+        public ForegroundWindowInfo? PreviousWindow
         {
-            get { return _previousWindow; }
+            get => _previousWindow;
         }
 
-        public ForegroundWindowInfo LastExternalWindow
+        public ForegroundWindowInfo? LastExternalWindow
         {
-            get { return _lastExternalWindow; }
+            get => _lastExternalWindow;
         }
 
         public IntPtr CurrentHwnd
         {
             get
             {
-                ForegroundWindowInfo info = _currentWindow;
+                ForegroundWindowInfo? info = _currentWindow;
                 return info == null ? IntPtr.Zero : info.Handle;
             }
         }
@@ -115,14 +123,14 @@ namespace KkjQuicker.Utilities.Win32
         {
             get
             {
-                ForegroundWindowInfo info = _lastExternalWindow;
+                ForegroundWindowInfo? info = _lastExternalWindow;
                 return info == null ? IntPtr.Zero : info.Handle;
             }
         }
 
         public bool IsRunning
         {
-            get { return _isRunning; }
+            get => _isRunning;
         }
 
         /// <summary>
@@ -131,13 +139,13 @@ namespace KkjQuicker.Utilities.Win32
         /// </summary>
         public bool MarshalEventToContext
         {
-            get { return _marshalEventToContext; }
+            get => _marshalEventToContext;
             set { _marshalEventToContext = value; }
         }
 
-        public Func<ForegroundWindowInfo, bool> IgnorePredicate
+        public Func<ForegroundWindowInfo, bool>? IgnorePredicate
         {
-            get { return _ignorePredicate; }
+            get => _ignorePredicate;
             set { _ignorePredicate = value; }
         }
 
@@ -259,7 +267,7 @@ namespace KkjQuicker.Utilities.Win32
 
         public bool TryActivateLastExternalWindow()
         {
-            ForegroundWindowInfo info = _lastExternalWindow;
+            ForegroundWindowInfo? info = _lastExternalWindow;
 
             if (info == null || info.Handle == IntPtr.Zero)
                 return false;
@@ -308,7 +316,7 @@ namespace KkjQuicker.Utilities.Win32
 
             int pid = WindowHelper.GetWindowProcessId(hwnd);
 
-            ForegroundWindowInfo current = _currentWindow;
+            ForegroundWindowInfo? current = _currentWindow;
             if (!forceRaise && current != null && current.Handle == hwnd && current.Pid == pid)
                 return;
 
@@ -393,7 +401,7 @@ namespace KkjQuicker.Utilities.Win32
 
         private bool ShouldIgnore(ForegroundWindowInfo info)
         {
-            Func<ForegroundWindowInfo, bool> ignorePredicate = IgnorePredicate;
+            Func<ForegroundWindowInfo, bool>? ignorePredicate = IgnorePredicate;
             if (ignorePredicate == null)
                 return false;
 
@@ -410,14 +418,14 @@ namespace KkjQuicker.Utilities.Win32
 
         private void RaiseForegroundWindowChanged(
             ForegroundWindowInfo activatedWindow,
-            ForegroundWindowInfo deactivatedWindow,
+            ForegroundWindowInfo? deactivatedWindow,
             int version)
         {
             EventHandler<ForegroundWindowChangedEventArgs>? handler = ForegroundWindowChanged;
             if (handler == null)
                 return;
 
-            SynchronizationContext context = _synchronizationContext;
+            SynchronizationContext? context = _synchronizationContext;
 
             if (MarshalEventToContext && context != null)
             {

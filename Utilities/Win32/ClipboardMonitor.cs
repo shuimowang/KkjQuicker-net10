@@ -34,7 +34,7 @@ namespace KkjQuicker.Utilities.Win32
         /// </summary>
         public bool IsStarted
         {
-            get { return _isStarted; }
+            get => _isStarted;
         }
 
         /// <summary>
@@ -162,7 +162,14 @@ namespace KkjQuicker.Utilities.Win32
 
             if (handler != null)
             {
-                handler(this, EventArgs.Empty);
+                try
+                {
+                    handler(this, EventArgs.Empty);
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    System.Diagnostics.Debug.WriteLine("ClipboardMonitor.ClipboardChanged handler failed: " + ex);
+                }
             }
         }
     }

@@ -51,7 +51,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// </remarks>
         public static DpiScale SystemDpi
         {
-            get { return _systemDpi; }
+            get => _systemDpi;
         }
 
         private static readonly DpiScale _systemDpi = CreateSystemDpi();
@@ -108,7 +108,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <item><description>最后退回到 <see cref="SystemDpi"/>。</description></item>
         /// </list>
         /// </remarks>
-        public static DpiScale GetDpi(Visual visual)
+        public static DpiScale GetDpi(Visual? visual)
         {
             if (visual == null)
                 return SystemDpi;
@@ -133,9 +133,9 @@ namespace KkjQuicker.Utilities.Imaging
         /// 若 <paramref name="window"/> 为 <see langword="null"/> 或尚未连接，
         /// 则返回 <see cref="SystemDpi"/>。
         /// </returns>
-        public static DpiScale GetDpi(Window window)
+        public static DpiScale GetDpi(Window? window)
         {
-            return GetDpi((Visual)window);
+            return GetDpi((Visual?)window);
         }
 
         #endregion ===== Visual DPI =====
@@ -197,7 +197,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="dip">DIP 值。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>转换后的设备像素值。</returns>
-        public static double DipToPxX(double dip, Visual visual)
+        public static double DipToPxX(double dip, Visual? visual)
         {
             return dip * GetDpi(visual).DpiScaleX;
         }
@@ -208,7 +208,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="dip">DIP 值。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>转换后的设备像素值。</returns>
-        public static double DipToPxY(double dip, Visual visual)
+        public static double DipToPxY(double dip, Visual? visual)
         {
             return dip * GetDpi(visual).DpiScaleY;
         }
@@ -219,7 +219,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="dip">DIP 坐标点。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>转换后的设备像素坐标点。</returns>
-        public static Point DipToPx(Point dip, Visual visual)
+        public static Point DipToPx(Point dip, Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
 
@@ -234,7 +234,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="dip">DIP 尺寸。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>转换后的设备像素尺寸。</returns>
-        public static Size DipToPx(Size dip, Visual visual)
+        public static Size DipToPx(Size dip, Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
 
@@ -249,7 +249,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="dip">DIP 矩形。应为规范矩形（宽高非负）。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>转换后的设备像素矩形。</returns>
-        public static Rect DipToPx(Rect dip, Visual visual)
+        public static Rect DipToPx(Rect dip, Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
 
@@ -275,7 +275,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 适用于截图裁剪、Win32 定位、位图区域计算等需要整数像素边界的场景。
         /// 相比直接分别对 X、Y、Width、Height 四舍五入,本方法更适合区域边界换算。
         /// </remarks>
-        public static Int32Rect DipToPxInt32Rect(Rect dip, Visual visual)
+        public static Int32Rect DipToPxInt32Rect(Rect dip, Visual? visual)
         {
             if (dip.IsEmpty)
                 return Int32Rect.Empty;
@@ -306,7 +306,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="px">设备像素值。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>转换后的 DIP 值。</returns>
-        public static double PxToDipX(double px, Visual visual)
+        public static double PxToDipX(double px, Visual? visual)
         {
             return px / GetDpi(visual).DpiScaleX;
         }
@@ -317,7 +317,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="px">设备像素值。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>转换后的 DIP 值。</returns>
-        public static double PxToDipY(double px, Visual visual)
+        public static double PxToDipY(double px, Visual? visual)
         {
             return px / GetDpi(visual).DpiScaleY;
         }
@@ -328,7 +328,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="px">设备像素坐标点。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>转换后的 DIP 坐标点。</returns>
-        public static Point PxToDip(Point px, Visual visual)
+        public static Point PxToDip(Point px, Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
 
@@ -343,7 +343,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="px">设备像素尺寸。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>转换后的 DIP 尺寸。</returns>
-        public static Size PxToDip(Size px, Visual visual)
+        public static Size PxToDip(Size px, Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
 
@@ -358,7 +358,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="px">设备像素矩形。应为规范矩形（宽高非负）。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>转换后的 DIP 矩形。</returns>
-        public static Rect PxToDip(Rect px, Visual visual)
+        public static Rect PxToDip(Rect px, Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
 
@@ -412,7 +412,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 会退回到 <see cref="SystemDpi"/> 进行近似换算。
         /// </param>
         /// <returns>转换后的屏幕设备像素坐标。</returns>
-        public static Point DipToPxOnScreen(Point dip, Visual relativeTo)
+        public static Point DipToPxOnScreen(Point dip, Visual? relativeTo)
         {
             if (relativeTo == null)
             {
@@ -462,7 +462,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 本方法按矩形左上角与右下角两个点分别进行转换，再重建结果矩形。
         /// 该策略更符合屏幕坐标空间与设备变换的实际语义。
         /// </remarks>
-        public static Rect DipToPxOnScreen(Rect dip, Visual relativeTo)
+        public static Rect DipToPxOnScreen(Rect dip, Visual? relativeTo)
         {
             Point topLeft = DipToPxOnScreen(new Point(dip.Left, dip.Top), relativeTo);
             Point bottomRight = DipToPxOnScreen(new Point(dip.Right, dip.Bottom), relativeTo);
@@ -479,7 +479,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="dip">原始 DIP 值。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>对齐后的 DIP 值。</returns>
-        public static double RoundToDevicePixelsX(double dip, Visual visual)
+        public static double RoundToDevicePixelsX(double dip, Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
             double px = dip * dpi.DpiScaleX;
@@ -492,7 +492,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="dip">原始 DIP 值。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>对齐后的 DIP 值。</returns>
-        public static double RoundToDevicePixelsY(double dip, Visual visual)
+        public static double RoundToDevicePixelsY(double dip, Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
             double px = dip * dpi.DpiScaleY;
@@ -505,7 +505,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="dip">原始 DIP 坐标点。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>对齐后的 DIP 坐标点。</returns>
-        public static Point RoundToDevicePixels(Point dip, Visual visual)
+        public static Point RoundToDevicePixels(Point dip, Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
 
@@ -520,7 +520,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// <param name="dip">原始 DIP 尺寸。</param>
         /// <param name="visual">用于确定 DPI 的视觉对象。可为 <see langword="null"/>。</param>
         /// <returns>对齐后的 DIP 尺寸。</returns>
-        public static Size RoundToDevicePixels(Size dip, Visual visual)
+        public static Size RoundToDevicePixels(Size dip, Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
 
@@ -539,7 +539,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 与简单四舍五入不同，本方法采用"左上取 Floor、右下取 Ceiling"的策略，
         /// 保证结果矩形完整包住原始区域，适合绘制边框、裁剪区域和命中框对齐等场景。
         /// </remarks>
-        public static Rect RoundToDevicePixels(Rect dip, Visual visual)
+        public static Rect RoundToDevicePixels(Rect dip, Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
 
@@ -563,7 +563,7 @@ namespace KkjQuicker.Utilities.Imaging
         /// 当 X 或 Y 任一方向的 DPI 缩放系数大于 1 时返回 <see langword="true"/>；
         /// 否则返回 <see langword="false"/>。
         /// </returns>
-        public static bool IsHighDpi(Visual visual)
+        public static bool IsHighDpi(Visual? visual)
         {
             DpiScale dpi = GetDpi(visual);
 

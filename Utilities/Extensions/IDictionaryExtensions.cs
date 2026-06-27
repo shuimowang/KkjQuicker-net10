@@ -7,69 +7,11 @@ namespace KkjQuicker.Utilities.Extensions
     /// 提供 <see cref="IDictionary{TKey, TValue}"/> 的常用扩展方法。
     /// </summary>
     /// <remarks>
-    /// 本类包含通用的词典读取、合并与比较器转换辅助方法，
+    /// 本类包含通用的词典合并与比较器转换辅助方法，
     /// 适用于大多数基于 <see cref="IDictionary{TKey, TValue}"/> 的使用场景。
     /// </remarks>
     public static class IDictionaryExtensions
     {
-        /// <summary>
-        /// 获取指定键对应的值；若字典为 <see langword="null"/> 或键不存在，则返回指定默认值。
-        /// </summary>
-        /// <typeparam name="TKey">词典键类型。</typeparam>
-        /// <typeparam name="TValue">词典值类型。</typeparam>
-        /// <param name="dict">要读取的词典。</param>
-        /// <param name="key">要查找的键。</param>
-        /// <param name="defaultValue">键不存在或词典为 <see langword="null"/> 时返回的默认值。</param>
-        /// <returns>
-        /// 若成功找到指定键，则返回对应值；否则返回 <paramref name="defaultValue"/>。
-        /// </returns>
-        public static TValue GetValueOrDefault<TKey, TValue>(
-            this IDictionary<TKey, TValue> dict,
-            TKey key,
-            TValue defaultValue)
-        {
-            if (dict == null)
-                return defaultValue;
-
-            TValue value = default!;
-#pragma warning disable CS8600 // 将 null 字面量或可能的 null 值转换为非 null 类型。
-            return dict.TryGetValue(key, out value) ? value : defaultValue;
-#pragma warning restore CS8600
-        }
-
-        /// <summary>
-        /// 获取指定键对应的值；若字典为 <see langword="null"/> 或键不存在，则通过委托生成默认值。
-        /// </summary>
-        /// <typeparam name="TKey">词典键类型。</typeparam>
-        /// <typeparam name="TValue">词典值类型。</typeparam>
-        /// <param name="dict">要读取的词典。</param>
-        /// <param name="key">要查找的键。</param>
-        /// <param name="defaultValueProvider">
-        /// 用于生成默认值的委托。仅在词典为 <see langword="null"/> 或键不存在时调用，不可为 <see langword="null"/>。
-        /// </param>
-        /// <returns>
-        /// 若成功找到指定键，则返回对应值；否则返回 <paramref name="defaultValueProvider"/> 生成的值。
-        /// </returns>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="defaultValueProvider"/> 为 <see langword="null"/>。
-        /// </exception>
-        public static TValue GetValueOrDefault<TKey, TValue>(
-            this IDictionary<TKey, TValue> dict,
-            TKey key,
-            Func<TValue> defaultValueProvider)
-        {
-            if (defaultValueProvider == null)
-                throw new ArgumentNullException(nameof(defaultValueProvider));
-
-            if (dict == null)
-                return defaultValueProvider();
-
-            TValue value = default!;
-#pragma warning disable CS8600
-            return dict.TryGetValue(key, out value) ? value : defaultValueProvider();
-#pragma warning restore CS8600
-        }
-
         /// <summary>
         /// 创建一个新的忽略键大小写的词典副本。
         /// </summary>
@@ -83,12 +25,11 @@ namespace KkjQuicker.Utilities.Extensions
         /// 若源词典中存在仅大小写不同但在忽略大小写比较下视为相同的键，
         /// 则创建新词典时会抛出异常。
         /// </remarks>
-        public static IDictionary<string, T>? ToIgnoreCase<T>(this IDictionary<string, T> dict)
+        public static IDictionary<string, T>? ToIgnoreCase<T>(this IDictionary<string, T>? dict)
         {
-            if (dict == null)
-                return null;
-
-            return new Dictionary<string, T>(dict, StringComparer.OrdinalIgnoreCase);
+            return dict == null
+                ? null
+                : new Dictionary<string, T>(dict, StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -107,11 +48,10 @@ namespace KkjQuicker.Utilities.Extensions
         /// </exception>
         public static void MergeFrom<TKey, TValue>(
             this IDictionary<TKey, TValue> target,
-            IDictionary<TKey, TValue> source,
+            IDictionary<TKey, TValue>? source,
             bool overwriteExistingKeys = true)
         {
-            if (target == null)
-                throw new ArgumentNullException(nameof(target));
+            ArgumentNullException.ThrowIfNull(target);
 
             if (source == null)
                 return;
@@ -135,7 +75,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// </exception>
         public static void EnsureDefaults<TKey, TValue>(
             this IDictionary<TKey, TValue> target,
-            IDictionary<TKey, TValue> defaults)
+            IDictionary<TKey, TValue>? defaults)
         {
             target.MergeFrom(defaults, false);
         }

@@ -19,7 +19,6 @@ namespace KkjQuicker.Utilities.Imaging
         private const QRCodeGenerator.ECCLevel DefaultEccLevel = QRCodeGenerator.ECCLevel.Q;
         private const bool DefaultDrawQuietZones = true;
 
-        // Fix #1
         /// <summary>
         /// 将文本编码为二维码 BitmapSource，适合 WPF Image.Source 直接绑定。
         /// </summary>
@@ -141,8 +140,11 @@ namespace KkjQuicker.Utilities.Imaging
                 }
             };
 
-            Result result = reader.Decode(bitmap);
-            return result == null ? string.Empty : result.Text;
+            using (Bitmap readable = CreateReadableBitmap(bitmap))
+            {
+                Result result = reader.Decode(readable);
+                return result == null ? string.Empty : result.Text;
+            }
         }
 
         private static LuminanceSource CreateLuminanceSource(Bitmap bitmap)
@@ -150,16 +152,53 @@ namespace KkjQuicker.Utilities.Imaging
             var bitmapData = bitmap.LockBits(
                 new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                 System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                bitmap.PixelFormat);
+                PixelFormat.Format24bppRgb);
             try
             {
-                var bytes = new byte[bitmapData.Stride * bitmapData.Height];
-                System.Runtime.InteropServices.Marshal.Copy(bitmapData.Scan0, bytes, 0, bytes.Length);
-                return new RGBLuminanceSource(bytes, bitmapData.Width, bitmapData.Height);
+                int sourceStride = bitmapData.Stride;
+                int targetStride = bitmapData.Width * 3;
+                var bytes = new byte[targetStride * bitmapData.Height];
+
+                for (int y = 0; y < bitmapData.Height; y++)
+                {
+                    IntPtr sourceRow = IntPtr.Add(bitmapData.Scan0, y * sourceStride);
+                    System.Runtime.InteropServices.Marshal.Copy(sourceRow, bytes, y * targetStride, targetStride);
+                }
+
+                return new RGBLuminanceSource(
+                    bytes,
+                    bitmapData.Width,
+                    bitmapData.Height,
+                    RGBLuminanceSource.BitmapFormat.BGR24);
             }
             finally
             {
                 bitmap.UnlockBits(bitmapData);
+            }
+        }
+
+        private static Bitmap CreateReadableBitmap(Bitmap source)
+        {
+            var bitmap = new Bitmap(source.Width, source.Height, PixelFormat.Format24bppRgb);
+
+            try
+            {
+                float dpiX = source.HorizontalResolution > 0 ? source.HorizontalResolution : 96f;
+                float dpiY = source.VerticalResolution > 0 ? source.VerticalResolution : 96f;
+                bitmap.SetResolution(dpiX, dpiY);
+
+                using (Graphics g = Graphics.FromImage(bitmap))
+                {
+                    g.Clear(Color.White);
+                    g.DrawImage(source, 0, 0, source.Width, source.Height);
+                }
+
+                return bitmap;
+            }
+            catch
+            {
+                bitmap.Dispose();
+                throw;
             }
         }
     }

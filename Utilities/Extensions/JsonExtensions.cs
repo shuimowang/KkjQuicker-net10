@@ -25,7 +25,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <remarks>
         /// 当 <paramref name="obj"/> 为 <see langword="null"/> 时，返回 JSON 字面量 <c>"null"</c>。
         /// </remarks>
-        public static string ToJson(this object obj, bool indented = false, bool ignoreNull = false, bool camelCase = false)
+        public static string ToJson(this object? obj, bool indented = false, bool ignoreNull = false, bool camelCase = false)
         {
             var settings = CreateSerializerSettings(ignoreNull, camelCase);
             var formatting = indented ? Formatting.Indented : Formatting.None;
@@ -39,7 +39,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <param name="json">要反序列化的 JSON 字符串。</param>
         /// <returns>反序列化后的对象。</returns>
         /// <exception cref="JsonException">JSON 格式无效或无法转换为目标类型。</exception>
-        public static T? FromJson<T>(this string json)
+        public static T? FromJson<T>(this string? json)
         {
             return JsonConvert.DeserializeObject<T>(json);
         }
@@ -52,10 +52,9 @@ namespace KkjQuicker.Utilities.Extensions
         /// <returns>反序列化后的对象。</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type"/> 为 <see langword="null"/>。</exception>
         /// <exception cref="JsonException">JSON 格式无效或无法转换为目标类型。</exception>
-        public static object? FromJson(this string json, Type type)
+        public static object? FromJson(this string? json, Type type)
         {
-            if (type == null)
-                throw new ArgumentNullException(nameof(type));
+            ArgumentNullException.ThrowIfNull(type);
 
             return JsonConvert.DeserializeObject(json, type);
         }
@@ -73,7 +72,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// 当输入为空、格式无效、无法转换为目标类型，或反序列化结果为 <see langword="null"/> 时，
         /// 本方法不会抛出异常，而是返回 <see langword="false"/>。
         /// </remarks>
-        public static bool TryFromJson<T>(this string json, out T? result)
+        public static bool TryFromJson<T>(this string? json, out T? result)
         {
             if (string.IsNullOrWhiteSpace(json))
             {
@@ -132,7 +131,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <returns>
         /// 当字符串是有效 JSON 对象、数组或 JSON 字面量时返回 <see langword="true"/>；否则返回 <see langword="false"/>。
         /// </returns>
-        public static bool IsJson(this string json)
+        public static bool IsJson(this string? json)
         {
             if (string.IsNullOrWhiteSpace(json))
                 return false;
@@ -161,7 +160,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// 仅对可被 Newtonsoft.Json 正常序列化的对象有效；
         /// 若对象包含循环引用或不可序列化成员，将抛出 <see cref="JsonException"/>。
         /// </remarks>
-        public static bool JsonEquals(this object left, object right)
+        public static bool JsonEquals(this object? left, object? right)
         {
             if (ReferenceEquals(left, right))
                 return true;

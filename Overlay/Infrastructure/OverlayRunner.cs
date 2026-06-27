@@ -25,8 +25,8 @@ namespace KkjQuicker.Overlay.Infrastructure
                 var layer = new ScreenshotLayer();
                 overlay.Push(layer);
 
-                // 让 Overlay 窗口完成 SourceInitialized、首次布局与渲染后再执行截屏。
-                await Task.Yield();
+                // Let the overlay window finish SourceInitialized, first layout and render before capturing.
+                await WaitForRenderAsync();
 
                 var result = await layer.CaptureAsync();
                 return result?.Cropped;
@@ -34,45 +34,6 @@ namespace KkjQuicker.Overlay.Infrastructure
             finally
             {
                 overlay.Dispose();
-            }
-        }
-
-        /// <summary>
-        /// 在屏幕指定位置播放一次水波纹通知动画，播完后自动释放所有资源。
-        /// </summary>
-        /// <param name="screenCenterDip">
-        /// 波纹中心的屏幕绝对坐标（DIP）。
-        /// 传入 <see langword="null"/> 时默认使用主屏幕中心。
-        /// </param>
-        /// <param name="rippleColor">波纹颜色，默认天蓝色。</param>
-        public static void NotifyWithRipple(
-            Point? screenCenterDip = null,
-            Color? rippleColor = null)
-        {
-            var center = screenCenterDip ?? new Point(
-                SystemParameters.PrimaryScreenWidth / 2.0,
-                SystemParameters.PrimaryScreenHeight / 2.0);
-
-            var engine = new OverlayEngine(BuildFullscreenPassthroughOptions());
-            try
-            {
-                var layer = new WaterRippleLayer(rippleColor ?? Colors.DeepSkyBlue);
-
-                layer.AnimationCompleted += (s, e) => engine.Dispose();
-                engine.Push(layer, layer.Priority);
-
-                // 屏幕绝对坐标 → Overlay 相对坐标
-                // GlobalFullscreen 模式下 Overlay 左上角与虚拟屏幕原点对齐
-                var overlayPos = new Point(
-                    center.X - SystemParameters.VirtualScreenLeft,
-                    center.Y - SystemParameters.VirtualScreenTop);
-
-                layer.TriggerRipple(overlayPos);
-            }
-            catch
-            {
-                engine.Dispose();
-                throw;
             }
         }
 
@@ -89,8 +50,8 @@ namespace KkjQuicker.Overlay.Infrastructure
         /// </param>
         /// <returns>
         /// 用于手动关闭效果的释放句柄。
-        /// 若已设置 <paramref name="autoCloseSeconds"/>，到期后引擎自动释放，
-        /// 此后再调用 <see cref="IDisposable.Dispose"/> 是安全的 no-op。
+        /// 若已设置 <paramref name="autoCloseSeconds"/>，到期后引擎自动释放；
+        /// 此后再次调用 <see cref="IDisposable.Dispose"/> 是安全的 no-op。
         /// </returns>
         public static IDisposable StartBreathingAlert(
             Color? color = null,
@@ -100,6 +61,8 @@ namespace KkjQuicker.Overlay.Infrastructure
             double? autoCloseSeconds = null)
         {
             var engine = new OverlayEngine(BuildFullscreenPassthroughOptions());
+            DispatcherTimer? timer = null;
+
             try
             {
                 var layer = new BreathingEdgeLayer(
@@ -112,7 +75,7 @@ namespace KkjQuicker.Overlay.Infrastructure
 
                 if (autoCloseSeconds.HasValue && autoCloseSeconds.Value > 0)
                 {
-                    var timer = new DispatcherTimer
+                    timer = new DispatcherTimer
                     {
                         Interval = TimeSpan.FromSeconds(autoCloseSeconds.Value)
                     };
@@ -124,12 +87,44 @@ namespace KkjQuicker.Overlay.Infrastructure
                     timer.Start();
                 }
 
-                return engine;
+                return new TimedOverlayHandle(engine, timer);
             }
             catch
             {
+                timer?.Stop();
                 engine.Dispose();
                 throw;
+            }
+        }
+
+        private static Task WaitForRenderAsync()
+        {
+            return Application.Current?.Dispatcher.InvokeAsync(
+                static () => { },
+                DispatcherPriority.Render).Task ?? Task.CompletedTask;
+        }
+
+        private sealed class TimedOverlayHandle : IDisposable
+        {
+            private readonly OverlayEngine _engine;
+            private DispatcherTimer? _timer;
+            private bool _disposed;
+
+            public TimedOverlayHandle(OverlayEngine engine, DispatcherTimer? timer)
+            {
+                _engine = engine ?? throw new ArgumentNullException(nameof(engine));
+                _timer = timer;
+            }
+
+            public void Dispose()
+            {
+                if (_disposed)
+                    return;
+
+                _disposed = true;
+                _timer?.Stop();
+                _timer = null;
+                _engine.Dispose();
             }
         }
 
@@ -145,6 +140,5 @@ namespace KkjQuicker.Overlay.Infrastructure
                 AutoFocus = false
             };
         }
-
     }
 }

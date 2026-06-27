@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -20,12 +20,12 @@ namespace KkjQuicker.Utilities.FFmpeg
         /// <summary>
         /// 获取或设置标准输出文本。
         /// </summary>
-        public string StandardOutput { get; set; } = null!;
+        public string StandardOutput { get; set; } = string.Empty;
 
         /// <summary>
         /// 获取或设置标准错误文本。
         /// </summary>
-        public string StandardError { get; set; } = null!;
+        public string StandardError { get; set; } = string.Empty;
 
         /// <summary>
         /// 获取或设置是否因超时被终止。
@@ -40,12 +40,12 @@ namespace KkjQuicker.Utilities.FFmpeg
         /// <summary>
         /// 获取或设置启动时使用的可执行文件路径。
         /// </summary>
-        public string FileName { get; set; } = null!;
+        public string FileName { get; set; } = string.Empty;
 
         /// <summary>
         /// 获取或设置启动时使用的参数。
         /// </summary>
-        public string Arguments { get; set; } = null!;
+        public string Arguments { get; set; } = string.Empty;
 
         /// <summary>
         /// 获取执行结果是否成功。
@@ -123,8 +123,7 @@ namespace KkjQuicker.Utilities.FFmpeg
             if (string.IsNullOrWhiteSpace(ffmpegExePath))
                 throw new ArgumentNullException(nameof(ffmpegExePath));
 
-            if (arguments == null)
-                arguments = string.Empty;
+            arguments ??= string.Empty;
 
             if (string.IsNullOrWhiteSpace(workingDirectory))
                 workingDirectory = TryGetDirectoryName(ffmpegExePath);
@@ -138,8 +137,8 @@ namespace KkjQuicker.Utilities.FFmpeg
                 StandardError = string.Empty
             };
 
-            var stdoutBuilder = new StringBuilder();
-            var stderrBuilder = new StringBuilder();
+            StringBuilder stdoutBuilder = new();
+            StringBuilder stderrBuilder = new();
 
             using (var process = new Process())
             {
@@ -149,7 +148,7 @@ namespace KkjQuicker.Utilities.FFmpeg
                 var stderrClosed = new TaskCompletionSource<bool>();
                 var processExited = new TaskCompletionSource<bool>();
 
-                process.OutputDataReceived += delegate (object? sender, DataReceivedEventArgs e)
+                process.OutputDataReceived += (_, e) =>
                 {
                     if (e.Data == null)
                     {
@@ -162,11 +161,10 @@ namespace KkjQuicker.Utilities.FFmpeg
                         stdoutBuilder.AppendLine(e.Data);
                     }
 
-                    if (outputDataReceived != null)
-                        outputDataReceived(e.Data);
+                    SafeInvoke(outputDataReceived, e.Data);
                 };
 
-                process.ErrorDataReceived += delegate (object? sender, DataReceivedEventArgs e)
+                process.ErrorDataReceived += (_, e) =>
                 {
                     if (e.Data == null)
                     {
@@ -179,12 +177,11 @@ namespace KkjQuicker.Utilities.FFmpeg
                         stderrBuilder.AppendLine(e.Data);
                     }
 
-                    if (errorDataReceived != null)
-                        errorDataReceived(e.Data);
+                    SafeInvoke(errorDataReceived, e.Data);
                 };
 
                 process.EnableRaisingEvents = true;
-                process.Exited += delegate
+                process.Exited += (_, _) =>
                 {
                     processExited.TrySetResult(true);
                 };
@@ -255,8 +252,7 @@ namespace KkjQuicker.Utilities.FFmpeg
             if (string.IsNullOrWhiteSpace(ffmpegExePath))
                 throw new ArgumentNullException(nameof(ffmpegExePath));
 
-            if (arguments == null)
-                arguments = string.Empty;
+            arguments ??= string.Empty;
 
             if (string.IsNullOrWhiteSpace(workingDirectory))
                 workingDirectory = TryGetDirectoryName(ffmpegExePath);
@@ -264,16 +260,16 @@ namespace KkjQuicker.Utilities.FFmpeg
             var process = new Process();
             process.StartInfo = CreateStartInfo(ffmpegExePath, arguments, workingDirectory);
 
-            process.OutputDataReceived += delegate (object? sender, DataReceivedEventArgs e)
+            process.OutputDataReceived += (_, e) =>
             {
-                if (e.Data != null && outputDataReceived != null)
-                    outputDataReceived(e.Data);
+                if (e.Data != null)
+                    SafeInvoke(outputDataReceived, e.Data);
             };
 
-            process.ErrorDataReceived += delegate (object? sender, DataReceivedEventArgs e)
+            process.ErrorDataReceived += (_, e) =>
             {
-                if (e.Data != null && errorDataReceived != null)
-                    errorDataReceived(e.Data);
+                if (e.Data != null)
+                    SafeInvoke(errorDataReceived, e.Data);
             };
 
             if (!process.Start())
@@ -334,7 +330,7 @@ namespace KkjQuicker.Utilities.FFmpeg
             try
             {
                 if (!process.HasExited)
-                    process.Kill();
+                    process.Kill(entireProcessTree: true);
             }
             catch
             {
@@ -363,7 +359,7 @@ namespace KkjQuicker.Utilities.FFmpeg
             try
             {
                 if (!process.HasExited)
-                    process.Kill();
+                    process.Kill(entireProcessTree: true);
             }
             catch
             {
@@ -382,8 +378,7 @@ namespace KkjQuicker.Utilities.FFmpeg
             if (string.IsNullOrWhiteSpace(ffmpegExePath))
                 throw new ArgumentNullException(nameof(ffmpegExePath));
 
-            if (arguments == null)
-                arguments = string.Empty;
+            arguments ??= string.Empty;
 
             if (string.IsNullOrWhiteSpace(workingDirectory))
                 workingDirectory = TryGetDirectoryName(ffmpegExePath);
@@ -416,6 +411,20 @@ namespace KkjQuicker.Utilities.FFmpeg
             catch
             {
                 return -1;
+            }
+        }
+
+        private static void SafeInvoke(Action<string>? handler, string line)
+        {
+            if (handler == null)
+                return;
+
+            try
+            {
+                handler(line);
+            }
+            catch
+            {
             }
         }
 

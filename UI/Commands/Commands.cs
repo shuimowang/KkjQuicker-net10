@@ -83,6 +83,9 @@ namespace KkjQuicker.UI.Commands
             {
                 await task.ConfigureAwait(false);
             }
+            catch (OperationCanceledException)
+            {
+            }
             catch (Exception ex)
             {
                 try
@@ -146,8 +149,8 @@ namespace KkjQuicker.UI.Commands
         /// 可从任意线程调用。
         /// </para>
         /// <para>
-        /// 若当前线程不是 UI 线程，则会自动切换到应用程序主调度器异步触发事件，
-        /// 以避免后台线程同步阻塞 UI 线程。
+        /// 若存在应用程序主调度器，且当前线程不是该调度器线程，则会自动切换到主调度器异步触发事件，
+        /// 以避免后台线程同步阻塞 UI 线程。若当前宿主没有 <see cref="Application"/>，则在当前线程触发。
         /// </para>
         /// </remarks>
         public void RaiseCanExecuteChanged()
@@ -290,8 +293,7 @@ namespace KkjQuicker.UI.Commands
 
         private static Action<object> WrapExecute(Action execute)
         {
-            if (execute == null)
-                throw new ArgumentNullException(nameof(execute));
+            ArgumentNullException.ThrowIfNull(execute);
 
             return _ => execute();
         }
@@ -351,7 +353,7 @@ namespace KkjQuicker.UI.Commands
         /// </summary>
         public bool IsExecuting
         {
-            get { return Interlocked.CompareExchange(ref _isExecuting, 0, 0) != 0; }
+            get => Interlocked.CompareExchange(ref _isExecuting, 0, 0) != 0;
         }
 
         /// <summary>
@@ -428,8 +430,7 @@ namespace KkjQuicker.UI.Commands
         public void Cancel()
         {
             var cts = _cts;
-            if (cts != null)
-                cts.Cancel();
+            TryCancel(cts);
         }
 
         private Task ExecuteAsyncInternal(object parameter)
@@ -479,10 +480,7 @@ namespace KkjQuicker.UI.Commands
             var currentToken = currentCts.Token;
 
             var oldCts = Interlocked.Exchange(ref _cts, currentCts);
-            if (oldCts != null)
-            {
-                oldCts.Cancel();
-            }
+            TryCancel(oldCts);
 
             var shouldRaiseExecuting = Interlocked.Exchange(ref _isExecuting, 1) == 0;
             if (shouldRaiseExecuting)
@@ -507,6 +505,20 @@ namespace KkjQuicker.UI.Commands
                     Interlocked.Exchange(ref _isExecuting, 0);
                     RaiseCanExecuteChanged();
                 }
+            }
+        }
+
+        private static void TryCancel(CancellationTokenSource? cts)
+        {
+            if (cts == null)
+                return;
+
+            try
+            {
+                cts.Cancel();
+            }
+            catch (ObjectDisposedException)
+            {
             }
         }
     }
@@ -535,8 +547,7 @@ namespace KkjQuicker.UI.Commands
 
         private static Func<object, Task> WrapExecute(Func<Task> execute)
         {
-            if (execute == null)
-                throw new ArgumentNullException(nameof(execute));
+            ArgumentNullException.ThrowIfNull(execute);
 
             return _ => execute();
         }

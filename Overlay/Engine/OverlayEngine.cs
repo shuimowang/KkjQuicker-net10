@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 
@@ -506,7 +505,7 @@ namespace KkjQuicker.Overlay.Engine
                 UpdateWindowState();
             }
 
-            return new DisposeAction(() => Remove(layer));
+            return new DisposeAction(() => RemoveFromAnyThread(layer));
         }
 
         /// <summary>
@@ -525,6 +524,30 @@ namespace KkjQuicker.Overlay.Engine
             _inputRouter.NotifyLayerRemoving(layer);
             _layers.Remove(layer);
             UpdateWindowState();
+        }
+
+        private void RemoveFromAnyThread(IOverlayLayer layer)
+        {
+            if (layer == null)
+                return;
+
+            if (_dispatcher.CheckAccess())
+            {
+                Remove(layer);
+                return;
+            }
+
+            if (_dispatcher.HasShutdownStarted || _dispatcher.HasShutdownFinished)
+                return;
+
+            try
+            {
+                _dispatcher.BeginInvoke((Action)(() => Remove(layer)));
+            }
+            catch (InvalidOperationException ex)
+            {
+                Debug.WriteLine(ex);
+            }
         }
 
         /// <summary>
@@ -813,12 +836,14 @@ namespace KkjQuicker.Overlay.Engine
 
             bool hasLayers = _layers.Count > 0;
             bool hasBounds = OverlayGeometryHelper.IsValidRect(_currentOverlayBounds);
-            bool shouldShow = hasLayers && hasBounds;
+            bool shouldShow = hasBounds && (hasLayers || !_options.AutoHideWindow);
 
             bool shouldHitTest = shouldShow &&
+                                 hasLayers &&
                                  _options.InputPolicy != OverlayInputPolicy.None;
 
             bool requiresMouseHitTest = shouldShow &&
+                                        hasLayers &&
                                         (_options.InputPolicy.HasFlag(OverlayInputPolicy.Mouse) ||
                                          _options.InputPolicy.HasFlag(OverlayInputPolicy.Wheel));
 
@@ -833,9 +858,7 @@ namespace KkjQuicker.Overlay.Engine
             {
                 _host.SetHitTestVisible(false);
                 _host.SetMousePassthrough(true);
-
-                if (_options.AutoHideWindow || !hasLayers || !hasBounds)
-                    _host.Hide();
+                _host.Hide();
             }
         }
 
@@ -850,7 +873,7 @@ namespace KkjQuicker.Overlay.Engine
             if (!owner.IsLoaded || !owner.IsVisible)
                 return false;
 
-            hwnd = new WindowInteropHelper(owner).Handle;
+            hwnd = owner.GetHandle();
             if (hwnd == IntPtr.Zero)
                 return false;
 
@@ -1026,7 +1049,7 @@ namespace KkjQuicker.Overlay.Engine
 
         private void ApplyWindowStyles()
         {
-            IntPtr hwnd = new WindowInteropHelper(_window).Handle;
+            IntPtr hwnd = _window.GetHandle();
             if (hwnd == IntPtr.Zero)
                 return;
 
@@ -1152,7 +1175,7 @@ namespace KkjQuicker.Overlay.Engine
                 if (!_options.TopMost || !_options.ForceTopMostViaWin32)
                     return;
 
-                IntPtr hwnd = new WindowInteropHelper(this).Handle;
+                IntPtr hwnd = this.GetHandle();
                 if (hwnd == IntPtr.Zero)
                     return;
 
@@ -1176,12 +1199,9 @@ namespace KkjQuicker.Overlay.Engine
 
     internal sealed class OverlayLayerCollection
     {
-        private readonly List<LayerEntry> _layers = new List<LayerEntry>(8);
+        private readonly List<LayerEntry> _layers = new(8);
         private long _seq;
         private Rect _ownerBounds;
-
-        private List<IOverlayInputLayer> _inputSnapshot = null!;
-        private bool _inputSnapshotDirty = true;
 
         private sealed class LayerEntry
         {
@@ -1305,33 +1325,17 @@ namespace KkjQuicker.Overlay.Engine
         }
 
         /// <summary>
-        /// 使输入层快照缓存失效，下次访问时重建。
-        /// <para>当图层 <see cref="UIElement.IsVisible"/> 在帧间动态切换（未经过 Add/Remove）时，
-        /// 外部应调用此方法以确保派发时快照中的可见性状态是最新的。</para>
-        /// </summary>
-        public void InvalidateInputSnapshot()
-        {
-            _inputSnapshotDirty = true;
-        }
-
-        /// <summary>
         /// 返回当前所有可见输入图层的快照列表（从高层到低层）。
-        /// <para>结果已缓存，集合结构未变化时重复调用不产生额外分配。</para>
+        /// <para>每次派发前重新构建，确保图层可见性变化能立即影响输入路由。</para>
         /// </summary>
         public List<IOverlayInputLayer> GetInputLayersTopToBottom()
         {
-            if (_inputSnapshotDirty)
-            {
-                _inputSnapshot = BuildInputSnapshot();
-                _inputSnapshotDirty = false;
-            }
-
-            return _inputSnapshot;
+            return BuildInputSnapshot();
         }
 
         private List<IOverlayInputLayer> BuildInputSnapshot()
         {
-            var result = new List<IOverlayInputLayer>(_layers.Count);
+            List<IOverlayInputLayer> result = new(_layers.Count);
             for (int i = _layers.Count - 1; i >= 0; i--)
             {
                 IOverlayInputLayer? inputLayer = _layers[i].Layer as IOverlayInputLayer;
@@ -1349,8 +1353,6 @@ namespace KkjQuicker.Overlay.Engine
 
         private void SyncOrder()
         {
-            InvalidateInputSnapshot();
-
             if (_layers.Count <= 1)
             {
                 if (_layers.Count == 1)
@@ -1448,15 +1450,17 @@ namespace KkjQuicker.Overlay.Engine
 
             if (!ReferenceEquals(_captured, layer))
             {
-                _captured?.OnInputCaptureLost();
+                var lost = _captured;
                 _captured = layer;
+                NotifyInputCaptureLost(lost);
             }
         }
 
         public void Release()
         {
-            _captured?.OnInputCaptureLost();
+            var lost = _captured;
             _captured = null;
+            NotifyInputCaptureLost(lost);
         }
 
         /// <summary>
@@ -1474,8 +1478,9 @@ namespace KkjQuicker.Overlay.Engine
 
             if (_captured != null && ReferenceEquals(_captured, layer))
             {
-                _captured.OnInputCaptureLost();
+                var lost = _captured;
                 _captured = null;
+                NotifyInputCaptureLost(lost);
             }
         }
 
@@ -1507,23 +1512,53 @@ namespace KkjQuicker.Overlay.Engine
             {
                 if (_layers.Contains(_captured))
                 {
-                    action(_captured, e);
+                    DispatchToLayer(_captured, e, action);
                     return;
                 }
 
                 // 被捕获图层已不在集合，补发丢失通知后继续广播
                 var lost = _captured;
                 _captured = null;
-                try { lost.OnInputCaptureLost(); }
-                catch (Exception ex) { Debug.WriteLine(ex); }
+                NotifyInputCaptureLost(lost);
             }
 
             var snapshot = _layers.GetInputLayersTopToBottom();
             foreach (IOverlayInputLayer layer in snapshot)
             {
-                action(layer, e);
+                DispatchToLayer(layer, e, action);
                 if (e.Handled)
                     break;
+            }
+        }
+
+        private static void DispatchToLayer<T>(
+            IOverlayInputLayer layer,
+            T e,
+            Action<IOverlayInputLayer, T> action)
+            where T : RoutedEventArgs
+        {
+            try
+            {
+                action(layer, e);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+            }
+        }
+
+        private static void NotifyInputCaptureLost(IOverlayInputLayer? layer)
+        {
+            if (layer == null)
+                return;
+
+            try
+            {
+                layer.OnInputCaptureLost();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
             }
         }
     }

@@ -1,4 +1,66 @@
-bin/
-obj/
-.vs/
+# User-specific files
+*.rsuser
+*.suo
 *.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+Generated\ Files/
+*_wpftmp.csproj
+
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+publish/
+
+# Build intermediates
+*.cache
+*.ilk
+*.iobj
+*.ipdb
+*.meta
+*.obj
+*.pch
+*.pdb
+*.tmp
+*.tmp_proj
+*.log
+
+# Test and coverage output
+[Tt]est[Rr]esult*/
+TestResult.xml
+nunit-*.xml
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# Tooling
+.idea/
+.vscode/
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user

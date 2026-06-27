@@ -56,12 +56,12 @@ namespace KkjQuicker.UI.Hotkeys
 
         public bool IsRegistered
         {
-            get { return _registered; }
+            get => _registered;
         }
 
         public int Id
         {
-            get { return _id; }
+            get => _id;
         }
 
         /// <summary>
@@ -76,8 +76,7 @@ namespace KkjQuicker.UI.Hotkeys
             Action onTriggered,
             Action<int>? onRegistrationFailed)
         {
-            if (onTriggered == null)
-                throw new ArgumentNullException(nameof(onTriggered));
+            ArgumentNullException.ThrowIfNull(onTriggered);
 
             var hotkey = new WindowGlobalHotkey(window, key, modifiers);
 
@@ -102,8 +101,7 @@ namespace KkjQuicker.UI.Hotkeys
 
         WindowGlobalHotkey(Window window, Key key, ModifierKeys modifiers)
         {
-            if (window == null)
-                throw new ArgumentNullException(nameof(window));
+            ArgumentNullException.ThrowIfNull(window);
 
             if (!window.Dispatcher.CheckAccess())
                 throw new InvalidOperationException("WindowGlobalHotkey 必须在窗口所属 UI 线程创建。");

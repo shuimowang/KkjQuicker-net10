@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
@@ -79,8 +79,7 @@ namespace KkjQuicker.UI.Converters
         /// <summary>
         /// 不支持反向转换。
         /// </summary>
-        /// <exception cref="NotSupportedException">始终抛出。</exception>
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-            => throw new NotSupportedException();
+            => targetTypes == null ? Array.Empty<object>() : targetTypes.Select(_ => Binding.DoNothing).ToArray();
     }
 }

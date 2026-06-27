@@ -37,7 +37,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         /// </remarks>
         public string? Language
         {
-            get { return _language; }
+            get => _language;
             set { _language = string.IsNullOrWhiteSpace(value) ? null : value; }
         }
 
@@ -59,7 +59,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         /// <exception cref="ArgumentOutOfRangeException">值不能小于 0。</exception>
         public double VadThreshold
         {
-            get { return _vadThreshold; }
+            get => _vadThreshold;
             set
             {
                 if (value < 0)
@@ -79,7 +79,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         /// <exception cref="ArgumentOutOfRangeException">值必须大于 0。</exception>
         public int SilenceDurationMs
         {
-            get { return _silenceDurationMs; }
+            get => _silenceDurationMs;
             set
             {
                 if (value <= 0)
@@ -104,7 +104,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         /// <exception cref="ArgumentOutOfRangeException">值必须大于 0。</exception>
         public int MaxQueuedAudioFrames
         {
-            get { return _maxQueuedAudioFrames; }
+            get => _maxQueuedAudioFrames;
             set
             {
                 if (value <= 0)
@@ -124,7 +124,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         /// <exception cref="ArgumentOutOfRangeException">值不能小于 0。</exception>
         public int FinishWaitTimeoutMs
         {
-            get { return _finishWaitTimeoutMs; }
+            get => _finishWaitTimeoutMs;
             set
             {
                 if (value < 0)
@@ -172,7 +172,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         private readonly IAudioFrameSource _audioSource;
         private readonly AliyunRealtimeAsrOptions _options;
 
-        private volatile bool _disposed;
+        private int _disposed;
         private bool _isRunning;
         private bool _isStopping;
         private bool _audioStarted;
@@ -251,10 +251,8 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
             IAudioFrameSource audioSource,
             AliyunRealtimeAsrOptions? options = null)
         {
-            if (webSocket == null)
-                throw new ArgumentNullException(nameof(webSocket));
-            if (audioSource == null)
-                throw new ArgumentNullException(nameof(audioSource));
+            ArgumentNullException.ThrowIfNull(webSocket);
+            ArgumentNullException.ThrowIfNull(audioSource);
             if (audioSource.OutputFormat == null)
                 throw new ArgumentException(
                     "音频源必须提供有效的 OutputFormat。", nameof(audioSource));
@@ -264,7 +262,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
 
             _webSocket = webSocket;
             _audioSource = audioSource;
-            _options = options ?? new AliyunRealtimeAsrOptions();
+            _options = CloneOptions(options);
 
             _webSocket.TextMessageReceived += OnWebSocketTextMessageReceived;
             _webSocket.StateChanged += OnWebSocketStateChanged;
@@ -272,6 +270,23 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
             _webSocket.Disconnected += OnWebSocketDisconnected;
 
             _audioSource.ErrorOccurred += OnAudioSourceError;
+        }
+
+        private static AliyunRealtimeAsrOptions CloneOptions(AliyunRealtimeAsrOptions? options)
+        {
+            if (options == null)
+                return new AliyunRealtimeAsrOptions();
+
+            return new AliyunRealtimeAsrOptions
+            {
+                Language = options.Language,
+                EnableServerVad = options.EnableServerVad,
+                VadThreshold = options.VadThreshold,
+                SilenceDurationMs = options.SilenceDurationMs,
+                AutoStartAudio = options.AutoStartAudio,
+                MaxQueuedAudioFrames = options.MaxQueuedAudioFrames,
+                FinishWaitTimeoutMs = options.FinishWaitTimeoutMs
+            };
         }
 
         /// <summary>
@@ -337,10 +352,9 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         public async Task StopAsync(
             CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (_disposed)
+            if (IsDisposed)
                 return;
 
-            // Fix #5：移除永远不会为 false 的冗余 shouldStop 变量。
             lock (_syncRoot)
             {
                 if (!_isRunning || _isStopping)
@@ -422,8 +436,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         {
             ThrowIfDisposed();
 
-            if (pcm16 == null)
-                throw new ArgumentNullException(nameof(pcm16));
+            ArgumentNullException.ThrowIfNull(pcm16);
             if (pcm16.Length == 0)
                 return;
 
@@ -472,12 +485,8 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         /// <summary>释放当前实例。</summary>
         public void Dispose()
         {
-            if (_disposed)
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
                 return;
-
-            // Fix #2：先置 _disposed = true，确保其他线程（如 OnAudioFrameReady）
-            // 在 ThrowIfDisposed 处提前退出，避免 Dispose 期间仍在发送数据。
-            _disposed = true;
 
             _audioSource.ErrorOccurred -= OnAudioSourceError;
 
@@ -636,8 +645,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
                     RaiseStatus("识别结束。");
                     RaiseSessionFinished();
 
-                    // Fix #3：事件回调为同步上下文，不能直接 await；
-                    // 用 Task.Run 在线程池执行断开逻辑，异常由 DisconnectAfterFinishAsync 内部处理。
+                    // 事件回调为同步上下文，断开逻辑放到后台任务中执行。
                     Task.Run(() => DisconnectAfterFinishAsync());
                     return;
                 }
@@ -688,7 +696,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
 
                     bool shouldDisconnect;
                     lock (_syncRoot)
-                        shouldDisconnect = !_disposed && !_isRunning && !_isStopping;
+                        shouldDisconnect = !IsDisposed && !_isRunning && !_isStopping;
 
                     if (shouldDisconnect && _webSocket.IsConnected)
                         await _webSocket.DisconnectAsync().ConfigureAwait(false);
@@ -936,7 +944,7 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
         private bool CanSendQueuedAudio()
         {
             lock (_syncRoot)
-                return !_disposed && _isRunning && _sessionUpdated && _webSocket.IsConnected;
+                return !IsDisposed && _isRunning && _sessionUpdated && _webSocket.IsConnected;
         }
 
         private void ResetSessionState_NoLock()
@@ -978,9 +986,11 @@ namespace KkjQuicker.AI.ASR.AliyunRealtime
 
         private void ThrowIfDisposed()
         {
-            if (_disposed)
+            if (IsDisposed)
                 throw new ObjectDisposedException(nameof(AliyunRealtimeAsrClient));
         }
+
+        private bool IsDisposed => Volatile.Read(ref _disposed) != 0;
 
         private void RaisePartialTranscript(string text)
         {

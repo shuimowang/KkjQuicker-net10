@@ -35,22 +35,22 @@ namespace KkjQuicker.UI.Hotkeys
 
         public bool IsEmpty
         {
-            get { return Key == EmptyKey; }
+            get => Key == EmptyKey;
         }
 
         public bool HasModifier
         {
-            get { return Modifiers != ModifierKeys.None; }
+            get => Modifiers != ModifierKeys.None;
         }
 
         public uint VirtualKey
         {
-            get { return unchecked((uint)Key); }
+            get => unchecked((uint)Key);
         }
 
         public string DisplayText
         {
-            get { return ToString(); }
+            get => ToString();
         }
 
         public Key WpfKey
@@ -235,7 +235,7 @@ namespace KkjQuicker.UI.Hotkeys
             if (IsEmpty)
                 return string.Empty;
 
-            StringBuilder builder = new StringBuilder();
+            StringBuilder builder = new();
 
             if ((Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
                 builder.Append("Ctrl + ");

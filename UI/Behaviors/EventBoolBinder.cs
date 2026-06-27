@@ -155,7 +155,7 @@ namespace KkjQuicker.UI.Behaviors
         {
             // 仅在 UI 线程访问，无需线程安全
             private readonly Dictionary<(string, Dispatcher), SharedTimerState> _timers
-                = new Dictionary<(string, Dispatcher), SharedTimerState>();
+                = [];
 
             public SharedTimerState GetOrCreate(string propertyPath, Dispatcher dispatcher)
             {

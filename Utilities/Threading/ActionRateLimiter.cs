@@ -107,15 +107,15 @@ namespace KkjQuicker.Utilities.Threading
         private bool _disposed;
 
         // Sync
-        private Action? _pendingSyncAction = null!;
+        private Action? _pendingSyncAction;
         private bool _isSyncThrottling;
 
         // Async debounce
-        private CancellationTokenSource? _debounceCts = null!;
+        private CancellationTokenSource? _debounceCts;
 
         // Async throttle
         private bool _isAsyncThrottling;
-        private CancellationTokenSource? _cooldownCts = null!;
+        private CancellationTokenSource? _cooldownCts;
 
         /// <summary>
         /// 初始化 <see cref="ActionRateLimiter"/>。
@@ -217,8 +217,7 @@ namespace KkjQuicker.Utilities.Threading
         /// <exception cref="ArgumentNullException"><paramref name="action"/> 为 <see langword="null"/>。</exception>
         public void Debounce(Action action)
         {
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
+            ArgumentNullException.ThrowIfNull(action);
 
             Dispatch(() =>
             {
@@ -250,18 +249,38 @@ namespace KkjQuicker.Utilities.Threading
         /// <exception cref="ArgumentNullException"><paramref name="action"/> 为 <see langword="null"/>。</exception>
         public bool Throttle(Action action)
         {
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
+            ArgumentNullException.ThrowIfNull(action);
 
-            if (_dispatcher?.CheckAccess() == true)
-                return ThrottleInternal(action);
+            if (!DispatcherAlive)
+                return false;
 
-            bool result = false;
-            _dispatcher?.Invoke(_priority, new Action(() =>
+            try
             {
-                result = ThrottleInternal(action);
-            }));
-            return result;
+                if (_dispatcher?.CheckAccess() == true)
+                    return ThrottleInternal(action);
+
+                bool result = false;
+                _dispatcher?.Invoke(_priority, new Action(() =>
+                {
+                    result = ThrottleInternal(action);
+                }));
+                return result;
+            }
+            catch (TaskCanceledException)
+            {
+                return false;
+            }
+            catch (OperationCanceledException)
+            {
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                if (DispatcherAlive)
+                    throw;
+
+                return false;
+            }
         }
 
         private bool ThrottleInternal(Action action)
@@ -350,8 +369,7 @@ namespace KkjQuicker.Utilities.Threading
         /// <exception cref="ArgumentNullException"><paramref name="action"/> 为 <see langword="null"/>。</exception>
         public async Task<bool> DebounceAsync(Func<CancellationToken, Task> action)
         {
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
+            ArgumentNullException.ThrowIfNull(action);
 
             CancellationTokenSource cts;
             CancellationToken localToken;
@@ -421,8 +439,7 @@ namespace KkjQuicker.Utilities.Threading
         /// <exception cref="ArgumentNullException"><paramref name="action"/> 为 <see langword="null"/>。</exception>
         public async Task<bool> ThrottleAsync(Func<CancellationToken, Task> action)
         {
-            if (action == null)
-                throw new ArgumentNullException(nameof(action));
+            ArgumentNullException.ThrowIfNull(action);
 
             CancellationTokenSource? cooldownCts = null;
             TimeSpan cooldownDelay;
@@ -437,10 +454,19 @@ namespace KkjQuicker.Utilities.Threading
             }
 
             bool accepted = false;
+            CancellationToken executionToken = _disposeCts.Token;
             try
             {
-                await action(_disposeCts.Token).ConfigureAwait(false);
+                await action(executionToken).ConfigureAwait(false);
                 accepted = true;
+            }
+            catch (OperationCanceledException) when (executionToken.IsCancellationRequested)
+            {
+                return false;
+            }
+            catch (ObjectDisposedException) when (IsDisposed)
+            {
+                return false;
             }
             finally
             {
@@ -477,7 +503,10 @@ namespace KkjQuicker.Utilities.Threading
             {
                 await Task.Delay(cooldownDelay, cooldownCts.Token).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) when (cooldownCts.IsCancellationRequested || _disposeCts.IsCancellationRequested)
+            catch (OperationCanceledException)
+            {
+            }
+            catch (ObjectDisposedException)
             {
             }
             finally
@@ -616,6 +645,15 @@ namespace KkjQuicker.Utilities.Threading
                 return _dispatcher != null
                     && !_dispatcher.HasShutdownStarted
                     && !_dispatcher.HasShutdownFinished;
+            }
+        }
+
+        private bool IsDisposed
+        {
+            get
+            {
+                lock (_syncRoot)
+                    return _disposed;
             }
         }
 

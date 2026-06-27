@@ -7,7 +7,7 @@
     /// 用于 <see cref="GlobalMouseHook.MouseRawEvent"/> 高频场景，
     /// 仅包含消息类型与屏幕物理像素坐标，无堆分配。
     /// </remarks>
-    public struct MouseRawInfo
+    public readonly struct MouseRawInfo
     {
         /// <summary>
         /// 初始化一个鼠标原始轻量数据实例。

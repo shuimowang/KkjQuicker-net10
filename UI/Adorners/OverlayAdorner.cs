@@ -49,7 +49,7 @@ namespace KkjQuicker.UI.Adorners
         /// </summary>
         /// <typeparam name="T">目标类型。</typeparam>
         /// <returns>转换成功时返回对应实例；否则返回 <see langword="null"/>。</returns>
-        public T As<T>() where T : class
+        public T? As<T>() where T : class
         {
             return Target as T;
         }
@@ -65,7 +65,7 @@ namespace KkjQuicker.UI.Adorners
         /// <typeparamref name="TTarget"/> 时返回的默认值。
         /// </param>
         /// <returns>函数结果，或 <paramref name="defaultValue"/>。</returns>
-        public TResult Dispatch<TTarget, TResult>(Func<TTarget, TResult> func, TResult defaultValue = default(TResult))
+        public TResult Dispatch<TTarget, TResult>(Func<TTarget, TResult>? func, TResult defaultValue = default!)
             where TTarget : class
         {
             if (func == null)
@@ -80,7 +80,7 @@ namespace KkjQuicker.UI.Adorners
         /// </summary>
         /// <typeparam name="TTarget">目标元素希望转换成的类型。</typeparam>
         /// <param name="action">要执行的动作。</param>
-        public void Dispatch<TTarget>(Action<TTarget> action) where TTarget : class
+        public void Dispatch<TTarget>(Action<TTarget>? action) where TTarget : class
         {
             if (action == null)
                 return;
@@ -92,67 +92,42 @@ namespace KkjQuicker.UI.Adorners
     }
 
     /// <summary>
-    /// 表示 Overlay 面板中一个项目的最小统一接口。
+    /// 直接承载现成 <see cref="UIElement"/> 的内部项目实现。
     /// </summary>
-    public interface IOverlayItem
+    internal sealed class OverlayItem
     {
-        /// <summary>
-        /// 获取该项目对应的可视元素。
-        /// </summary>
-        UIElement Element { get; }
+        private readonly UIElement _element;
+        private readonly Func<OverlayActionContext, bool>? _visibleWhen;
 
         /// <summary>
-        /// 刷新当前项目的可见性，并返回刷新后的最终可见状态。
+        /// 初始化一个 <see cref="OverlayItem"/> 实例。
         /// </summary>
-        /// <param name="context">当前运行上下文。</param>
-        /// <returns>项目最终是否可见。</returns>
-        bool RefreshVisibility(OverlayActionContext context);
-
-        /// <summary>
-        /// 当项目从所属面板分离时执行清理逻辑。
-        /// </summary>
-        void Detach();
-    }
-
-    /// <summary>
-    /// <see cref="IOverlayItem"/> 的轻量基类。
-    /// </summary>
-    public abstract class OverlayItemBase : IOverlayItem
-    {
-        /// <summary>
-        /// 获取该项目对应的可视元素。
-        /// </summary>
-        public abstract UIElement Element { get; }
-
-        /// <summary>
-        /// 刷新当前项目的可见性，并返回刷新后的最终可见状态。
-        /// </summary>
-        /// <param name="context">当前运行上下文。</param>
-        /// <returns>项目最终是否可见。</returns>
-        public abstract bool RefreshVisibility(OverlayActionContext context);
-
-        /// <summary>
-        /// 当项目从所属面板分离时执行清理逻辑。
-        /// </summary>
-        public virtual void Detach()
+        /// <param name="element">要承载的元素。</param>
+        /// <param name="visibleWhen">可见条件；为 <see langword="null"/> 时默认可见。</param>
+        internal OverlayItem(UIElement element, Func<OverlayActionContext, bool>? visibleWhen = null)
         {
+            ArgumentNullException.ThrowIfNull(element);
+
+            _element = element;
+            _visibleWhen = visibleWhen;
         }
 
         /// <summary>
-        /// 评估项目是否可见。
+        /// 刷新元素可见性。
         /// </summary>
-        /// <param name="visibleWhen">可见性判断委托；为 <see langword="null"/> 时默认视为可见。</param>
         /// <param name="context">当前运行上下文。</param>
-        /// <returns>是否可见。</returns>
-        /// <remarks>
-        /// <para>
-        /// 为保证 Overlay 逻辑稳定，委托抛出的异常会被捕获并按不可见处理。
-        /// </para>
-        /// <para>
-        /// 在 DEBUG 模式下会通过 <see cref="Debug.WriteLine"/> 输出异常信息，便于排查外部条件函数中的错误。
-        /// </para>
-        /// </remarks>
-        protected static bool EvaluateVisible(Func<OverlayActionContext, bool> visibleWhen, OverlayActionContext context)
+        /// <returns>元素最终是否可见。</returns>
+        public bool RefreshVisibility(OverlayActionContext context)
+        {
+            if (_element == null)
+                return false;
+
+            bool visible = EvaluateVisible(_visibleWhen, context);
+            SetElementVisibility(_element, visible);
+            return visible;
+        }
+
+        private static bool EvaluateVisible(Func<OverlayActionContext, bool>? visibleWhen, OverlayActionContext context)
         {
             if (visibleWhen == null)
                 return true;
@@ -168,66 +143,15 @@ namespace KkjQuicker.UI.Adorners
             }
         }
 
-        /// <summary>
-        /// 设置元素的可见性。
-        /// </summary>
-        /// <param name="element">目标元素。</param>
-        /// <param name="visible">是否可见。</param>
-        protected static void SetElementVisibility(UIElement element, bool visible)
+        private static void SetElementVisibility(UIElement element, bool visible)
         {
-            if (element == null)
-                return;
-
             element.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         }
 
         [Conditional("DEBUG")]
         private static void DebugLogException(Exception ex)
         {
-            Debug.WriteLine("[OverlayItemBase] visibleWhen 委托执行时抛出异常，已按不可见处理：" + ex);
-        }
-    }
-
-    /// <summary>
-    /// 直接承载现成 <see cref="UIElement"/> 的最轻量项目实现。
-    /// </summary>
-    public sealed class RawItem : OverlayItemBase
-    {
-        private readonly UIElement _element;
-        private readonly Func<OverlayActionContext, bool>? _visibleWhen;
-
-        /// <summary>
-        /// 初始化一个 <see cref="RawItem"/> 实例。
-        /// </summary>
-        /// <param name="element">要承载的元素。</param>
-        /// <param name="visibleWhen">可见条件；为 <see langword="null"/> 时默认可见。</param>
-        public RawItem(UIElement element, Func<OverlayActionContext, bool>? visibleWhen = null)
-        {
-            _element = element;
-            _visibleWhen = visibleWhen;
-        }
-
-        /// <summary>
-        /// 获取该项目对应的元素。
-        /// </summary>
-        public override UIElement Element
-        {
-            get { return _element; }
-        }
-
-        /// <summary>
-        /// 刷新元素可见性。
-        /// </summary>
-        /// <param name="context">当前运行上下文。</param>
-        /// <returns>元素最终是否可见。</returns>
-        public override bool RefreshVisibility(OverlayActionContext context)
-        {
-            if (_element == null)
-                return false;
-
-            bool visible = EvaluateVisible(_visibleWhen, context);
-            SetElementVisibility(_element, visible);
-            return visible;
+            Debug.WriteLine("[OverlayItem] visibleWhen 委托执行时抛出异常，已按不可见处理：" + ex);
         }
     }
 
@@ -386,9 +310,9 @@ namespace KkjQuicker.UI.Adorners
         private readonly OverlayAdorner _adorner;
         private readonly OverlayLayout _layout;
         private readonly OverlayStyle _style;
-        private readonly List<IOverlayItem> _items = new List<IOverlayItem>();
+        private readonly List<OverlayItem> _items = [];
         private readonly Dictionary<FrameworkElement, SizeChangedEventHandler> _sizeChangedHandlers =
-            new Dictionary<FrameworkElement, SizeChangedEventHandler>();
+            [];
 
         private Border _panelRoot = null!;
         private StackPanel _stackPanel = null!;
@@ -441,14 +365,6 @@ namespace KkjQuicker.UI.Adorners
         }
 
         /// <summary>
-        /// 获取当前面板中的所有项目。
-        /// </summary>
-        public IReadOnlyList<IOverlayItem> Items
-        {
-            get { return _items; }
-        }
-
-        /// <summary>
         /// 向面板添加一个现成元素。
         /// </summary>
         /// <param name="element">要承载的元素。</param>
@@ -470,12 +386,11 @@ namespace KkjQuicker.UI.Adorners
         {
             ThrowIfDetached();
 
-            if (element == null)
-                return this;
+            ArgumentNullException.ThrowIfNull(element);
 
             EnsureVisual();
 
-            var item = new RawItem(element, visibleWhen);
+            var item = new OverlayItem(element, visibleWhen);
             _items.Add(item);
             _stackPanel.Children.Add(element);
 
@@ -510,11 +425,7 @@ namespace KkjQuicker.UI.Adorners
 
             for (int i = 0; i < _items.Count; i++)
             {
-                IOverlayItem item = _items[i];
-                if (item == null)
-                    continue;
-
-                if (item.RefreshVisibility(context))
+                if (_items[i].RefreshVisibility(context))
                     anyVisible = true;
             }
 
@@ -546,13 +457,6 @@ namespace KkjQuicker.UI.Adorners
                 pair.Key.SizeChanged -= pair.Value;
             }
             _sizeChangedHandlers.Clear();
-
-            for (int i = 0; i < _items.Count; i++)
-            {
-                IOverlayItem item = _items[i];
-                if (item != null)
-                    item.Detach();
-            }
 
             _isAttached = false;
             _isDetached = true;
@@ -804,10 +708,10 @@ namespace KkjQuicker.UI.Adorners
     {
         private readonly VisualCollection _visuals;
         private readonly Canvas _canvas;
-        private readonly List<OverlayPanel> _panels = new List<OverlayPanel>();
+        private readonly List<OverlayPanel> _panels = [];
         private bool _isDetached;
 
-        private OverlayAdorner(UIElement adornedElement)
+        private OverlayAdorner(FrameworkElement adornedElement)
             : base(adornedElement)
         {
             IsHitTestVisible = true;
@@ -821,7 +725,7 @@ namespace KkjQuicker.UI.Adorners
         /// </summary>
         public FrameworkElement Target
         {
-            get { return AdornedElement as FrameworkElement; }
+            get { return (FrameworkElement)AdornedElement; }
         }
 
         /// <summary>
@@ -838,30 +742,56 @@ namespace KkjQuicker.UI.Adorners
         /// <param name="target">要附着的目标元素。</param>
         /// <returns>与该目标关联的 <see cref="OverlayAdorner"/> 实例。</returns>
         /// <exception cref="ArgumentNullException"><paramref name="target"/> 为 <see langword="null"/>。</exception>
-        /// <exception cref="InvalidOperationException">无法找到或创建可用的 <see cref="AdornerLayer"/>。</exception>
+        /// <exception cref="InvalidOperationException">无法找到可用的 <see cref="AdornerLayer"/>。</exception>
         /// <remarks>
         /// <para>
         /// 如果目标元素已经存在对应的 <see cref="OverlayAdorner"/>，则直接返回现有实例，不会重复创建。
         /// </para>
         /// <para>
-        /// 当目标视觉树中不存在 <see cref="AdornerLayer"/> 时，该方法会尝试将宿主窗口的
-        /// <see cref="Window.Content"/> 替换为 <see cref="AdornerDecorator"/> 包裹形式，
-        /// 以便为目标元素提供 AdornerLayer。
-        /// <b>注意：</b>此操作会改变窗口内容的视觉树结构，如果 XAML 中有针对窗口内容根元素的
-        /// 绑定或样式引用，可能受到影响。建议在 XAML 中直接为窗口根内容添加
-        /// <see cref="AdornerDecorator"/>，以避免此自动包裹行为。
+        /// 当目标视觉树中不存在 <see cref="AdornerLayer"/> 时，该方法会抛出异常。
+        /// 调用方应在窗口或目标控件外层显式放置 <see cref="AdornerDecorator"/>。
         /// </para>
         /// </remarks>
         public static OverlayAdorner Attach(FrameworkElement target)
         {
+            ArgumentNullException.ThrowIfNull(target);
+
+            if (TryAttach(target, out OverlayAdorner? overlay))
+                return overlay;
+
+            throw new InvalidOperationException(
+                "找不到 AdornerLayer。请确认 target 已在可视树中，并且其祖先包含 AdornerDecorator。");
+        }
+
+        /// <summary>
+        /// Tries to attach an <see cref="OverlayAdorner"/> to the target.
+        /// </summary>
+        /// <param name="target">The target element.</param>
+        /// <param name="adorner">The attached adorner when the operation succeeds.</param>
+        /// <returns><see langword="true"/> when an <see cref="AdornerLayer"/> is available.</returns>
+        public static bool TryAttach(FrameworkElement? target, out OverlayAdorner? adorner)
+        {
+            adorner = null;
+
             if (target == null)
-                throw new ArgumentNullException(nameof(target));
+                return false;
 
-            AdornerLayer layer = EnsureAdornerLayer(target);
+            AdornerLayer? layer = AdornerLayer.GetAdornerLayer(target);
             if (layer == null)
-                throw new InvalidOperationException("无法找到或创建 AdornerLayer。");
+                return false;
 
-            Adorner[] adorners = layer.GetAdorners(target);
+            adorner = FindExisting(layer, target);
+            if (adorner != null)
+                return true;
+
+            adorner = new OverlayAdorner(target);
+            layer.Add(adorner);
+            return true;
+        }
+
+        private static OverlayAdorner? FindExisting(AdornerLayer layer, UIElement target)
+        {
+            Adorner[]? adorners = layer.GetAdorners(target);
             if (adorners != null)
             {
                 for (int i = 0; i < adorners.Length; i++)
@@ -872,9 +802,7 @@ namespace KkjQuicker.UI.Adorners
                 }
             }
 
-            var overlay = new OverlayAdorner(target);
-            layer.Add(overlay);
-            return overlay;
+            return null;
         }
 
         /// <summary>
@@ -924,7 +852,7 @@ namespace KkjQuicker.UI.Adorners
             _canvas.Children.Clear();
             _panels.Clear();
 
-            AdornerLayer layer = Parent as AdornerLayer ?? AdornerLayer.GetAdornerLayer(AdornedElement);
+            AdornerLayer? layer = Parent as AdornerLayer ?? AdornerLayer.GetAdornerLayer(AdornedElement);
             if (layer != null)
             {
                 layer.Remove(this);
@@ -966,47 +894,5 @@ namespace KkjQuicker.UI.Adorners
             return finalSize;
         }
 
-        private static AdornerLayer EnsureAdornerLayer(FrameworkElement target)
-        {
-            AdornerLayer layer = AdornerLayer.GetAdornerLayer(target);
-            if (layer != null)
-                return layer;
-
-            Window window = Window.GetWindow(target);
-            if (window == null)
-                return null;
-
-            // 若视觉树中已有 AdornerDecorator 祖先，无需再包裹
-            if (FindAncestorAdornerDecorator(target) != null)
-                return AdornerLayer.GetAdornerLayer(target);
-
-            FrameworkElement? content = window.Content as FrameworkElement;
-            if (content == null)
-                return null;
-
-            // 自动将窗口内容包裹在 AdornerDecorator 中，为目标元素提供 AdornerLayer。
-            // 注意：此操作会改变 window.Content 的视觉树结构，详见 Attach 方法注释。
-            if (content is AdornerDecorator)
-                return AdornerLayer.GetAdornerLayer(target);
-
-            var wrapper = new AdornerDecorator { Child = content };
-            window.Content = wrapper;
-            return AdornerLayer.GetAdornerLayer(target);
-        }
-
-        private static AdornerDecorator FindAncestorAdornerDecorator(DependencyObject current)
-        {
-            DependencyObject parent = current;
-            while (parent != null)
-            {
-                AdornerDecorator? decorator = parent as AdornerDecorator;
-                if (decorator != null)
-                    return decorator;
-
-                parent = VisualTreeHelper.GetParent(parent);
-            }
-
-            return null;
-        }
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 
 namespace KkjQuicker.Utilities.Win32
@@ -60,7 +60,7 @@ namespace KkjQuicker.Utilities.Win32
         /// </summary>
         public int Width
         {
-            get { return Right - Left; }
+            get => Right - Left;
         }
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace KkjQuicker.Utilities.Win32
         /// </summary>
         public int Height
         {
-            get { return Bottom - Top; }
+            get => Bottom - Top;
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace KkjQuicker.Utilities.Win32
         /// </remarks>
         public bool IsEmpty
         {
-            get { return Width <= 0 || Height <= 0; }
+            get => Width <= 0 || Height <= 0;
         }
 
         /// <summary>
@@ -165,7 +165,7 @@ namespace KkjQuicker.Utilities.Win32
         /// <summary>
         /// 返回当前矩形的文本表示。
         /// </summary>
-        /// <returns>形如 <c>L=0, T=0, R=100, B=50 (100x50)</c> 的字符串。</returns>
+        /// <returns>形如 <c>0,0,100,50</c> 的字符串。</returns>
         public override string ToString()
         {
             return $"{Left},{Top},{Right},{Bottom}";

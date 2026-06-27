@@ -12,7 +12,7 @@ namespace KkjQuicker.UI.Input
         /// <exception cref="ArgumentNullException"><paramref name="e"/> 为 null。</exception>
         public static Key GetRealKey(KeyEventArgs e)
         {
-            if (e == null) throw new ArgumentNullException(nameof(e));
+            ArgumentNullException.ThrowIfNull(e);
             if (e.Key == Key.System) return e.SystemKey;
             if (e.Key == Key.ImeProcessed) return e.ImeProcessedKey;
             if (e.Key == Key.DeadCharProcessed) return e.DeadCharProcessedKey;

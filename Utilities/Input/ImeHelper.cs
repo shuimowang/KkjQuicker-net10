@@ -204,7 +204,7 @@ namespace KkjQuicker.Utilities.Input
         /// </summary>
         public static void WithImeOff(Action action, IntPtr hwnd = default(IntPtr))
         {
-            if (action == null) throw new ArgumentNullException(nameof(action));
+            ArgumentNullException.ThrowIfNull(action);
             using (PushImeOff(hwnd))
             {
                 action();
@@ -216,7 +216,7 @@ namespace KkjQuicker.Utilities.Input
         /// </summary>
         public static T WithImeOff<T>(Func<T> func, IntPtr hwnd = default(IntPtr))
         {
-            if (func == null) throw new ArgumentNullException(nameof(func));
+            ArgumentNullException.ThrowIfNull(func);
             using (PushImeOff(hwnd))
             {
                 return func();
@@ -229,7 +229,7 @@ namespace KkjQuicker.Utilities.Input
         /// </summary>
         public static async Task WithImeOffAsync(Func<Task> action, IntPtr hwnd = default(IntPtr))
         {
-            if (action == null) throw new ArgumentNullException(nameof(action));
+            ArgumentNullException.ThrowIfNull(action);
             IDisposable scope = PushImeOff(hwnd);
             try
             {
@@ -384,19 +384,19 @@ namespace KkjQuicker.Utilities.Input
         /// <summary>是否中文输入模式（IME 打开 AND ConversionMode 含 NATIVE 位）。</summary>
         public bool IsChinese
         {
-            get { return IsOpen && (ConversionMode & NativeMethods.IME_CMODE_NATIVE) != 0; }
+            get => IsOpen && (ConversionMode & NativeMethods.IME_CMODE_NATIVE) != 0;
         }
 
         /// <summary>是否全角。</summary>
         public bool IsFullShape
         {
-            get { return (ConversionMode & NativeMethods.IME_CMODE_FULLSHAPE) != 0; }
+            get => (ConversionMode & NativeMethods.IME_CMODE_FULLSHAPE) != 0;
         }
 
         /// <summary>是否中文标点（SYMBOL 位）。</summary>
         public bool IsChinesePunctuation
         {
-            get { return (ConversionMode & NativeMethods.IME_CMODE_SYMBOL) != 0; }
+            get => (ConversionMode & NativeMethods.IME_CMODE_SYMBOL) != 0;
         }
 
         public bool Equals(ImeState other)

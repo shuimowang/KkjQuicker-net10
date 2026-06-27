@@ -20,21 +20,21 @@ namespace KkjQuicker.UI.Adorners
     {
         private readonly VisualBrush _brush;
 
-        private UIElement _dragVisual = null!;              // 当前预览视觉（用于尺寸/事件订阅）
-        private FrameworkElement _dragFE = null!;           // 用于 SizeChanged（可选）
-        private SizeChangedEventHandler _sizeHandler = null!;
+        private UIElement? _dragVisual;              // Current drag preview visual.
+        private FrameworkElement? _dragFE;           // Optional SizeChanged source.
+        private SizeChangedEventHandler? _sizeHandler;
 
         private Point _dragOffset;                  // 鼠标在拖拽元素内的相对点
         private Point _mousePos;                    // 鼠标相对 AdornedElement 的位置
 
         // Text
-        private string _text;
+        private string? _text;
 
         private bool _textDirty = true;
         private Typeface _typeface = new Typeface("Segoe UI");
         private double _fontSize = 12;
         private Brush _textBrush = Brushes.Black;
-        private FormattedText _formattedText = null!;
+        private FormattedText? _formattedText;
         private double _lastPixelsPerDip = -1;
 
         /// <summary>文本相对鼠标的偏移。</summary>
@@ -63,16 +63,16 @@ namespace KkjQuicker.UI.Adorners
         public Thickness TextPadding { get; set; } = new Thickness(4, 3, 4, 3);
 
         /// <summary>当前文本（null/empty 表示不显示）。</summary>
-        public string Text
+        public string? Text
         {
             get { return _text; }
             set { SetText(value); }
         }
 
-        private DragAdorner(UIElement adornedElement, UIElement dragVisual, Point dragOffset, double opacity, string text)
+        private DragAdorner(UIElement adornedElement, UIElement dragVisual, Point dragOffset, double opacity, string? text)
             : base(adornedElement ?? throw new ArgumentNullException(nameof(adornedElement)))
         {
-            if (dragVisual == null) throw new ArgumentNullException(nameof(dragVisual));
+            ArgumentNullException.ThrowIfNull(dragVisual);
 
             IsHitTestVisible = false;
 
@@ -171,14 +171,14 @@ namespace KkjQuicker.UI.Adorners
         /// <summary>用 MouseEventArgs 更新鼠标位置。</summary>
         public void UpdatePosition(MouseEventArgs e)
         {
-            if (e == null) throw new ArgumentNullException(nameof(e));
+            ArgumentNullException.ThrowIfNull(e);
             UpdatePositionCore(e.GetPosition(AdornedElement));
         }
 
         /// <summary>用 DragEventArgs 更新鼠标位置。</summary>
         public void UpdatePosition(DragEventArgs e)
         {
-            if (e == null) throw new ArgumentNullException(nameof(e));
+            ArgumentNullException.ThrowIfNull(e);
             UpdatePositionCore(e.GetPosition(AdornedElement));
         }
 
@@ -213,7 +213,7 @@ namespace KkjQuicker.UI.Adorners
         /// <summary>更新预览视觉（拖拽中如果需要替换虚影视觉）。</summary>
         public void SetDragVisual(UIElement dragVisual)
         {
-            if (dragVisual == null) throw new ArgumentNullException(nameof(dragVisual));
+            ArgumentNullException.ThrowIfNull(dragVisual);
             SetDragVisualCore(dragVisual);
             InvalidateVisual();
         }
@@ -221,7 +221,7 @@ namespace KkjQuicker.UI.Adorners
         /// <summary>
         /// 设置显示在虚影旁的文本标签；传入 <see langword="null"/> 或空字符串表示不显示。
         /// </summary>
-        public void SetText(string text)
+        public void SetText(string? text)
         {
             if (string.Equals(_text, text, StringComparison.Ordinal)) return;
             _text = text;
@@ -245,7 +245,7 @@ namespace KkjQuicker.UI.Adorners
         /// <param name="fontSize">字号；须大于 0，否则忽略。</param>
         /// <param name="textBrush">文本画刷。</param>
         /// <param name="typeface">字体。</param>
-        public void SetTextStyle(double? fontSize = null, Brush textBrush = null, Typeface typeface = null)
+        public void SetTextStyle(double? fontSize = null, Brush? textBrush = null, Typeface? typeface = null)
         {
             bool changed = false;
 
@@ -314,8 +314,8 @@ namespace KkjQuicker.UI.Adorners
             double opacity = 0.7,
             string? text = null)
         {
-            if (adornedElement == null) throw new ArgumentNullException(nameof(adornedElement));
-            if (dragVisual == null) throw new ArgumentNullException(nameof(dragVisual));
+            ArgumentNullException.ThrowIfNull(adornedElement);
+            ArgumentNullException.ThrowIfNull(dragVisual);
 
             var layer = AdornerLayer.GetAdornerLayer(adornedElement);
             if (layer == null)
@@ -352,7 +352,7 @@ namespace KkjQuicker.UI.Adorners
         /// 从 adornedElement 上移除 DragAdorner（若存在），并返回被移除的实例（可能为 null）。
         /// 适合：拖拽结束时不持有引用也能清理。
         /// </summary>
-        public static DragAdorner Detach(UIElement adornedElement)
+        public static DragAdorner? Detach(UIElement? adornedElement)
         {
             if (adornedElement == null) return null;
 
@@ -377,7 +377,7 @@ namespace KkjQuicker.UI.Adorners
         }
 
         /// <summary>移除指定 DragAdorner。</summary>
-        public static void Detach(DragAdorner adorner)
+        public static void Detach(DragAdorner? adorner)
         {
             if (adorner == null) return;
 

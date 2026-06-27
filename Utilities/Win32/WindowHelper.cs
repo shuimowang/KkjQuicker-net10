@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Interop;
@@ -14,32 +16,7 @@ namespace KkjQuicker.Utilities.Win32
     /// </summary>
     public static class WindowHelper
     {
-        #region WPF 窗口查找 / 句柄桥接
-
-        /// <summary>
-        /// 查找当前 <see cref="Application"/> 中第一个指定类型的根窗口。
-        /// </summary>
-        /// <typeparam name="T">窗口类型。</typeparam>
-        /// <returns>找到则返回对应窗口；未找到则返回 <see langword="null"/>。</returns>
-        public static T? FindRootWindow<T>() where T : Window
-        {
-            return Application.Current == null
-                ? null
-                : Application.Current.Windows.OfType<T>().FirstOrDefault();
-        }
-
-        /// <summary>
-        /// 查找当前 <see cref="Application"/> 中所有指定类型的根窗口。
-        /// </summary>
-        /// <typeparam name="T">窗口类型。</typeparam>
-        /// <returns>匹配到的窗口序列；若当前应用不存在则返回空序列。</returns>
-        public static IEnumerable<T> FindRootWindows<T>() where T : Window
-        {
-            return Application.Current == null
-                ? Enumerable.Empty<T>()
-                : Application.Current.Windows.OfType<T>();
-        }
-
+        
         /// <summary>
         /// 获取指定 WPF 窗口对应的 HWND。
         /// </summary>
@@ -48,7 +25,7 @@ namespace KkjQuicker.Utilities.Win32
         /// <exception cref="ArgumentNullException"><paramref name="window"/> 为 <see langword="null"/>。</exception>
         public static IntPtr GetHandle(this Window window)
         {
-            if (window == null) throw new ArgumentNullException(nameof(window));
+            ArgumentNullException.ThrowIfNull(window);
             return new WindowInteropHelper(window).Handle;
         }
 
@@ -74,8 +51,6 @@ namespace KkjQuicker.Utilities.Win32
 
             return null;
         }
-
-        #endregion
 
         #region Style / ExStyle 修改
 
@@ -139,12 +114,20 @@ namespace KkjQuicker.Utilities.Win32
             if (oldValue == newValue)
                 return true;
 
-            NativeMethods.SetWindowLongPtr(hwnd, index, new IntPtr(newValue));
+            if (!TrySetWindowLongPtr(hwnd, index, new IntPtr(newValue)))
+                return false;
 
             if (index == NativeMethods.GWL_STYLE)
                 ApplyFrameChanged(hwnd);
 
             return true;
+        }
+
+        private static bool TrySetWindowLongPtr(IntPtr hwnd, int index, IntPtr value)
+        {
+            Marshal.SetLastPInvokeError(0);
+            IntPtr previous = NativeMethods.SetWindowLongPtr(hwnd, index, value);
+            return previous != IntPtr.Zero || Marshal.GetLastPInvokeError() == 0;
         }
 
         /// <summary>
@@ -156,9 +139,10 @@ namespace KkjQuicker.Utilities.Win32
         /// 为 <see langword="true"/> 表示设置该位；
         /// 为 <see langword="false"/> 表示清除该位。
         /// </param>
-        public static void SetStyleFlag(IntPtr hwnd, long flag, bool enable)
+        /// <returns>设置成功或目标样式无需修改时返回 <see langword="true"/>；句柄无效或底层调用失败时返回 <see langword="false"/>。</returns>
+        public static bool SetStyleFlag(IntPtr hwnd, long flag, bool enable)
         {
-            SetLongFlag(hwnd, NativeMethods.GWL_STYLE, flag, enable);
+            return SetLongFlag(hwnd, NativeMethods.GWL_STYLE, flag, enable);
         }
 
         /// <summary>
@@ -170,9 +154,10 @@ namespace KkjQuicker.Utilities.Win32
         /// 为 <see langword="true"/> 表示设置该位；
         /// 为 <see langword="false"/> 表示清除该位。
         /// </param>
-        public static void SetExStyleFlag(IntPtr hwnd, long flag, bool enable)
+        /// <returns>设置成功或目标样式无需修改时返回 <see langword="true"/>；句柄无效或底层调用失败时返回 <see langword="false"/>。</returns>
+        public static bool SetExStyleFlag(IntPtr hwnd, long flag, bool enable)
         {
-            SetLongFlag(hwnd, NativeMethods.GWL_EXSTYLE, flag, enable);
+            return SetLongFlag(hwnd, NativeMethods.GWL_EXSTYLE, flag, enable);
         }
 
         /// <summary>
@@ -271,7 +256,7 @@ namespace KkjQuicker.Utilities.Win32
 
             try
             {
-                var sb = new StringBuilder(256);
+                StringBuilder sb = new(256);
                 int len = NativeMethods.GetClassName(hwnd, sb, sb.Capacity);
                 return len > 0 ? sb.ToString() : string.Empty;
             }
@@ -331,7 +316,7 @@ namespace KkjQuicker.Utilities.Win32
                 if (len <= 0)
                     return string.Empty;
 
-                var sb = new StringBuilder(len + 1);
+                StringBuilder sb = new(len + 1);
                 NativeMethods.GetWindowText(hwnd, sb, sb.Capacity);
                 return sb.ToString();
             }
@@ -751,9 +736,9 @@ namespace KkjQuicker.Utilities.Win32
         /// </remarks>
         public static Dictionary<IntPtr, RECT> GetVisibleWindowRects(IntPtr excludeHwnd = default(IntPtr), Action<Exception>? onError = null)
         {
-            var result = new Dictionary<IntPtr, RECT>();
+            Dictionary<IntPtr, RECT> result = [];
 
-            NativeMethods.EnumWindows((hwnd, _) =>
+            bool ok = NativeMethods.EnumWindows((hwnd, _) =>
             {
                 try
                 {
@@ -800,6 +785,15 @@ namespace KkjQuicker.Utilities.Win32
 
                 return true;
             }, IntPtr.Zero);
+
+            if (!ok && onError != null)
+            {
+                try { onError(new Win32Exception(Marshal.GetLastWin32Error(), "EnumWindows failed.")); }
+                catch (Exception cbEx) when (cbEx is not OutOfMemoryException)
+                {
+                    Debug.WriteLine("GetVisibleWindowRects: onError callback failed: " + cbEx);
+                }
+            }
 
             return result;
         }

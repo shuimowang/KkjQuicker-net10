@@ -16,8 +16,7 @@ namespace KkjQuicker.UI
         /// </summary>
         public static void ResetSelectionAnchor(this ListBox listBox)
         {
-            if (listBox == null)
-                throw new ArgumentNullException("listBox");
+            ArgumentNullException.ThrowIfNull(listBox);
 
             var oldMode = listBox.SelectionMode;
             if (oldMode != SelectionMode.Single)
@@ -39,14 +38,10 @@ namespace KkjQuicker.UI
             T anchor,
             T current) where T : class
         {
-            if (listBox == null)
-                throw new ArgumentNullException("listBox");
-            if (view == null)
-                throw new ArgumentNullException("view");
-            if (anchor == null)
-                throw new ArgumentNullException("anchor");
-            if (current == null)
-                throw new ArgumentNullException("current");
+            ArgumentNullException.ThrowIfNull(listBox);
+            ArgumentNullException.ThrowIfNull(view);
+            ArgumentNullException.ThrowIfNull(anchor);
+            ArgumentNullException.ThrowIfNull(current);
 
             if (listBox.SelectionMode == SelectionMode.Single)
             {
@@ -77,23 +72,17 @@ namespace KkjQuicker.UI
         /// </summary>
         public static void FocusSelectedItem(this ListBox listBox)
         {
-            if (listBox == null)
-                throw new ArgumentNullException("listBox");
+            ArgumentNullException.ThrowIfNull(listBox);
             if (listBox.SelectedItem == null)
                 return;
 
-            listBox.ScrollIntoView(listBox.SelectedItem);
-            listBox.UpdateLayout();
-
-            var lbi = listBox.ItemContainerGenerator
-                .ContainerFromItem(listBox.SelectedItem) as ListBoxItem;
-            if (lbi != null)
-                lbi.Focus();
+            var lbi = listBox.GetItemContainer<ListBoxItem>(listBox.SelectedItem);
+            UiHelper.SetFocus(lbi);
         }
 
         private static List<T> ToTypedList<T>(ICollectionView view) where T : class
         {
-            var result = new List<T>();
+            List<T> result = [];
             foreach (var obj in view)
             {
                 var item = obj as T;

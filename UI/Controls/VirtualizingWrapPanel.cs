@@ -52,7 +52,7 @@ namespace KkjQuicker.UI.Controls
                     FrameworkPropertyMetadataOptions.AffectsMeasure,
                     OnLayoutPropertyChanged));
 
-        private ItemsControl _itemsControl = null!;
+        private ItemsControl? _itemsControl;
         private Size _extent;
         private Size _viewport;
         private Point _offset;

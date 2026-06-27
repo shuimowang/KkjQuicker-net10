@@ -34,10 +34,10 @@ namespace KkjQuicker.Overlay.Layers
         private readonly ScreenshotCanvas _canvas = null!;
         private OverlayContext _context = null!;
 
-        private BitmapSource _screen = null!;
+        private BitmapSource? _screen;
         private Rect _selectionRect;
         private Int32Rect _selectionBitmapPixelRect;
-        private TaskCompletionSource<ScreenshotResult> _tcs = null!;
+        private TaskCompletionSource<ScreenshotResult?>? _tcs;
 
         private bool _isDragging;
         private bool _captureStarted;
@@ -116,7 +116,7 @@ namespace KkjQuicker.Overlay.Layers
         /// 调用本方法前，图层必须已经附加到 Overlay。
         /// 一个实例只允许执行一次截图流程；如需再次截图，请创建新实例。
         /// </remarks>
-        public Task<ScreenshotResult> CaptureAsync()
+        public Task<ScreenshotResult?> CaptureAsync()
         {
             if (_context == null)
                 throw new InvalidOperationException("ScreenshotLayer must be attached before CaptureAsync is called.");
@@ -143,7 +143,7 @@ namespace KkjQuicker.Overlay.Layers
                 _canvas.UpdateMagnifierSource(_screen);
             }
 
-            _tcs = new TaskCompletionSource<ScreenshotResult>(
+            _tcs = new TaskCompletionSource<ScreenshotResult?>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
 
             EnsureKeyboardFocus();
@@ -377,7 +377,7 @@ namespace KkjQuicker.Overlay.Layers
             FinishWithResult(null);
         }
 
-        private void FinishWithResult(ScreenshotResult resultOrNull)
+        private void FinishWithResult(ScreenshotResult? resultOrNull)
         {
             _isDragging = false;
 
@@ -393,7 +393,7 @@ namespace KkjQuicker.Overlay.Layers
             catch { }
         }
 
-        private void Complete(ScreenshotResult resultOrNull)
+        private void Complete(ScreenshotResult? resultOrNull)
         {
             if (_completed)
                 return;
@@ -597,7 +597,7 @@ namespace KkjQuicker.Overlay.Layers
                 RenderOptions.SetBitmapScalingMode(_magnifierBrush, BitmapScalingMode.NearestNeighbor);
             }
 
-            public void UpdateMagnifierSource(BitmapSource screen)
+            public void UpdateMagnifierSource(BitmapSource? screen)
             {
                 _magnifierBrush.ImageSource = screen;
             }
@@ -654,8 +654,8 @@ namespace KkjQuicker.Overlay.Layers
                 string info = string.Format(
                     CultureInfo.InvariantCulture,
                     "{0},{1}   {2} × {3}",
-                    Math.Max(0, bmpPx.X + _owner._vsBounds.Left),
-                    Math.Max(0, bmpPx.Y + _owner._vsBounds.Top),
+                    bmpPx.X + _owner._vsBounds.Left,
+                    bmpPx.Y + _owner._vsBounds.Top,
                     Math.Max(0, bmpPx.Width),
                     Math.Max(0, bmpPx.Height));
 

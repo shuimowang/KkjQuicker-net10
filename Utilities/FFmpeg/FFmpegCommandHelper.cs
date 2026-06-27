@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace KkjQuicker.Utilities.FFmpeg
 {
@@ -167,7 +168,7 @@ namespace KkjQuicker.Utilities.FFmpeg
         // 仅用于 DirectShow 设备枚举的内部类型
         private sealed class AudioDeviceEntry
         {
-            public string DisplayName = null!;
+            public string DisplayName = string.Empty;
             public string? AlternativeName;
         }
 
@@ -195,17 +196,9 @@ namespace KkjQuicker.Utilities.FFmpeg
             if (string.IsNullOrWhiteSpace(outputPath))
                 throw new ArgumentNullException(nameof(outputPath));
 
-            if (options == null)
-                throw new ArgumentNullException(nameof(options));
+            ArgumentNullException.ThrowIfNull(options);
 
-            if (options.Width <= 0)
-                throw new ArgumentOutOfRangeException(nameof(options.Width));
-
-            if (options.Height <= 0)
-                throw new ArgumentOutOfRangeException(nameof(options.Height));
-
-            if (options.Fps <= 0)
-                throw new ArgumentOutOfRangeException(nameof(options.Fps));
+            ValidateOptions(options);
 
             var normalized = NormalizeForOutput(options);
             bool isGif = IsGif(normalized.OutputKind);
@@ -230,7 +223,7 @@ namespace KkjQuicker.Utilities.FFmpeg
             bool hasTwoAudio = hasMic && hasSysAudio;
             bool hasAnyAudio = hasMic || hasSysAudio;
 
-            var parts = new List<string>();
+            List<string> parts = [];
 
             // 1. 覆盖标志
             parts.Add(normalized.OverwriteOutput ? "-y" : "-n");
@@ -239,10 +232,10 @@ namespace KkjQuicker.Utilities.FFmpeg
             AppendGdiGrabInput(parts, normalized);
 
             // 3. 音频输入（dshow；单路为索引 1，双路为索引 1 和 2）
-            if (hasMic)
+            if (micDevice != null)
                 AppendDshowAudioInput(parts, micDevice, normalized);
 
-            if (hasSysAudio)
+            if (sysAudioDevice != null)
                 AppendDshowAudioInput(parts, sysAudioDevice, normalized);
 
             // 4. 双路音频混流（filter_complex + map）
@@ -291,19 +284,13 @@ namespace KkjQuicker.Utilities.FFmpeg
             parts.Add("-draw_mouse");
             parts.Add(options.CaptureCursor ? "1" : "0");
 
-            if (options.DurationSeconds > 0)
-            {
-                parts.Add("-t");
-                parts.Add(options.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture));
-            }
-
             parts.Add("-i");
             parts.Add("desktop");
         }
 
         private static void AppendDshowAudioInput(
             List<string> parts,
-            string? deviceName,
+            string deviceName,
             FFmpegScreenRecordOptions options)
         {
             if (options.InputThreadQueueSize > 0)
@@ -372,6 +359,12 @@ namespace KkjQuicker.Utilities.FFmpeg
             bool hasAnyAudio,
             bool hasTwoAudio)
         {
+            if (options.DurationSeconds > 0)
+            {
+                parts.Add("-t");
+                parts.Add(options.DurationSeconds.ToString("0.###", CultureInfo.InvariantCulture));
+            }
+
             if (IsGif(options.OutputKind))
             {
                 AppendGifArguments(parts, options);
@@ -453,7 +446,7 @@ namespace KkjQuicker.Utilities.FFmpeg
             }
             catch
             {
-                return new List<AudioDeviceEntry>();
+                return [];
             }
         }
 
@@ -467,6 +460,7 @@ namespace KkjQuicker.Utilities.FFmpeg
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                RedirectStandardInput = false,
                 // FFmpeg 在 Windows 上以系统 ANSI 编码输出设备名称，
                 // 必须使用 Encoding.Default 才能正确解析含中文的设备名。
                 StandardOutputEncoding = Encoding.Default,
@@ -480,9 +474,17 @@ namespace KkjQuicker.Utilities.FFmpeg
             using (var process = new Process { StartInfo = psi })
             {
                 process.Start();
-                string stdout = process.StandardOutput.ReadToEnd();
-                string stderr = process.StandardError.ReadToEnd();
-                process.WaitForExit();
+                Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
+                Task<string> stderrTask = process.StandardError.ReadToEndAsync();
+
+                if (!process.WaitForExit(5000))
+                {
+                    try { process.Kill(entireProcessTree: true); }
+                    catch { }
+                }
+
+                string stdout = WaitStringTask(stdoutTask, 1000);
+                string stderr = WaitStringTask(stderrTask, 1000);
                 // FFmpeg 将设备列表写入 stderr，stdout 通常为空
                 return stderr + Environment.NewLine + stdout;
             }
@@ -490,7 +492,7 @@ namespace KkjQuicker.Utilities.FFmpeg
 
         private static List<AudioDeviceEntry> ParseAudioDeviceEntries(string ffmpegOutput)
         {
-            var result = new List<AudioDeviceEntry>();
+            List<AudioDeviceEntry> result = [];
             if (string.IsNullOrWhiteSpace(ffmpegOutput))
                 return result;
 
@@ -653,6 +655,60 @@ namespace KkjQuicker.Utilities.FFmpeg
             };
         }
 
+        private static void ValidateOptions(FFmpegScreenRecordOptions options)
+        {
+            if (options.Width <= 0)
+                throw new ArgumentOutOfRangeException(nameof(options.Width));
+
+            if (options.Height <= 0)
+                throw new ArgumentOutOfRangeException(nameof(options.Height));
+
+            if (options.Fps <= 0)
+                throw new ArgumentOutOfRangeException(nameof(options.Fps));
+
+            if (options.DurationSeconds < 0)
+                throw new ArgumentOutOfRangeException(nameof(options.DurationSeconds));
+
+            if (!IsMp4(options.OutputKind) && !IsGif(options.OutputKind))
+                throw new ArgumentException("OutputKind 仅支持 mp4 或 gif。", nameof(options.OutputKind));
+
+            if (options.GifScaleWidth < 0)
+                throw new ArgumentOutOfRangeException(nameof(options.GifScaleWidth));
+
+            if (options.GifFps < 0)
+                throw new ArgumentOutOfRangeException(nameof(options.GifFps));
+
+            if (options.InputThreadQueueSize < 0)
+                throw new ArgumentOutOfRangeException(nameof(options.InputThreadQueueSize));
+
+            if (IsMp4(options.OutputKind))
+            {
+                if (options.Crf < 0 || options.Crf > 51)
+                    throw new ArgumentOutOfRangeException(nameof(options.Crf));
+
+                if (string.IsNullOrWhiteSpace(options.VideoCodec))
+                    throw new ArgumentException("VideoCodec 不能为空白。", nameof(options.VideoCodec));
+
+                if (string.IsNullOrWhiteSpace(options.Preset))
+                    throw new ArgumentException("Preset 不能为空白。", nameof(options.Preset));
+
+                if (string.IsNullOrWhiteSpace(options.PixelFormat))
+                    throw new ArgumentException("PixelFormat 不能为空白。", nameof(options.PixelFormat));
+            }
+
+            if (IsMp4(options.OutputKind) && (options.CaptureMic || options.CaptureSystemAudio))
+            {
+                if (options.AudioSampleRate <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(options.AudioSampleRate));
+
+                if (options.AudioChannels <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(options.AudioChannels));
+
+                if (options.AudioBufferSize < 0)
+                    throw new ArgumentOutOfRangeException(nameof(options.AudioBufferSize));
+            }
+        }
+
         private static int NormalizeEvenDown(int value) => (value & 1) == 0 ? value : value - 1;
 
         private static bool IsMp4(string kind) =>
@@ -698,7 +754,7 @@ namespace KkjQuicker.Utilities.FFmpeg
 
         private static string Join(IList<string> parts)
         {
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
 
             foreach (var part in parts)
             {
@@ -721,6 +777,20 @@ namespace KkjQuicker.Utilities.FFmpeg
         {
             try { return Path.GetDirectoryName(path); }
             catch { return null; }
+        }
+
+        private static string WaitStringTask(Task<string> task, int timeoutMilliseconds)
+        {
+            try
+            {
+                if (task.Wait(timeoutMilliseconds))
+                    return task.GetAwaiter().GetResult();
+            }
+            catch
+            {
+            }
+
+            return string.Empty;
         }
     }
 }

@@ -2,6 +2,7 @@
 using KkjQuicker.Utilities.Win32;
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Input;
@@ -25,10 +26,11 @@ namespace KkjQuicker.Utilities.Hooks
     {
         private static int _nextId;
 
+        private readonly object _syncRoot = new();
         private readonly int _id;
         private readonly HwndSource _source;
         private readonly Action _callback;
-        private bool _disposed;
+        private volatile bool _disposed;
 
         /// <summary>
         /// 初始化一个全局热键实例，并立即向系统注册。
@@ -41,8 +43,7 @@ namespace KkjQuicker.Utilities.Hooks
         /// <exception cref="Win32Exception">注册全局热键失败。</exception>
         public GlobalHotkey(HotkeyModifiers modifiers, Key key, Action callback)
         {
-            if (callback == null)
-                throw new ArgumentNullException(nameof(callback));
+            ArgumentNullException.ThrowIfNull(callback);
 
             if (key == Key.None)
                 throw new ArgumentException("热键主键不能为 Key.None。", nameof(key));
@@ -74,23 +75,39 @@ namespace KkjQuicker.Utilities.Hooks
         /// </summary>
         public void Dispose()
         {
-            if (_disposed)
-                return;
+            lock (_syncRoot)
+            {
+                if (_disposed)
+                    return;
 
-            NativeMethods.UnregisterHotKey(_source.Handle, _id);
-            _source.RemoveHook(WndProc);
-            _source.Dispose();
+                _disposed = true;
 
-            _disposed = true;
+                if (!NativeMethods.UnregisterHotKey(_source.Handle, _id))
+                {
+                    int error = Marshal.GetLastWin32Error();
+                    Debug.WriteLine("GlobalHotkey.UnregisterHotKey failed: " + error);
+                }
+
+                _source.RemoveHook(WndProc);
+                _source.Dispose();
+            }
             GC.SuppressFinalize(this);
         }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            if (msg == NativeConstants.WM_HOTKEY && wParam.ToInt32() == _id)
+            if (!_disposed && msg == NativeConstants.WM_HOTKEY && wParam.ToInt32() == _id)
             {
-                _callback();
                 handled = true;
+
+                try
+                {
+                    _callback();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("GlobalHotkey callback failed: " + ex);
+                }
             }
 
             return IntPtr.Zero;

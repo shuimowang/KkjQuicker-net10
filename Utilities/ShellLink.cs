@@ -16,6 +16,7 @@ namespace KkjQuicker.Utilities
     public sealed class ShellLink : IDisposable
     {
         private const int MaxPath = 260;
+        private const int LongPathBufferSize = 32767;
         private const int InfoTipSize = 1024;
         private const uint SLGP_UNCPRIORITY = 0x0002;
 
@@ -35,8 +36,8 @@ namespace KkjQuicker.Utilities
         {
             get
             {
-                StringBuilder builder = new StringBuilder(MaxPath);
-                WIN32_FIND_DATAW findData = new WIN32_FIND_DATAW();
+                StringBuilder builder = new(LongPathBufferSize);
+                var findData = new WIN32_FIND_DATAW();
 
                 ShellLinkInterface.GetPath(
                     builder,
@@ -59,7 +60,7 @@ namespace KkjQuicker.Utilities
         {
             get
             {
-                StringBuilder builder = new StringBuilder(MaxPath);
+                StringBuilder builder = new(LongPathBufferSize);
                 ShellLinkInterface.GetWorkingDirectory(builder, builder.Capacity);
                 return builder.ToString();
             }
@@ -76,7 +77,7 @@ namespace KkjQuicker.Utilities
         {
             get
             {
-                StringBuilder builder = new StringBuilder(InfoTipSize);
+                StringBuilder builder = new(InfoTipSize);
                 ShellLinkInterface.GetArguments(builder, builder.Capacity);
                 return builder.ToString();
             }
@@ -93,7 +94,7 @@ namespace KkjQuicker.Utilities
         {
             get
             {
-                StringBuilder builder = new StringBuilder(InfoTipSize);
+                StringBuilder builder = new(InfoTipSize);
                 ShellLinkInterface.GetDescription(builder, builder.Capacity);
                 return builder.ToString();
             }
@@ -190,16 +191,17 @@ namespace KkjQuicker.Utilities
             ThrowIfDisposed();
 
             if (string.IsNullOrWhiteSpace(linkFile))
-                throw new ArgumentException("快捷方式文件路径不能为空。", "linkFile");
+                throw new ArgumentException("快捷方式文件路径不能为空。", nameof(linkFile));
 
             if (!string.Equals(Path.GetExtension(linkFile), ".lnk", StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("快捷方式文件扩展名必须是 .lnk。", "linkFile");
+                throw new ArgumentException("快捷方式文件扩展名必须是 .lnk。", nameof(linkFile));
 
             if (!File.Exists(linkFile))
                 throw new FileNotFoundException("快捷方式文件不存在。", linkFile);
 
-            PersistFile.Load(linkFile, 0);
-            CurrentFile = linkFile;
+            string fullPath = Path.GetFullPath(linkFile);
+            PersistFile.Load(fullPath, 0);
+            CurrentFile = fullPath;
         }
 
         /// <summary>
@@ -228,17 +230,18 @@ namespace KkjQuicker.Utilities
             ThrowIfDisposed();
 
             if (string.IsNullOrWhiteSpace(linkFile))
-                throw new ArgumentException("快捷方式文件路径不能为空。", "linkFile");
+                throw new ArgumentException("快捷方式文件路径不能为空。", nameof(linkFile));
 
             if (!string.Equals(Path.GetExtension(linkFile), ".lnk", StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("快捷方式文件扩展名必须是 .lnk。", "linkFile");
+                throw new ArgumentException("快捷方式文件扩展名必须是 .lnk。", nameof(linkFile));
 
-            string? directory = Path.GetDirectoryName(linkFile);
+            string fullPath = Path.GetFullPath(linkFile);
+            string? directory = Path.GetDirectoryName(fullPath);
             if (!string.IsNullOrWhiteSpace(directory))
                 Directory.CreateDirectory(directory);
 
-            PersistFile.Save(linkFile, true);
-            CurrentFile = linkFile;
+            PersistFile.Save(fullPath, true);
+            CurrentFile = fullPath;
         }
 
         public void Dispose()
@@ -254,7 +257,7 @@ namespace KkjQuicker.Utilities
                 try
                 {
                     if (Marshal.IsComObject(_comObject))
-                        Marshal.ReleaseComObject(_comObject);
+                        Marshal.FinalReleaseComObject(_comObject);
                 }
                 catch
                 {
@@ -264,20 +267,16 @@ namespace KkjQuicker.Utilities
             }
         }
 
-        /// <summary>
-        /// 获取 Windows 快捷方式（.lnk 文件）的目标路径。
-        /// </summary>
-        /// <param name="linkFile">快捷方式文件路径。</param>
-        /// <returns>
-        /// 快捷方式指向的目标路径；若路径无效、文件不存在、扩展名不是 .lnk 或解析失败，则返回空字符串。
-        /// </returns>
-        public static string GetTargetPath(string linkFile)
+        public static bool TryGetTargetPath(string linkFile, out string targetPath)
         {
+            targetPath = string.Empty;
+
             try
             {
                 using (var link = new ShellLink(linkFile))
                 {
-                    return link.TargetPath;
+                    targetPath = link.TargetPath;
+                    return !string.IsNullOrEmpty(targetPath);
                 }
             }
             catch (OutOfMemoryException)
@@ -290,15 +289,18 @@ namespace KkjQuicker.Utilities
             }
             catch
             {
-                return string.Empty;
+                return false;
             }
         }
 
-        private IShellLinkW? ShellLinkInterface
+        private IShellLinkW ShellLinkInterface
         {
             get
             {
                 ThrowIfDisposed();
+                if (_shellLink == null)
+                    throw new ObjectDisposedException(nameof(ShellLink));
+
                 return _shellLink;
             }
         }
@@ -319,7 +321,7 @@ namespace KkjQuicker.Utilities
 
         private string GetIconLocation(out int iconIndex)
         {
-            StringBuilder builder = new StringBuilder(MaxPath);
+            StringBuilder builder = new(LongPathBufferSize);
             ShellLinkInterface.GetIconLocation(builder, builder.Capacity, out iconIndex);
             return builder.ToString();
         }
@@ -327,7 +329,7 @@ namespace KkjQuicker.Utilities
         private void ThrowIfDisposed()
         {
             if (_isDisposed)
-                throw new ObjectDisposedException(GetType().FullName);
+                throw new ObjectDisposedException(nameof(ShellLink));
         }
 
         [ComImport]

@@ -11,7 +11,7 @@ namespace KkjQuicker.AI.OpenAI
     public sealed class ChatRequest
     {
         private static readonly HashSet<string> ReservedExtraKeys =
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            new(StringComparer.OrdinalIgnoreCase)
             {
                 "model",
                 "messages",
@@ -26,9 +26,13 @@ namespace KkjQuicker.AI.OpenAI
         public string? Prompt { get; private set; }
         public string? SystemPrompt { get; private set; }
         public string? SessionId { get; private set; }
-        public IList<ChatMessage>? History { get; private set; }
-        public IList<object>? RawMessages { get; private set; }
-        public IDictionary<string, object>? ExtraParameters { get; private set; }
+        private List<ChatMessage>? _history;
+        private List<object>? _rawMessages;
+        private Dictionary<string, object?>? _extraParameters;
+
+        public IReadOnlyList<ChatMessage>? History => _history;
+        public IReadOnlyList<object>? RawMessages => _rawMessages;
+        public IReadOnlyDictionary<string, object?>? ExtraParameters => _extraParameters;
 
         /// <summary>0 表示不发送 max_tokens 参数。</summary>
         public int MaxTokens { get; private set; }
@@ -115,15 +119,15 @@ namespace KkjQuicker.AI.OpenAI
             return this;
         }
 
-        public ChatRequest WithHistory(IEnumerable<ChatMessage> history)
+        public ChatRequest WithHistory(IEnumerable<ChatMessage>? history)
         {
-            History = history == null ? null : history.ToList();
+            _history = history == null ? null : history.ToList();
             return this;
         }
 
-        public ChatRequest WithRawMessages(IEnumerable<object> messages)
+        public ChatRequest WithRawMessages(IEnumerable<object>? messages)
         {
-            RawMessages = messages == null ? null : messages.ToList();
+            _rawMessages = messages == null ? null : messages.ToList();
             return this;
         }
 
@@ -133,7 +137,7 @@ namespace KkjQuicker.AI.OpenAI
 
             ResponseFormat = t == null
                 ? null
-                : (object)new Dictionary<string, object> { { "type", t } };
+                : (object)new Dictionary<string, object> { ["type"] = t };
 
             return this;
         }
@@ -144,7 +148,7 @@ namespace KkjQuicker.AI.OpenAI
             return this;
         }
 
-        public ChatRequest WithExtra(string key, object value)
+        public ChatRequest WithExtra(string key, object? value)
         {
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentException("key 不能为空白。", nameof(key));
@@ -154,16 +158,12 @@ namespace KkjQuicker.AI.OpenAI
             if (ReservedExtraKeys.Contains(key))
                 throw new ArgumentException("不能通过 ExtraParameters 覆盖基础请求字段：" + key, nameof(key));
 
-            if (ExtraParameters == null)
-                ExtraParameters = new Dictionary<string, object>();
-
-            ExtraParameters[key] = value;
+            _extraParameters ??= new Dictionary<string, object?>();
+            _extraParameters[key] = value;
             return this;
         }
 
-        private static string? Normalize(string? s)
-        {
-            return string.IsNullOrWhiteSpace(s) ? null : s.Trim();
-        }
+        private static string? Normalize(string? s) =>
+            string.IsNullOrWhiteSpace(s) ? null : s.Trim();
     }
 }

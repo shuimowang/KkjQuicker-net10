@@ -1,10 +1,9 @@
-// KkjQuicker.UI.WindowMessageMonitor
 using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Interop;
 
-using KkjQuicker.Utilities.Win32; // NativeMethods
+using KkjQuicker.Utilities.Win32;
 
 namespace KkjQuicker.UI
 {
@@ -28,19 +27,31 @@ namespace KkjQuicker.UI
 
         public WindowMessageMonitor(Window window)
         {
-            if (window == null)
-                throw new ArgumentNullException("window");
+            ArgumentNullException.ThrowIfNull(window);
+            if (!window.Dispatcher.CheckAccess())
+                throw new InvalidOperationException("WindowMessageMonitor 必须在目标窗口所属 UI 线程创建。");
 
             _window = window;
 
-            if (_window.IsLoaded)
-                Attach();
-            else
-                _window.SourceInitialized += OnSourceInitialized;
-
+            _window.SourceInitialized += OnSourceInitialized;
             _window.Closed += OnWindowClosed;
             SystemParameters.StaticPropertyChanged += OnSystemParametersStaticPropertyChanged;
+
+            Attach();
         }
+
+        /// <summary>
+        /// 获取当前是否已经安装窗口消息 Hook。
+        /// </summary>
+        public bool IsAttached
+        {
+            get { return _isHooked; }
+        }
+
+        /// <summary>
+        /// 获取当前绑定的窗口句柄。窗口句柄尚未创建时返回 <see cref="IntPtr.Zero"/>。
+        /// </summary>
+        public IntPtr Handle { get; private set; }
 
         /// <summary>
         /// 显示器配置变化。
@@ -72,16 +83,23 @@ namespace KkjQuicker.UI
         /// </summary>
         public event EventHandler<PropertyChangedEventArgs>? SystemParametersChanged;
 
+        /// <summary>
+        /// 收到任意窗口消息时触发。
+        /// </summary>
+        public event EventHandler<WindowMessageEventArgs>? MessageReceived;
+
         public void Attach()
         {
+            VerifyAccess();
+
             if (_isDisposed || _isHooked)
                 return;
 
-            var helper = new WindowInteropHelper(_window);
-            if (helper.Handle == IntPtr.Zero)
+            Handle = _window.GetHandle();
+            if (Handle == IntPtr.Zero)
                 return;
 
-            _source = HwndSource.FromHwnd(helper.Handle);
+            _source = HwndSource.FromHwnd(Handle);
             if (_source == null)
                 return;
 
@@ -91,6 +109,8 @@ namespace KkjQuicker.UI
 
         public void Detach()
         {
+            VerifyAccess();
+
             if (!_isHooked)
                 return;
 
@@ -99,6 +119,7 @@ namespace KkjQuicker.UI
 
             _source = null;
             _isHooked = false;
+            Handle = IntPtr.Zero;
         }
 
         public void Dispose()
@@ -106,6 +127,7 @@ namespace KkjQuicker.UI
             if (_isDisposed)
                 return;
 
+            VerifyAccess();
             _isDisposed = true;
 
             Detach();
@@ -113,6 +135,13 @@ namespace KkjQuicker.UI
             _window.SourceInitialized -= OnSourceInitialized;
             _window.Closed -= OnWindowClosed;
             SystemParameters.StaticPropertyChanged -= OnSystemParametersStaticPropertyChanged;
+
+            DisplayChanged = null;
+            SettingChanged = null;
+            DpiChanged = null;
+            TaskbarCreated = null;
+            SystemParametersChanged = null;
+            MessageReceived = null;
         }
 
         private void OnSourceInitialized(object? sender, EventArgs e)
@@ -134,6 +163,12 @@ namespace KkjQuicker.UI
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
+            var messageReceived = MessageReceived;
+            if (messageReceived != null)
+            {
+                messageReceived(this, new WindowMessageEventArgs(hwnd, msg, wParam, lParam));
+            }
+
             if (msg == WM_DISPLAYCHANGE)
             {
                 Raise(DisplayChanged);
@@ -154,10 +189,35 @@ namespace KkjQuicker.UI
             return IntPtr.Zero;
         }
 
+        private void VerifyAccess()
+        {
+            if (!_window.Dispatcher.CheckAccess())
+                throw new InvalidOperationException("WindowMessageMonitor 只能在目标窗口所属 UI 线程访问。");
+        }
+
         private void Raise(EventHandler? handler)
         {
             if (handler != null)
                 handler(this, EventArgs.Empty);
         }
+    }
+
+    public sealed class WindowMessageEventArgs : EventArgs
+    {
+        public WindowMessageEventArgs(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam)
+        {
+            Hwnd = hwnd;
+            Message = message;
+            WParam = wParam;
+            LParam = lParam;
+        }
+
+        public IntPtr Hwnd { get; }
+
+        public int Message { get; }
+
+        public IntPtr WParam { get; }
+
+        public IntPtr LParam { get; }
     }
 }

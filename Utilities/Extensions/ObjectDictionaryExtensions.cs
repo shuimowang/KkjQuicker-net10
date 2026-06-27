@@ -30,7 +30,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// 对应值为 <see langword="null"/> 或 <see cref="DBNull.Value"/>，则返回 <see langword="null"/>；
         /// 否则返回对应的原始值。
         /// </returns>
-        public static object? GetValueOrNull(this IDictionary<string, object> dict, string key)
+        public static object? GetValueOrNull(this IDictionary<string, object>? dict, string? key)
         {
             if (dict == null)
                 return null;
@@ -54,7 +54,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// 当字典中存在指定键，且对应值不为 <see langword="null"/> 且不为 <see cref="DBNull.Value"/> 时返回 <see langword="true"/>；
         /// 否则返回 <see langword="false"/>。
         /// </returns>
-        public static bool HasValue(this IDictionary<string, object> dict, string key)
+        public static bool HasValue(this IDictionary<string, object>? dict, string? key)
         {
             if (dict == null)
                 return false;
@@ -73,7 +73,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <param name="key">键名。</param>
         /// <param name="defaultValue">当读取失败时返回的默认值。</param>
         /// <returns>转换后的布尔值，或 <paramref name="defaultValue"/>。</returns>
-        public static bool GetBool(this IDictionary<string, object> dict, string key, bool defaultValue = false)
+        public static bool GetBool(this IDictionary<string, object>? dict, string? key, bool defaultValue = false)
         {
             return ToBoolOrDefault(dict.GetValueOrNull(key), defaultValue);
         }
@@ -88,8 +88,8 @@ namespace KkjQuicker.Utilities.Extensions
         /// <param name="maxValue">允许的最大值；为 <see langword="null"/> 时不限制上限。</param>
         /// <returns>转换后并按需限制范围的整数值，或限制后的 <paramref name="defaultValue"/>。</returns>
         public static int GetInt(
-            this IDictionary<string, object> dict,
-            string key,
+            this IDictionary<string, object>? dict,
+            string? key,
             int defaultValue = 0,
             int? minValue = null,
             int? maxValue = null)
@@ -107,8 +107,8 @@ namespace KkjQuicker.Utilities.Extensions
         /// <param name="maxValue">允许的最大值；为 <see langword="null"/> 时不限制上限。</param>
         /// <returns>转换后并按需限制范围的双精度浮点值，或限制后的 <paramref name="defaultValue"/>。</returns>
         public static double GetDouble(
-            this IDictionary<string, object> dict,
-            string key,
+            this IDictionary<string, object>? dict,
+            string? key,
             double defaultValue = 0,
             double? minValue = null,
             double? maxValue = null)
@@ -131,7 +131,7 @@ namespace KkjQuicker.Utilities.Extensions
         /// <remarks>
         /// 本方法不会将空字符串视为失败；若原始值为非空对象，则返回其 <see cref="object.ToString"/> 结果。
         /// </remarks>
-        public static string? GetString(this IDictionary<string, object> dict, string key, string? defaultValue = null)
+        public static string? GetString(this IDictionary<string, object>? dict, string? key, string? defaultValue = null)
         {
             return ToStringOrDefault(dict.GetValueOrNull(key), defaultValue);
         }

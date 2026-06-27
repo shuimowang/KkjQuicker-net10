@@ -183,10 +183,8 @@ namespace KkjQuicker.Utilities.History
         /// <param name="redo">重做动作。</param>
         public DelegateUndoableCommand(string description, Action undo, Action redo)
         {
-            if (undo == null)
-                throw new ArgumentNullException(nameof(undo));
-            if (redo == null)
-                throw new ArgumentNullException(nameof(redo));
+            ArgumentNullException.ThrowIfNull(undo);
+            ArgumentNullException.ThrowIfNull(redo);
 
             _description = description ?? string.Empty;
             _undo = undo;
@@ -198,7 +196,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public string Description
         {
-            get { return _description; }
+            get => _description;
         }
 
         /// <summary>
@@ -223,7 +221,7 @@ namespace KkjQuicker.Utilities.History
     /// </summary>
     public sealed class CompositeUndoableCommand : IUndoableCommand
     {
-        private readonly List<IUndoableCommand> _commands = new List<IUndoableCommand>();
+        private readonly List<IUndoableCommand> _commands = [];
         private readonly string _description;
 
         /// <summary>
@@ -240,7 +238,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public string Description
         {
-            get { return _description; }
+            get => _description;
         }
 
         /// <summary>
@@ -248,7 +246,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public int Count
         {
-            get { return _commands.Count; }
+            get => _commands.Count;
         }
 
         /// <summary>
@@ -256,7 +254,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public IReadOnlyList<IUndoableCommand> Commands
         {
-            get { return _commands; }
+            get => _commands;
         }
 
         /// <summary>
@@ -265,8 +263,7 @@ namespace KkjQuicker.Utilities.History
         /// <param name="command">要添加的命令。</param>
         public void Add(IUndoableCommand command)
         {
-            if (command == null)
-                throw new ArgumentNullException(nameof(command));
+            ArgumentNullException.ThrowIfNull(command);
 
             _commands.Add(command);
         }
@@ -304,11 +301,14 @@ namespace KkjQuicker.Utilities.History
     /// <para>
     /// 如需将多步操作合并为一步历史，请由调用方显式构造 <see cref="CompositeUndoableCommand"/>。
     /// </para>
+    /// <para>
+    /// 本类型不是线程安全类型，建议在拥有编辑状态的同一线程（通常是 UI 线程）上使用。
+    /// </para>
     /// </remarks>
     public sealed class HistoryManager : IDisposable
     {
-        private readonly List<IUndoableCommand> _undoStack = new List<IUndoableCommand>();
-        private readonly Stack<IUndoableCommand> _redoStack = new Stack<IUndoableCommand>();
+        private readonly List<IUndoableCommand> _undoStack = [];
+        private readonly Stack<IUndoableCommand> _redoStack = new();
         private bool _isDisposed;
         private int _maxCapacity = 100;
 
@@ -329,7 +329,7 @@ namespace KkjQuicker.Utilities.History
         /// </remarks>
         public int MaxCapacity
         {
-            get { return _maxCapacity; }
+            get => _maxCapacity;
             set
             {
                 ThrowIfDisposed();
@@ -351,7 +351,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public bool CanUndo
         {
-            get { return _undoStack.Count > 0; }
+            get => _undoStack.Count > 0;
         }
 
         /// <summary>
@@ -359,7 +359,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public bool CanRedo
         {
-            get { return _redoStack.Count > 0; }
+            get => _redoStack.Count > 0;
         }
 
         /// <summary>
@@ -367,7 +367,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public int UndoCount
         {
-            get { return _undoStack.Count; }
+            get => _undoStack.Count;
         }
 
         /// <summary>
@@ -375,7 +375,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public int RedoCount
         {
-            get { return _redoStack.Count; }
+            get => _redoStack.Count;
         }
 
         /// <summary>
@@ -383,7 +383,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public string UndoDescription
         {
-            get { return CanUndo ? SafeDescription(_undoStack[_undoStack.Count - 1]) : string.Empty; }
+            get => CanUndo ? SafeDescription(_undoStack[^1]) : string.Empty;
         }
 
         /// <summary>
@@ -391,7 +391,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public string RedoDescription
         {
-            get { return CanRedo ? SafeDescription(_redoStack.Peek()) : string.Empty; }
+            get => CanRedo ? SafeDescription(_redoStack.Peek()) : string.Empty;
         }
 
         /// <summary>
@@ -404,7 +404,7 @@ namespace KkjQuicker.Utilities.History
         /// </remarks>
         public bool IsDirty
         {
-            get { return _undoStack.Count != _cleanIndex; }
+            get => _undoStack.Count != _cleanIndex;
         }
 
         /// <summary>
@@ -412,7 +412,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public IReadOnlyList<IUndoableCommand> UndoStack
         {
-            get { return _undoStack; }
+            get => _undoStack;
         }
 
         /// <summary>
@@ -420,7 +420,7 @@ namespace KkjQuicker.Utilities.History
         /// </summary>
         public IEnumerable<IUndoableCommand> RedoStack
         {
-            get { return _redoStack; }
+            get => _redoStack;
         }
 
         /// <summary>
@@ -447,15 +447,14 @@ namespace KkjQuicker.Utilities.History
         /// <param name="command">要执行的命令。</param>
         public void Execute(IUndoableCommand command)
         {
-            if (command == null)
-                throw new ArgumentNullException(nameof(command));
+            ArgumentNullException.ThrowIfNull(command);
 
             ThrowIfDisposed();
 
             command.Redo();
 
+            DiscardRedoStack();
             _undoStack.Add(command);
-            _redoStack.Clear();
             TrimCapacity();
 
             RaiseChanged(HistoryChangeKind.Executed);
@@ -470,13 +469,12 @@ namespace KkjQuicker.Utilities.History
         /// </remarks>
         public void Push(IUndoableCommand command)
         {
-            if (command == null)
-                throw new ArgumentNullException(nameof(command));
+            ArgumentNullException.ThrowIfNull(command);
 
             ThrowIfDisposed();
 
+            DiscardRedoStack();
             _undoStack.Add(command);
-            _redoStack.Clear();
             TrimCapacity();
 
             RaiseChanged(HistoryChangeKind.Pushed);
@@ -493,7 +491,7 @@ namespace KkjQuicker.Utilities.History
             if (!CanUndo)
                 return false;
 
-            IUndoableCommand command = _undoStack[_undoStack.Count - 1];
+            IUndoableCommand command = _undoStack[^1];
             command.Undo();                               // 先执行，异常时栈结构不受影响
             _undoStack.RemoveAt(_undoStack.Count - 1);
             _redoStack.Push(command);
@@ -517,6 +515,7 @@ namespace KkjQuicker.Utilities.History
             command.Redo();                               // 先执行，异常时栈结构不受影响
             _redoStack.Pop();
             _undoStack.Add(command);
+            TrimCapacity();
 
             RaiseChanged(HistoryChangeKind.Redone);
             return true;
@@ -580,6 +579,17 @@ namespace KkjQuicker.Utilities.History
                 _undoStack.RemoveAt(0);
                 _cleanIndex--; // 负值表示存档点已丢失，IsDirty 将始终为 true
             }
+        }
+
+        private void DiscardRedoStack()
+        {
+            if (_redoStack.Count == 0)
+                return;
+
+            if (_cleanIndex > _undoStack.Count)
+                _cleanIndex = -1;
+
+            _redoStack.Clear();
         }
 
         private void RaiseChanged(HistoryChangeKind kind)
